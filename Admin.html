@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin HOLLI</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #f8fafc; padding: 20px; max-width: 800px; margin: auto; }
+        h1 { color: #f97316; }
+        .card { background: white; border-radius: 24px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 12px; font-family: inherit; }
+        button { background: #f97316; color: white; border: none; padding: 10px 16px; border-radius: 99px; font-weight: bold; cursor: pointer; margin-right: 8px; margin-top: 8px; }
+        button.secondary { background: #64748b; }
+        .article-item { border-bottom: 1px solid #e2e8f0; padding: 12px 0; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .article-item input { flex: 1; margin: 0; }
+        .danger { background: #ef4444; }
+        pre { background: #1e293b; color: #e2e8f0; padding: 12px; border-radius: 16px; overflow-x: auto; font-size: 12px; }
+        hr { margin: 20px 0; }
+    </style>
+</head>
+<body>
+<h1>🧑‍🍳 Administration HOLLI</h1>
+<p>Modifie les articles Maison et les textes des pages. Télécharge les fichiers JSON et remplace-les sur ton hébergement (GitHub).</p>
+
+<div id="login" class="card">
+    <h2>🔐 Accès administrateur</h2>
+    <input type="password" id="password" placeholder="Mot de passe">
+    <button onclick="checkPassword()">Entrer</button>
+</div>
+
+<div id="adminPanel" style="display:none;">
+    <div class="card">
+        <h2>🏠 Articles Maison</h2>
+        <div id="maisonList"></div>
+        <button onclick="addMaisonArticle()">➕ Ajouter un article</button>
+        <button onclick="downloadMaisonJSON()" class="secondary">📥 Télécharger maison.json</button>
+    </div>
+
+    <div class="card">
+        <h2>📝 Contenu des pages (content.json)</h2>
+        <div id="contentEditor"></div>
+        <button onclick="downloadContentJSON()" class="secondary">📥 Télécharger content.json</button>
+    </div>
+
+    <div class="card">
+        <h2>📤 Remplacer les fichiers sur GitHub</h2>
+        <p>1. Télécharge les fichiers ci-dessus.<br>
+        2. Va sur ton dépôt GitHub → clique sur chaque fichier (maison.json, content.json) → "Edit" → supprime l’ancien contenu et colle le nouveau.<br>
+        3. Valide les changements. L’application sera mise à jour automatiquement.</p>
+    </div>
+</div>
+
+<script>
+    const ADMIN_PASSWORD = "holli2026";
+
+    let maisonData = { articles: [] };
+    let contentData = {};
+
+    function checkPassword() {
+        const pwd = document.getElementById('password').value;
+        if (pwd === ADMIN_PASSWORD) {
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('adminPanel').style.display = 'block';
+            loadData();
+        } else {
+            alert('Mot de passe incorrect');
+        }
+    }
+
+    async function loadData() {
+        try {
+            const res = await fetch('/maison.json');
+            maisonData = await res.json();
+        } catch(e) { maisonData = { articles: [] }; }
+        try {
+            const res = await fetch('/content.json');
+            contentData = await res.json();
+        } catch(e) { contentData = {}; }
+        renderMaisonList();
+        renderContentEditor();
+    }
+
+    function renderMaisonList() {
+        const container = document.getElementById('maisonList');
+        if (!maisonData.articles) maisonData.articles = [];
+        container.innerHTML = '';
+        maisonData.articles.forEach((article, idx) => {
+            const div = document.createElement('div');
+            div.className = 'article-item';
+            div.innerHTML = `
+                <input type="text" value="${escapeHtml(article.cat)}" placeholder="Catégorie" data-field="cat" data-idx="${idx}" style="width:120px;">
+                <input type="text" value="${escapeHtml(article.n)}" placeholder="Nom" data-field="n" data-idx="${idx}" style="flex:2;">
+                <input type="text" value="${escapeHtml(article.i)}" placeholder="Icône (emoji)" data-field="i" data-idx="${idx}" style="width:80px;">
+                <select data-field="freq" data-idx="${idx}">
+                    <option value="hebdo" ${article.freq === 'hebdo' ? 'selected' : ''}>hebdo</option>
+                    <option value="mensuel" ${article.freq === 'mensuel' ? 'selected' : ''}>mensuel</option>
+                    <option value="trim" ${article.freq === 'trim' ? 'selected' : ''}>trim</option>
+                </select>
+                <button class="danger" onclick="deleteArticle(${idx})">✕</button>
+            `;
+            container.appendChild(div);
+        });
+        document.querySelectorAll('#maisonList input, #maisonList select').forEach(el => {
+            el.addEventListener('change', (e) => {
+                const idx = parseInt(el.dataset.idx);
+                const field = el.dataset.field;
+                if (maisonData.articles[idx]) {
+                    maisonData.articles[idx][field] = el.value;
+                }
+            });
+        });
+    }
+
+    function deleteArticle(idx) {
+        if (confirm('Supprimer cet article ?')) {
+            maisonData.articles.splice(idx, 1);
+            renderMaisonList();
+        }
+    }
+
+    function addMaisonArticle() {
+        maisonData.articles.push({
+            cat: "🚿 Nouvelle catégorie",
+            n: "Nouvel article",
+            i: "📦",
+            freq: "mensuel"
+        });
+        renderMaisonList();
+    }
+
+    function renderContentEditor() {
+        const container = document.getElementById('contentEditor');
+        if (!contentData.home) contentData.home = {};
+        if (!contentData.week) contentData.week = {};
+        if (!contentData.cart) contentData.cart = {};
+        if (!contentData.footer) contentData.footer = {};
+
+        container.innerHTML = `
+            <h3>Page d'accueil</h3>
+            <label>Titre du catalogue :</label>
+            <input type="text" id="catalogueTitle" value="${escapeHtml(contentData.home.catalogueTitle || 'Le Catalogue')}">
+            <label>Texte swipe :</label>
+            <input type="text" id="swipeHint" value="${escapeHtml(contentData.home.swipeHint || 'Glisse la carte')}">
+            <label>Label "MIAM" :</label>
+            <input type="text" id="likeText" value="${escapeHtml(contentData.home.likeText || 'MIAM')}">
+
+            <h3>Page Semaine</h3>
+            <label>Titre :</label>
+            <input type="text" id="weekTitle" value="${escapeHtml(contentData.week.title || '🗓 Crée ta semaine')}">
+            <label>Sous-titre :</label>
+            <input type="text" id="weekSubtitle" value="${escapeHtml(contentData.week.subtitle || 'Choisis le nombre de repas, on s\'occupe du reste.')}">
+            <label>Bannière - sous-titre :</label>
+            <input type="text" id="weekBannerSub" value="${escapeHtml(contentData.week.bannerSub || 'Menu personnalisé')}">
+            <label>Bannière - titre (HTML autorisé) :</label>
+            <input type="text" id="weekBannerTitle" value="${escapeHtml(contentData.week.bannerTitle || 'Crée ta semaine<br>de menus 🍽️')}">
+            <label>Bannière - footer :</label>
+            <input type="text" id="weekBannerFooter" value="${escapeHtml(contentData.week.bannerFooter || 'Choisis tes repas · Modifie à volonté →')}">
+
+            <h3>Page Panier</h3>
+            <label>Titre :</label>
+            <input type="text" id="cartTitle" value="${escapeHtml(contentData.cart.title || 'Courses')}">
+            <label>Message vide :</label>
+            <input type="text" id="cartEmpty" value="${escapeHtml(contentData.cart.emptyMessage || 'Panier vide')}">
+
+            <h3>Footer</h3>
+            <label>Lien confidentialité :</label>
+            <input type="text" id="privacyLabel" value="${escapeHtml(contentData.footer.privacyLinkLabel || '🔒 Politique de confidentialité')}">
+        `;
+        const inputs = container.querySelectorAll('input');
+        inputs.forEach(inp => {
+            inp.addEventListener('change', () => {
+                contentData.home.catalogueTitle = document.getElementById('catalogueTitle').value;
+                contentData.home.swipeHint = document.getElementById('swipeHint').value;
+                contentData.home.likeText = document.getElementById('likeText').value;
+                contentData.week.title = document.getElementById('weekTitle').value;
+                contentData.week.subtitle = document.getElementById('weekSubtitle').value;
+                contentData.week.bannerSub = document.getElementById('weekBannerSub').value;
+                contentData.week.bannerTitle = document.getElementById('weekBannerTitle').value;
+                contentData.week.bannerFooter = document.getElementById('weekBannerFooter').value;
+                contentData.cart.title = document.getElementById('cartTitle').value;
+                contentData.cart.emptyMessage = document.getElementById('cartEmpty').value;
+                contentData.footer.privacyLinkLabel = document.getElementById('privacyLabel').value;
+            });
+        });
+    }
+
+    function downloadMaisonJSON() {
+        const jsonStr = JSON.stringify(maisonData, null, 2);
+        const blob = new Blob([jsonStr], {type: 'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'maison.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
+    function downloadContentJSON() {
+        const jsonStr = JSON.stringify(contentData, null, 2);
+        const blob = new Blob([jsonStr], {type: 'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'content.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
+    function escapeHtml(str) { return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+</script>
+</body>
+</html>
