@@ -1,0 +1,8 @@
+{
+  "articles": [
+    {"cat":"🚿 Hygiène","n":"Papier toilette","i":"🧻","freq":"hebdo"},
+    {"cat":"🚿 Hygiène","n":"Gel douche","i":"🧴","freq":"mensuel"},
+    ...
+    (les 100 articles)
+  ]
+}
