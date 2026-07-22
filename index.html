@@ -2,40 +2,10 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HOLLI</title>
-    <script>
-        if (!localStorage.getItem('holli_user')) {
-            window.location.href = 'auth.html';
-        } else if (!localStorage.getItem('holli_profile')) {
-            window.location.href = 'onboarding.html';
-        }
-    </script>
+    <meta http-equiv="refresh" content="0; url=auth.html">
+    <title>Redirection - HOLLI</title>
 </head>
-<body style="margin: 0; font-family: sans-serif; background: #f4f6f8;">
-    <main id="app-view" style="padding: 20px; padding-bottom: 90px;"></main>
-
-    <nav id="bottom-nav" style="position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 12px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);">
-        <button onclick="switchPage('recettes')" style="border:none; background:none; font-weight:bold; cursor:pointer;">🍳 Recettes</button>
-        <button onclick="switchPage('courses')" style="border:none; background:none; font-weight:bold; cursor:pointer;">🛒 Courses</button>
-        <button onclick="switchPage('maison')" style="border:none; background:none; font-weight:bold; cursor:pointer;">🏠 Maison</button>
-        <button onclick="switchPage('profil')" style="border:none; background:none; font-weight:bold; cursor:pointer;">👤 Profil</button>
-    </nav>
-
-    <script src="js/app.js"></script>
-    <script>
-        // METS TON ADRESSE EMAIL ICI ENTRE LES GUILLEMETS 👇
-        const monEmailCreateur = "ton-email@exemple.com"; 
-
-        const currentUser = localStorage.getItem('holli_user');
-        if (currentUser === monEmailCreateur) {
-            const nav = document.getElementById('bottom-nav');
-            const adminBtn = document.createElement('button');
-            adminBtn.innerHTML = "🛠️ Créateur";
-            adminBtn.style.cssText = "border:none; background:none; font-weight:bold; cursor:pointer; color: #2563eb;";
-            adminBtn.onclick = () => switchPage('admin');
-            nav.appendChild(adminBtn);
-        }
-    </script>
+<body>
+    <p>Redirection vers la connexion...</p>
 </body>
 </html>
