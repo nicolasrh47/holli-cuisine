@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Profil - HOLLI</title>
+    <style>
+        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #f4f6f8; font-family: sans-serif; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 90%; max-width: 450px; box-sizing: border-box; }
+        .card h2 { text-align: center; margin-bottom: 10px; color: #333; }
+        .card p { text-align: center; color: #666; font-size: 14px; margin-bottom: 20px; }
+        .input-group { margin-bottom: 20px; display: flex; flex-direction: column; }
+        .input-group label { margin-bottom: 8px; font-size: 14px; font-weight: bold; color: #444; }
+        .input-group input { padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; }
+        .checkbox-group { display: flex; flex-direction: column; gap: 8px; }
+        .btn-submit { width: 100%; padding: 12px; background-color: #2563eb; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Personnalisons HOLLI</h2>
+        <p>Dis-nous en plus sur ton foyer.</p>
+        <form onsubmit="saveProfile(event)">
+            <div class="input-group">
+                <label>Nombre de personnes dans le foyer</label>
+                <input type="number" id="foyer-count" min="1" max="20" value="2" required>
+            </div>
+            <div class="input-group">
+                <label>Régimes alimentaires</label>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="diet" value="vegetarien"> Végétarien</label>
+                    <label><input type="checkbox" name="diet" value="vegan"> Vegan</label>
+                    <label><input type="checkbox" name="diet" value="sans-gluten"> Sans gluten</label>
+                </div>
+            </div>
+            <button type="submit" class="btn-submit">Valider</button>
+        </form>
+    </div>
+    <script>
+        function saveProfile(event) {
+            event.preventDefault();
+            const diets = [];
+            document.querySelectorAll('input[name="diet"]:checked').forEach(cb => diets.push(cb.value));
+            localStorage.setItem('holli_profile', JSON.stringify({ foyer: document.getElementById('foyer-count').value, diets }));
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
