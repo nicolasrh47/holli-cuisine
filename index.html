@@ -14,6 +14,7 @@
             margin: 0; 
             background-color: #f8fafc; 
             font-family: 'Plus Jakarta Sans', sans-serif, system-ui; 
+            padding-bottom: 70px; /* Espace pour la barre fixe du bas */
         }
         .auth-card { 
             background: white; 
@@ -196,6 +197,29 @@
         .btn-creator:hover {
             background-color: #1e293b;
         }
+        /* Style de la barre de navigation du bas */
+        .menu-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+            z-index: 100;
+        }
+        .menu-bar a {
+            text-decoration: none;
+            color: #64748b;
+            font-size: 11px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .menu-bar a:hover {
+            color: #f97316;
+        }
     </style>
 </head>
 <body>
@@ -242,6 +266,15 @@
             <button type="submit" class="btn-submit" id="submit-btn">Se connecter</button>
             <button type="button" class="btn-creator" onclick="creatorBypass()">🛠️ Accès Créateur (Mode Test Direct)</button>
         </form>
+    </div>
+
+    <!-- Barre de navigation du bas avec Profil ajouté après Maison -->
+    <div class="menu-bar">
+        <a href="index.html">🍽️<br>Menu</a>
+        <a href="favoris.html">❤️<br>Favoris</a>
+        <a href="courses.html">🛒<br>Courses</a>
+        <a href="maison.html">🏡<br>Maison</a>
+        <a href="profil.html">👤<br>Profil</a>
     </div>
 
     <script>
@@ -359,7 +392,6 @@
                 localStorage.setItem('holli_logged', 'true');
                 localStorage.setItem('holli_saved_email', email);
 
-                // Simulation des préférences par défaut pour l'inscription normale
                 const defaultPrefs = { foyerSize: "2", diet: "classique", allergies: "" };
                 localStorage.setItem('holli_preferences', JSON.stringify(defaultPrefs));
 
@@ -403,7 +435,6 @@
             }
         }
 
-        // Fonction d'accès direct pour le créateur
         function creatorBypass() {
             const creatorUser = { name: "Créateur HOLLI", email: "createur@holli.fr", password: "admin" };
             const creatorPrefs = { foyerSize: "2", diet: "classique", allergies: "Aucune" };
@@ -417,14 +448,6 @@
         }
 
         window.onload = function() {
-            // Optionnel : décommentez la ligne ci-dessous si vous voulez que ça zappe le login auto pendant vos tests
-            /*
-            if (localStorage.getItem('holli_logged') === 'true') {
-                window.location.href = 'app.html';
-                return;
-            }
-            */
-
             const rememberedEmail = localStorage.getItem('holli_saved_email');
             if (rememberedEmail) {
                 document.getElementById('email').value = rememberedEmail;
