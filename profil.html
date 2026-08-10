@@ -31,15 +31,6 @@
             box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
             transform: translateY(-2px);
         }
-        .glass-input {
-            background: rgba(18, 10, 6, 0.95);
-            border: 1px solid rgba(255, 107, 53, 0.2);
-            color: #ffffff;
-        }
-        .glass-input:focus {
-            border-color: #FF6B35;
-            box-shadow: 0 0 15px rgba(255, 107, 53, 0.4);
-        }
         .menu-bar { 
             position: fixed; 
             bottom: 0; 
@@ -89,7 +80,7 @@
 
     <main class="max-w-2xl mx-auto p-4 sm:p-6 space-y-6">
         
-        <!-- Identité & Statistiques (Gamifié) -->
+        <!-- Identité & Statistiques -->
         <section class="logo-card rounded-3xl p-6 space-y-4">
             <div class="flex items-center space-x-4">
                 <div class="w-20 h-20 rounded-2xl logo-gradient-bg flex items-center justify-center text-3xl shadow-lg border border-[#F7C59F]">
@@ -104,7 +95,6 @@
                 </div>
             </div>
 
-            <!-- Statistiques rapides -->
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 border-t border-[#FF6B35]/20">
                 <div class="bg-black/40 p-3 rounded-2xl text-center border border-[#FF6B35]/10">
                     <span class="block text-lg font-extrabold text-[#FF6B35]">24</span>
@@ -185,148 +175,16 @@
             </div>
         </section>
 
-        <!-- 3. Intolérances et Allergènes -->
-        <section class="logo-card rounded-3xl p-6 space-y-4">
-            <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center font-bold">⚠️</div>
-                <div>
-                    <h3 class="font-bold text-white text-base">Intolérances & Allergènes</h3>
-                    <p class="text-xs text-[#F7C59F]/80">Ingrédients à écarter strictement de vos recettes.</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
-                <label class="relative cursor-pointer option-card">
-                    <input type="checkbox" name="allergy" value="gluten" class="option-checkbox sr-only">
-                    <div class="option-content p-3.5 rounded-2xl border border-[#FF6B35]/20 bg-black/40 flex flex-col items-center text-center space-y-1">
-                        <span class="text-2xl">🌾</span>
-                        <span class="text-xs font-bold text-gray-200">Gluten</span>
-                    </div>
-                </label>
-                <label class="relative cursor-pointer option-card">
-                    <input type="checkbox" name="allergy" value="lactose" class="option-checkbox sr-only">
-                    <div class="option-content p-3.5 rounded-2xl border border-[#FF6B35]/20 bg-black/40 flex flex-col items-center text-center space-y-1">
-                        <span class="text-2xl">🥛</span>
-                        <span class="text-xs font-bold text-gray-200">Lactose</span>
-                    </div>
-                </label>
-                <label class="relative cursor-pointer option-card">
-                    <input type="checkbox" name="allergy" value="cacahuetes" class="option-checkbox sr-only">
-                    <div class="option-content p-3.5 rounded-2xl border border-[#FF6B35]/20 bg-black/40 flex flex-col items-center text-center space-y-1">
-                        <span class="text-2xl">🥜</span>
-                        <span class="text-xs font-bold text-gray-200">Arachides</span>
-                    </div>
-                </label>
-                <label class="relative cursor-pointer option-card">
-                    <input type="checkbox" name="allergy" value="oeufs" class="option-checkbox sr-only">
-                    <div class="option-content p-3.5 rounded-2xl border border-[#FF6B35]/20 bg-black/40 flex flex-col items-center text-center space-y-1">
-                        <span class="text-2xl">🥚</span>
-                        <span class="text-xs font-bold text-gray-200">Œufs</span>
-                    </div>
-                </label>
-                <label class="relative cursor-pointer option-card">
-                    <input type="checkbox" name="allergy" value="fruits-coque" class="option-checkbox sr-only">
-                    <div class="option-content p-3.5 rounded-2xl border border-[#FF6B35]/20 bg-black/40 flex flex-col items-center text-center space-y-1">
-                        <span class="text-2xl">🌰</span>
-                        <span class="text-xs font-bold text-gray-200">Fruits à coque</span>
-                    </div>
-                </label>
-                <label class="relative cursor-pointer option-card">
-                    <input type="checkbox" name="allergy" value="crustaces" class="option-checkbox sr-only">
-                    <div class="option-content p-3.5 rounded-2xl border border-[#FF6B35]/20 bg-black/40 flex flex-col items-center text-center space-y-1">
-                        <span class="text-2xl">🦐</span>
-                        <span class="text-xs font-bold text-gray-200">Crustacés</span>
-                    </div>
-                </label>
-            </div>
-        </section>
-
-        <!-- 4. Ustensiles de cuisine disponibles -->
-        <section class="logo-card rounded-3xl p-6 space-y-4">
-            <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-xl bg-[#EFEFD0]/20 text-[#EFEFD0] flex items-center justify-center font-bold">🍳</div>
-                <div>
-                    <h3 class="font-bold text-white text-base">Ustensiles & Équipements</h3>
-                    <p class="text-xs text-[#F7C59F]/80">Quels appareils possèdes-tu chez toi ?</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
-                <label class="relative cursor-pointer option-card">
-                    <input type="checkbox" name="tool" value="four" class="option-checkbox sr-only">
-                    <div class="option-content p-3.5 rounded-2xl border border-[#FF6B35]/20 bg-black/40 flex flex-col items-center text-center space-y-1">
-                        <span class="text-2xl">🔥</span>
-                        <span class="text-xs font-bold text-gray-200">Four</span>
-                    </div>
-                </label>
-                <label class="relative cursor-pointer option-card">
-                    <input type="checkbox" name="tool" value="microondes" class="option-checkbox sr-only">
-                    <div class="option-content p-3.5 rounded-2xl border border-[#FF6B35]/20 bg-black/40 flex flex-col items-center text-center space-y-1">
-                        <span class="text-2xl">📡</span>
-                        <span class="text-xs font-bold text-gray-200">Micro-ondes</span>
-                    </div>
-                </label>
-                <label class="relative cursor-pointer option-card">
-                    <input type="checkbox" name="tool" value="airfryer" class="option-checkbox sr-only">
-                    <div class="option-content p-3.5 rounded-2xl border border-[#FF6B35]/20 bg-black/40 flex flex-col items-center text-center space-y-1">
-                        <span class="text-2xl">🌀</span>
-                        <span class="text-xs font-bold text-gray-200">Airfryer</span>
-                    </div>
-                </label>
-                <label class="relative cursor-pointer option-card">
-                    <input type="checkbox" name="tool" value="blender" class="option-checkbox sr-only">
-                    <div class="option-content p-3.5 rounded-2xl border border-[#FF6B35]/20 bg-black/40 flex flex-col items-center text-center space-y-1">
-                        <span class="text-2xl">🥤</span>
-                        <span class="text-xs font-bold text-gray-200">Blender</span>
-                    </div>
-                </label>
-                <label class="relative cursor-pointer option-card">
-                    <input type="checkbox" name="tool" value="robot" class="option-checkbox sr-only">
-                    <div class="option-content p-3.5 rounded-2xl border border-[#FF6B35]/20 bg-black/40 flex flex-col items-center text-center space-y-1">
-                        <span class="text-2xl">🤖</span>
-                        <span class="text-xs font-bold text-gray-200">Robot cuiseur</span>
-                    </div>
-                </label>
-                <label class="relative cursor-pointer option-card">
-                    <input type="checkbox" name="tool" value="cocotte" class="option-checkbox sr-only">
-                    <div class="option-content p-3.5 rounded-2xl border border-[#FF6B35]/20 bg-black/40 flex flex-col items-center text-center space-y-1">
-                        <span class="text-2xl">🍲</span>
-                        <span class="text-xs font-bold text-gray-200">Cocotte</span>
-                    </div>
-                </label>
-            </div>
-        </section>
-
-        <!-- 5. Section Parrainage -->
-        <section class="logo-card rounded-3xl p-6 space-y-4">
-            <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center font-bold">🎁</div>
-                <div>
-                    <h3 class="font-bold text-white text-base">Parrainage Gourmand</h3>
-                    <p class="text-xs text-[#F7C59F]/80">Invite tes proches à rejoindre ton QG HOLLI.</p>
-                </div>
-            </div>
-
-            <div class="bg-black/50 p-4 rounded-2xl border border-[#FF6B35]/20 space-y-3 text-center">
-                <p class="text-xs text-gray-300">Partage ton code secret de chef avec tes amis :</p>
-                <div class="flex items-center justify-center gap-2">
-                    <span id="referral-code" class="bg-[#FF6B35]/10 border border-[#FF6B35]/40 text-[#F7C59F] font-extrabold px-4 py-2 rounded-xl text-sm tracking-widest">HOLLI-CHEF-94</span>
-                    <button onclick="copyReferral()" class="bg-gradient-to-r from-[#FF6B35] to-[#F7C59F] text-gray-950 font-bold px-3 py-2 rounded-xl text-xs shadow transition active:scale-95">Copier</button>
-                </div>
-                <p class="text-[10px] text-gray-400">0 amis parrainés pour le moment. À toi de jouer !</p>
-            </div>
-        </section>
-
     </main>
 
-    <!-- Barre de navigation mise à jour (Profil à côté de Maison) -->
+    <!-- Barre de navigation du bas (Profil tout à gauche) -->
     <div class="menu-bar">
+        <a href="profil.html">👤<br>PROFIL</a>
         <a href="index.html">🍴<br>MENU</a>
         <a href="favoris.html">❤️<br>FAVORIS</a>
         <a href="courses.html">🛒<br>COURSES</a>
         <a href="cook.html">👨‍🍳<br>COOK</a>
         <a href="maison.html">✨<br>MAISON</a>
-        <a href="profil.html">👤<br>PROFIL</a>
     </div>
 
     <script>
@@ -334,60 +192,14 @@
             const adults = document.getElementById('adults-count').value;
             const kids = document.getElementById('kids-count').value;
             const diets = Array.from(document.querySelectorAll('input[name="diet"]:checked')).map(cb => cb.value);
-            const allergies = Array.from(document.querySelectorAll('input[name="allergy"]:checked')).map(cb => cb.value);
-            const tools = Array.from(document.querySelectorAll('input[name="tool"]:checked')).map(cb => cb.value);
-
-            const profileData = { adults, kids, diets, allergies, tools, updatedAt: new Date().toISOString() };
+            const profileData = { adults, kids, diets, updatedAt: new Date().toISOString() };
             localStorage.setItem('holli_user_profile', JSON.stringify(profileData));
-            
-            alert('🎉 Profil et préférences avancées enregistrés avec succès !');
-        }
-
-        function copyReferral() {
-            const code = document.getElementById('referral-code').innerText;
-            navigator.clipboard.writeText(code);
-            alert('📋 Code de parrainage copié dans le presse-papier !');
+            alert('🎉 Profil enregistré avec succès !');
         }
 
         function logout() {
             localStorage.removeItem('holli_user_profile');
         }
-
-        // Charger les données au démarrage
-        window.addEventListener('DOMContentLoaded', () => {
-            const saved = localStorage.getItem('holli_user_profile');
-            if (saved) {
-                try {
-                    const data = JSON.parse(saved);
-                    if (data.adults) {
-                        document.getElementById('adults-count').value = data.adults;
-                        document.getElementById('adults-val').innerText = data.adults;
-                    }
-                    if (data.kids) {
-                        document.getElementById('kids-count').value = data.kids;
-                        document.getElementById('kids-val').innerText = data.kids;
-                    }
-                    if (data.diets) {
-                        data.diets.forEach(d => {
-                            const cb = document.querySelector(`input[name="diet"][value="${d}"]`);
-                            if (cb) cb.checked = true;
-                        });
-                    }
-                    if (data.allergies) {
-                        data.allergies.forEach(a => {
-                            const cb = document.querySelector(`input[name="allergy"][value="${a}"]`);
-                            if (cb) cb.checked = true;
-                        });
-                    }
-                    if (data.tools) {
-                        data.tools.forEach(t => {
-                            const cb = document.querySelector(`input[name="tool"][value="${t}"]`);
-                            if (cb) cb.checked = true;
-                        });
-                    }
-                } catch(e) { console.error(e); }
-            }
-        });
     </script>
 </body>
 </html>
