@@ -72,9 +72,9 @@
             <button onclick="saveProfile()" class="bg-gradient-to-r from-[#FF6B35] to-[#F7C59F] text-gray-950 font-extrabold px-3 py-2 rounded-xl text-xs shadow-md transition active:scale-95">
                 ✨ Enregistrer
             </button>
-            <a href="auth.html" onclick="logout()" class="bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 font-bold px-3 py-2 rounded-xl text-xs transition flex items-center gap-1">
+            <button onclick="logout()" class="bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 font-bold px-3 py-2 rounded-xl text-xs transition flex items-center gap-1">
                 🚪 Déconnexion
-            </a>
+            </button>
         </div>
     </header>
 
@@ -177,7 +177,7 @@
 
     </main>
 
-    <!-- Barre de navigation du bas (Profil tout à gauche) -->
+    <!-- Barre de navigation du bas -->
     <div class="menu-bar">
         <a href="profil.html">👤<br>PROFIL</a>
         <a href="index.html">🍴<br>MENU</a>
@@ -188,6 +188,36 @@
     </div>
 
     <script>
+        // Charger les données sauvegardées dès l'ouverture de la page
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedProfile = localStorage.getItem('holli_user_profile');
+            if (savedProfile) {
+                try {
+                    const data = JSON.parse(savedProfile);
+                    
+                    // Restaurer les adultes
+                    if (data.adults) {
+                        document.getElementById('adults-count').value = data.adults;
+                        document.getElementById('adults-val').innerText = data.adults;
+                    }
+                    // Restaurer les enfants
+                    if (data.kids) {
+                        document.getElementById('kids-count').value = data.kids;
+                        document.getElementById('kids-val').innerText = data.kids;
+                    }
+                    // Restaurer les régimes
+                    if (data.diets && Array.isArray(data.diets)) {
+                        data.diets.forEach(dietValue => {
+                            const checkbox = document.querySelector(`input[name="diet"][value="${dietValue}"]`);
+                            if (checkbox) checkbox.checked = true;
+                        });
+                    }
+                } catch (e) {
+                    console.error("Erreur lors du chargement du profil", e);
+                }
+            }
+        });
+
         function saveProfile() {
             const adults = document.getElementById('adults-count').value;
             const kids = document.getElementById('kids-count').value;
@@ -199,6 +229,8 @@
 
         function logout() {
             localStorage.removeItem('holli_user_profile');
+            // Redirection vers la page de connexion (modifier le nom du fichier si besoin, ex: auth.html)
+            window.location.href = 'auth.html';
         }
     </script>
 </body>
