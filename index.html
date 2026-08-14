@@ -241,6 +241,58 @@ body.dark #add-item-modal{background:#1e293b;}
 .toast{position:fixed;bottom:100px;left:16px;right:16px;color:white;text-align:center;padding:15px 20px;border-radius:99px;font-weight:900;font-size:14px;z-index:700;animation:slideUp .4s ease-out;}
 .toast.hiding{animation:toastFade .4s ease forwards;}
 .page-pers{display:flex;align-items:center;justify-content:flex-end;margin-bottom:12px;}
+
+/* ========== AUTH / ONBOARDING / PROFIL ========== */
+#auth-screen,#onboard-screen{position:fixed;inset:0;background:linear-gradient(160deg,#fff7ed,#f8fafc 55%);z-index:900;display:none;align-items:center;justify-content:center;padding:24px;overflow-y:auto;}
+#auth-screen.show,#onboard-screen.show{display:flex;animation:fadeIn .35s ease-out;}
+body.dark #auth-screen,body.dark #onboard-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
+.auth-card{width:100%;max-width:380px;background:var(--card);border-radius:2.5rem;padding:32px 26px;box-shadow:0 24px 60px -12px rgba(0,0,0,.15);border:1.5px solid var(--border);}
+.auth-tabs{display:flex;background:#f1f5f9;border-radius:99px;padding:4px;margin:22px 0 18px;}
+body.dark .auth-tabs{background:#334155;}
+.auth-tab{flex:1;text-align:center;padding:10px 0;border-radius:99px;font-weight:900;font-size:11px;text-transform:uppercase;color:#94a3b8;cursor:pointer;border:none;background:transparent;transition:.2s;}
+.auth-tab.active{background:#f97316;color:white;box-shadow:0 4px 12px rgba(249,115,22,.3);}
+.auth-input{width:100%;border:2px solid var(--border);border-radius:1.1rem;padding:14px 16px;font-size:14px;font-weight:700;font-family:inherit;outline:none;margin-bottom:10px;background:var(--card);color:var(--text);}
+.auth-input:focus{border-color:#f97316;}
+.auth-submit{width:100%;padding:15px;background:#f97316;color:white;border:none;border-radius:1.1rem;font-weight:900;font-size:13px;text-transform:uppercase;cursor:pointer;box-shadow:0 8px 22px rgba(249,115,22,.3);margin-top:4px;}
+.auth-submit:active{transform:scale(.97);}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:20px 0;color:#cbd5e1;font-size:10px;font-weight:800;text-transform:uppercase;}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.auth-google-btn{width:100%;padding:14px;background:white;border:2px solid var(--border);border-radius:1.1rem;font-weight:900;font-size:12px;text-transform:uppercase;cursor:pointer;color:var(--text);}
+.auth-google-btn:active{transform:scale(.97);}
+.auth-error{color:#ef4444;font-size:11px;font-weight:800;text-align:center;margin-top:12px;min-height:14px;}
+
+.onboard-card{width:100%;max-width:420px;background:var(--card);border-radius:2.5rem;padding:28px 24px 24px;box-shadow:0 24px 60px -12px rgba(0,0,0,.15);border:1.5px solid var(--border);}
+.onboard-progress{height:5px;background:#f1f5f9;border-radius:99px;overflow:hidden;margin-bottom:22px;}
+body.dark .onboard-progress{background:#334155;}
+.onboard-progress-fill{height:100%;background:linear-gradient(90deg,#f97316,#fb923c);border-radius:99px;transition:width .35s;}
+.onboard-step{display:none;animation:fadeIn .3s ease-out;}
+.onboard-step.active{display:block;}
+.onboard-step h2{font-size:19px;font-weight:900;font-style:italic;text-transform:uppercase;color:var(--text);margin-bottom:4px;letter-spacing:-.5px;}
+.onboard-step p.sub{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:18px;}
+.onboard-options{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px;}
+.onboard-opt{padding:11px 16px;border-radius:14px;font-size:12px;font-weight:800;border:2px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;transition:.2s;}
+.onboard-opt.active{background:#f97316;border-color:#f97316;color:white;}
+.onboard-nav{display:flex;justify-content:space-between;align-items:center;margin-top:26px;}
+.onboard-back-btn{font-weight:900;font-size:11px;text-transform:uppercase;color:#94a3b8;background:none;border:none;cursor:pointer;padding:10px;}
+.onboard-next-btn{padding:13px 28px;background:#f97316;color:white;border:none;border-radius:99px;font-weight:900;font-size:12px;text-transform:uppercase;cursor:pointer;box-shadow:0 8px 20px rgba(249,115,22,.3);}
+.onboard-next-btn:active{transform:scale(.96);}
+.onboard-textarea{width:100%;border:2px solid var(--border);border-radius:1.1rem;padding:12px 14px;font-size:13px;font-weight:700;font-family:inherit;outline:none;resize:none;min-height:70px;background:var(--card);color:var(--text);margin-bottom:12px;}
+.onboard-textarea:focus{border-color:#f97316;}
+
+.profile-avatar{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#f97316,#fb923c);display:flex;align-items:center;justify-content:center;font-size:34px;box-shadow:0 8px 20px rgba(249,115,22,.3);cursor:pointer;flex-shrink:0;}
+.profile-card{background:var(--card);border-radius:2rem;border:1.5px solid var(--border);padding:18px;margin-bottom:14px;}
+.pref-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+.pref-row:last-child{border-bottom:none;}
+.pref-label{font-size:9px;font-weight:900;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;}
+.pref-value{font-size:12px;font-weight:800;color:var(--text);text-align:right;max-width:60%;}
+.chip{display:inline-block;background:#fff7ed;color:#c2410c;font-size:9px;font-weight:900;padding:4px 10px;border-radius:99px;margin:2px;}
+body.dark .chip{background:#3a2415;color:#fdba74;}
+.chip.allergy{background:#fef2f2;color:#b91c1c;}
+body.dark .chip.allergy{background:#3f1d1d;color:#fca5a5;}
+.share-code-box{background:#fff7ed;border:2px dashed #fdba74;border-radius:1.3rem;padding:16px;text-align:center;margin-top:10px;}
+body.dark .share-code-box{background:#3a2415;border-color:#9a5b24;}
+.share-code-val{font-size:24px;font-weight:900;letter-spacing:4px;color:#f97316;font-style:italic;}
+.allergy-warning-badge{position:absolute;top:8px;right:44px;background:#fef2f2;color:#dc2626;font-size:9px;font-weight:900;padding:3px 8px;border-radius:99px;z-index:6;box-shadow:0 2px 6px rgba(0,0,0,.12);}
 </style>
 </head>
 <body>
@@ -249,6 +301,85 @@ body.dark #add-item-modal{background:#1e293b;}
   <div class="ba-emoji">🍽️</div>
   <div class="ba-text">Bon appétit !</div>
   <div class="ba-sub">Votre plat est prêt · Régalez-vous !</div>
+</div>
+
+<!-- ========== ÉCRAN AUTHENTIFICATION ========== -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="holli-logo" style="justify-content:center">
+      <div class="holli-logo-icon">🍳</div>
+      <div>
+        <div class="holli-logo-text">HOLLI.</div>
+        <div class="holli-logo-sub">Cuisine &amp; Maison</div>
+      </div>
+    </div>
+    <div class="auth-tabs">
+      <button id="auth-tab-login" class="auth-tab active" onclick="setAuthTab('login')">Connexion</button>
+      <button id="auth-tab-signup" class="auth-tab" onclick="setAuthTab('signup')">Inscription</button>
+    </div>
+    <div id="auth-form-login">
+      <input id="login-email" class="auth-input" type="email" placeholder="Adresse e-mail" autocomplete="email">
+      <input id="login-password" class="auth-input" type="password" placeholder="Mot de passe" autocomplete="current-password">
+      <button onclick="handleLogin()" class="auth-submit">Se connecter</button>
+    </div>
+    <div id="auth-form-signup" style="display:none">
+      <input id="signup-pseudo" class="auth-input" type="text" placeholder="Pseudo" maxlength="30">
+      <input id="signup-email" class="auth-input" type="email" placeholder="Adresse e-mail" autocomplete="email">
+      <input id="signup-password" class="auth-input" type="password" placeholder="Mot de passe (6 car. min.)" autocomplete="new-password">
+      <button onclick="handleSignup()" class="auth-submit">Créer mon compte</button>
+    </div>
+    <div class="auth-divider"><span>ou</span></div>
+    <button onclick="handleGoogleAuth()" class="auth-google-btn">🔵 Continuer avec Google</button>
+    <p id="auth-error" class="auth-error"></p>
+  </div>
+</div>
+
+<!-- ========== ONBOARDING ========== -->
+<div id="onboard-screen">
+  <div class="onboard-card">
+    <div class="onboard-progress"><div class="onboard-progress-fill" id="onboard-progress-fill" style="width:25%"></div></div>
+
+    <div class="onboard-step active" id="onboard-step-1">
+      <h2>🍽️ Ton régime alimentaire</h2>
+      <p class="sub">On adaptera les recettes en conséquence.</p>
+      <div class="onboard-options" id="onboard-regime-options"></div>
+    </div>
+
+    <div class="onboard-step" id="onboard-step-2">
+      <h2>👨‍👩‍👧‍👦 Ton foyer</h2>
+      <p class="sub">Combien de personnes à nourrir en général ?</p>
+      <div class="flex justify-center my-8">
+        <div class="pers-pill" style="padding:8px 6px">
+          <button onclick="onboardHousehold(-1)" style="width:38px;height:38px;font-size:18px">-</button>
+          <span id="onboard-household-disp" style="min-width:90px;font-size:14px">2 PERS.</span>
+          <button onclick="onboardHousehold(1)" style="width:38px;height:38px;font-size:18px">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="onboard-step" id="onboard-step-3">
+      <h2>⚠️ Allergies &amp; à éviter</h2>
+      <p class="sub">Sépare les ingrédients par des virgules.</p>
+      <p class="pref-label" style="margin-bottom:6px">Allergies</p>
+      <textarea id="onboard-allergies" class="onboard-textarea" placeholder="Ex: arachide, fruits de mer…"></textarea>
+      <p class="pref-label" style="margin-bottom:6px">Ingrédients détestés</p>
+      <textarea id="onboard-dislikes" class="onboard-textarea" placeholder="Ex: champignons, coriandre…"></textarea>
+    </div>
+
+    <div class="onboard-step" id="onboard-step-4">
+      <h2>💰 Budget &amp; temps</h2>
+      <p class="sub">Pour affiner nos suggestions.</p>
+      <p class="pref-label" style="margin-bottom:6px">Budget hebdo moyen (€)</p>
+      <input id="onboard-budget" class="auth-input" type="number" min="0" placeholder="Ex: 80" style="margin-bottom:18px">
+      <p class="pref-label" style="margin-bottom:6px">Temps de cuisine préféré</p>
+      <div class="onboard-options" id="onboard-cooktime-options"></div>
+    </div>
+
+    <div class="onboard-nav">
+      <button class="onboard-back-btn" id="onboard-back-btn" onclick="onboardBack()" style="visibility:hidden">← Retour</button>
+      <button class="onboard-next-btn" id="onboard-next-btn" onclick="onboardNext()">Suivant →</button>
+    </div>
+  </div>
 </div>
 
 <div id="detail-modal">
@@ -300,6 +431,7 @@ body.dark #add-item-modal{background:#1e293b;}
   </div>
 </div>
 
+<div id="app-shell" style="display:none">
 <header class="sticky top-0 z-50 glass px-5 py-3 flex justify-between items-center border-b border-slate-100">
   <div class="holli-logo">
     <div class="holli-logo-icon">🍳</div>
@@ -443,6 +575,52 @@ body.dark #add-item-modal{background:#1e293b;}
   <div id="cook-tab-content-old" style="display:none"><div id="old-recipes-grid"></div></div>
 </main>
 
+<main id="page-profile" class="page">
+  <h2 class="text-3xl font-black italic uppercase mb-4 px-1">Profil</h2>
+
+  <div class="profile-card flex items-center gap-4">
+    <div class="profile-avatar" id="profile-avatar" onclick="cycleAvatar()">🙂</div>
+    <div class="flex-1 min-w-0">
+      <p class="font-black uppercase italic text-base leading-tight truncate" id="profile-pseudo-disp">—</p>
+      <p class="text-[10px] font-bold text-slate-400 truncate" id="profile-email-disp">—</p>
+      <p class="text-[9px] font-bold text-slate-300 mt-0.5" id="profile-since-disp">—</p>
+    </div>
+    <button onclick="openEditPseudo()" class="text-orange-500 font-black text-[9px] uppercase bg-orange-50 px-3 py-1.5 rounded-full flex-shrink-0">✎</button>
+  </div>
+
+  <div class="section-title">Mes préférences</div>
+  <div class="profile-card" id="profile-prefs-card"></div>
+  <button onclick="startOnboarding(true)" class="w-full bg-slate-900 text-white font-black text-xs uppercase py-3 rounded-full mb-4 active:scale-95 transition-transform">✎ Modifier mes préférences</button>
+
+  <div class="section-title">Partage foyer / famille</div>
+  <div class="profile-card">
+    <p class="text-[11px] font-bold text-slate-400 mb-2">Partage ce code avec ton/ta conjoint(e) ou coloc pour synchroniser votre liste de courses.</p>
+    <div class="share-code-box">
+      <div class="share-code-val" id="profile-share-code">------</div>
+    </div>
+    <div class="flex gap-2 mt-3">
+      <button onclick="copyShareCode()" class="flex-1 bg-orange-500 text-white font-black text-[10px] uppercase py-3 rounded-full">📋 Copier le code</button>
+      <button onclick="regenShareCode()" class="flex-1 border-2 border-slate-200 text-slate-500 font-black text-[10px] uppercase py-3 rounded-full">🔄 Nouveau code</button>
+    </div>
+    <div class="flex gap-2 mt-3">
+      <input id="join-code-input" class="auth-input" style="margin-bottom:0" type="text" maxlength="6" placeholder="Rejoindre avec un code…">
+      <button onclick="joinShareCode()" class="bg-slate-900 text-white font-black text-[10px] uppercase px-4 rounded-full flex-shrink-0">OK</button>
+    </div>
+  </div>
+
+  <div class="section-title">Options</div>
+  <div class="profile-card">
+    <div class="pref-row">
+      <span class="pref-label">Mode sombre</span>
+      <button onclick="toggleDark()" class="bg-slate-100 rounded-full px-4 py-2 font-black text-[10px] uppercase">🌓 Basculer</button>
+    </div>
+    <div class="pref-row">
+      <span class="pref-label">Session</span>
+      <button onclick="handleLogout()" class="text-red-500 font-black text-[10px] uppercase bg-red-50 px-4 py-2 rounded-full">Déconnexion</button>
+    </div>
+  </div>
+</main>
+
 <nav class="nav-bar glass">
   <button onclick="switchPage('home')" id="btn-home" class="nav-item active">🍴<span>Menu</span></button>
   <button onclick="switchPage('favs')" id="btn-favs" class="nav-item relative">
@@ -459,11 +637,33 @@ body.dark #add-item-modal{background:#1e293b;}
     <div id="cook-badge" class="absolute -top-1 right-3 bg-green-500 text-white text-[9px] w-5 h-5 rounded-full hidden items-center justify-center font-black">0</div>
   </button>
   <button onclick="switchPage('maison')" id="btn-maison" class="nav-item">✨<span>Maison</span></button>
+  <button onclick="switchPage('profile')" id="btn-profile" class="nav-item">👤<span>Profil</span></button>
 </nav>
+</div>
 
 <footer style="text-align:center; font-size:8px; padding:16px; color:#94a3b8; background:var(--bg); border-top:1px solid var(--border); margin-top:20px;">
   <a href="privacy.html" target="_blank" style="color:inherit; text-decoration:underline;" id="privacyLinkLabel">🔒 Politique de confidentialité</a>
 </footer>
+
+<!-- ========== FIREBASE ========== -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCoRsDap-Fxhp62MJ9yTHcRDQ03raa2IHg",
+  authDomain: "holli-cuisine.firebaseapp.com",
+  projectId: "holli-cuisine",
+  storageBucket: "holli-cuisine.firebasestorage.app",
+  messagingSenderId: "646415063774",
+  appId: "1:646415063774:web:27cee98232c7482922004f",
+  measurementId: "G-YGHN3EPRBW"
+};
+firebase.initializeApp(firebaseConfig);
+const fbAuth = firebase.auth();
+// const db = firebase.firestore(); // prêt pour la prochaine étape (migration panier/favoris/Maison)
+</script>
 
 <script>
 const SHEET_ID='1u21ZI3eDDm7rfNInC-SL2gLbCxEpZuIy9X7HUsS3oZI';
@@ -735,6 +935,7 @@ function switchPage(p){
   if(p==='maison')renderMaison();
   if(p==='favs')renderFavs();
   if(p==='week'){renderNbSelector();renderWeekMenu();}
+  if(p==='profile')renderProfilePage();
   window.scrollTo(0,0);
 }
 
@@ -832,7 +1033,8 @@ function renderFavs(){
         <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-4">
           <div class="flex-1"><span class="text-white/60 text-[9px] font-black uppercase">${r.cat}</span>
           <h3 class="text-white font-black uppercase italic text-base leading-tight">${r.n}</h3></div>
-          <div class="flex gap-2 flex-shrink-0">
+          <div class="flex gap-2 flex-shrink-0 items-center">
+            ${allergyBadgeHTML(r,'inline')}
             <button onclick="toggleFav(${r.id},event)" class="fav-btn active" data-fav-id="${r.id}" style="position:relative;width:36px;height:36px;background:rgba(239,68,68,.2);border:none">❤️</button>
             <button onclick="addToCart(recipes.find(x=>x.id==${r.id}));event.stopPropagation();" class="w-9 h-9 bg-orange-500 rounded-full flex items-center justify-center text-white font-black text-lg" style="position:relative;border:none;cursor:pointer">+</button>
           </div>
@@ -891,6 +1093,7 @@ function renderGrid(){
       </div>
       <button class="fav-btn ${favorites.has(r.id)?'active':''}" data-fav-id="${r.id}" onclick="toggleFav(${r.id},event)">${favorites.has(r.id)?'❤️':'🤍'}</button>
       <button class="add-btn" onclick="event.stopPropagation();handleAddRecipe(${r.id})">+</button>
+      ${allergyBadgeHTML(r)}
     </div>`).join('');
 }
 
@@ -912,6 +1115,7 @@ function showDetails(id){
         <button onclick="updateServings(1);refreshDetailModal(${r.id})">+</button>
       </div>
     </div>
+    ${getAllergyMatches(r).length?`<div class="bg-red-50 border-2 border-red-200 rounded-2xl p-4 mb-4"><p class="text-red-600 font-black text-xs uppercase">⚠️ Attention</p><p class="text-red-500 font-bold text-[11px] mt-1">Cette recette contient : ${getAllergyMatches(r).join(', ')}</p></div>`:''}
     <p class="text-[9px] font-black text-orange-500 uppercase mb-1" id="detail-ing-label">Ingrédients · ${servings} pers.</p>
     <div class="bg-orange-50 p-5 rounded-[2rem] mb-5 font-bold text-slate-700 text-sm" id="detail-ing-list">${ings}</div>
     <button onclick="addToCart(recipes.find(x=>x.id==${id}));closeDetails();" class="w-full bg-orange-500 text-white p-5 rounded-full font-black uppercase shadow-lg border-none cursor-pointer">Ajouter au panier</button>`;
@@ -975,7 +1179,7 @@ function renderWeekMenu(){
       <img class="week-page-img" src="${r.i}" loading="lazy" onclick="showDetails(${r.id})">
       <div class="week-page-body" onclick="showDetails(${r.id})">
         <div class="week-page-day">${item.day}</div>
-        <div class="week-page-name">${r.n}</div>
+        <div class="week-page-name">${r.n}${allergyBadgeHTML(r,'inline')}</div>
         <div style="font-size:9px;color:#94a3b8;font-weight:700;margin-top:2px">${r.cat}</div>
       </div>
       <div class="week-page-actions">
@@ -1103,7 +1307,7 @@ function renderCooking(){
       <div class="bg-white rounded-[2.2rem] border p-4 flex gap-4 items-center mb-2" style="animation:slideUp .4s ease-out ${idx*.08}s both">
         <img src="${r.i}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0" loading="lazy">
         <div class="flex-1 min-w-0">
-          <h3 class="font-black uppercase text-[11px] italic text-slate-800 leading-tight">${r.n}</h3>
+          <h3 class="font-black uppercase text-[11px] italic text-slate-800 leading-tight">${r.n}${allergyBadgeHTML(r,'inline')}</h3>
           <p class="text-[9px] text-slate-400 font-bold mt-1">${r.prep.split('.').filter(s=>s.trim().length>5).length} étapes</p>
         </div>
         <div class="flex flex-col gap-2 flex-shrink-0">
@@ -1252,7 +1456,271 @@ function clearMaison(){if(!homeCart.length)return;if(confirm('Retirer tous les a
 document.getElementById('add-item-input')?.addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddItem();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetails();closeCook();closeAddItem();}});
 
-init();
+/* ================================================================
+   ========== AUTHENTIFICATION / ONBOARDING / PROFIL ==============
+   ================================================================
+   Auth : gérée par Firebase Authentication (e-mail/mot de passe + Google).
+   Données de profil (pseudo, avatar, régime, allergies, foyer, code de
+   partage) : stockées en localStorage sous 'holli_profiles_v1', indexées
+   par uid Firebase — en attente de la prochaine étape (migration Firestore).
+================================================================= */
+const REGIME_OPTIONS=['Omnivore','Végétarien','Vegan','Sans gluten','Sans lactose','Halal','Kasher','Keto','Low Carb'];
+const COOKTIME_OPTIONS=[{v:'express',l:'⚡ Express (<15min)'},{v:'normal',l:'🍳 Normal'},{v:'passionne',l:'👨‍🍳 Passionné'}];
+const AVATAR_CHOICES=['🙂','😎','🧑‍🍳','👩‍🍳','🥑','🍕','🍜','🐱','🐶','🌶️'];
+
+let currentUser=null;
+let authTab='login';
+let onboardStep=1;
+let onboardEditMode=false;
+let onboardDraft={regime:'Omnivore',householdSize:2,allergies:[],dislikes:[],budget:'',cookTime:'normal'};
+
+function genShareCode(){return Math.random().toString(36).substring(2,8).toUpperCase();}
+function getLocalProfiles(){return JSON.parse(localStorage.getItem('holli_profiles_v1'))||{};}
+function saveLocalProfiles(obj){localStorage.setItem('holli_profiles_v1',JSON.stringify(obj));}
+function getLocalProfile(uid){return getLocalProfiles()[uid]||null;}
+function saveLocalProfile(uid,record){const all=getLocalProfiles();all[uid]=record;saveLocalProfiles(all);}
+function defaultProfileRecord(pseudo,avatar){
+  return{pseudo,avatar:avatar||'🙂',createdAt:new Date().toISOString(),onboarded:false,shareCode:genShareCode(),
+    profile:{regime:'Omnivore',householdSize:2,allergies:[],dislikes:[],budget:'',cookTime:'normal'}};
+}
+function buildCurrentUserFromFirebaseUser(fbUser){
+  let local=getLocalProfile(fbUser.uid);
+  if(!local){
+    local=defaultProfileRecord(fbUser.displayName||(fbUser.email?fbUser.email.split('@')[0]:'Utilisateur'),'🙂');
+    saveLocalProfile(fbUser.uid,local);
+  }
+  const isGoogle=(fbUser.providerData[0]?.providerId||'').includes('google');
+  return{
+    uid:fbUser.uid,email:fbUser.email,pseudo:local.pseudo,avatar:local.avatar,
+    provider:isGoogle?'google':'email',createdAt:local.createdAt,onboarded:local.onboarded,
+    shareCode:local.shareCode,profile:local.profile
+  };
+}
+function authErrorMessage(err){
+  const map={
+    'auth/email-already-in-use':'Un compte existe déjà avec cet e-mail.',
+    'auth/invalid-email':'Adresse e-mail invalide.',
+    'auth/weak-password':'Mot de passe : 6 caractères minimum.',
+    'auth/user-not-found':'E-mail ou mot de passe incorrect.',
+    'auth/wrong-password':'E-mail ou mot de passe incorrect.',
+    'auth/invalid-credential':'E-mail ou mot de passe incorrect.',
+    'auth/too-many-requests':'Trop de tentatives. Réessaie dans quelques minutes.',
+    'auth/popup-blocked':'Le popup Google a été bloqué par le navigateur.',
+    'auth/popup-closed-by-user':'Connexion Google annulée.',
+    'auth/network-request-failed':'Problème réseau. Vérifie ta connexion.'
+  };
+  return map[err.code]||('Erreur : '+(err.message||'inconnue'));
+}
+
+function setAuthTab(tab){
+  authTab=tab;
+  document.getElementById('auth-tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('auth-tab-signup').classList.toggle('active',tab==='signup');
+  document.getElementById('auth-form-login').style.display=tab==='login'?'block':'none';
+  document.getElementById('auth-form-signup').style.display=tab==='signup'?'block':'none';
+  document.getElementById('auth-error').innerText='';
+}
+function showAuthError(msg){document.getElementById('auth-error').innerText=msg;}
+
+function handleSignup(){
+  const pseudo=document.getElementById('signup-pseudo').value.trim();
+  const email=document.getElementById('signup-email').value.trim();
+  const pw=document.getElementById('signup-password').value;
+  if(!pseudo||!email||!pw)return showAuthError('Merci de remplir tous les champs.');
+  if(pw.length<6)return showAuthError('Mot de passe : 6 caractères minimum.');
+  showAuthError('Création du compte…');
+  fbAuth.createUserWithEmailAndPassword(email,pw).then(cred=>{
+    saveLocalProfile(cred.user.uid,defaultProfileRecord(pseudo,'🙂'));
+    return cred.user.updateProfile({displayName:pseudo});
+  }).catch(err=>showAuthError(authErrorMessage(err)));
+}
+function handleLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pw=document.getElementById('login-password').value;
+  if(!email||!pw)return showAuthError('Merci de remplir tous les champs.');
+  showAuthError('Connexion…');
+  fbAuth.signInWithEmailAndPassword(email,pw).catch(err=>showAuthError(authErrorMessage(err)));
+}
+function handleGoogleAuth(){
+  const provider=new firebase.auth.GoogleAuthProvider();
+  showAuthError('Connexion avec Google…');
+  fbAuth.signInWithPopup(provider).catch(err=>{
+    if(err.code==='auth/popup-blocked'||err.code==='auth/cancelled-popup-request'){
+      fbAuth.signInWithRedirect(provider);
+    } else showAuthError(authErrorMessage(err));
+  });
+}
+function handleLogout(){
+  fbAuth.signOut();
+}
+
+/* ---------- Onboarding ---------- */
+function startOnboarding(editMode){
+  onboardEditMode=!!editMode;
+  onboardStep=1;
+  onboardDraft=JSON.parse(JSON.stringify(currentUser.profile));
+  document.getElementById('onboard-regime-options').innerHTML=REGIME_OPTIONS.map(r=>`<button type="button" class="onboard-opt ${onboardDraft.regime===r?'active':''}" onclick="setOnboardRegime('${r}')">${r}</button>`).join('');
+  document.getElementById('onboard-cooktime-options').innerHTML=COOKTIME_OPTIONS.map(c=>`<button type="button" class="onboard-opt ${onboardDraft.cookTime===c.v?'active':''}" onclick="setOnboardCookTime('${c.v}')">${c.l}</button>`).join('');
+  document.getElementById('onboard-allergies').value=(onboardDraft.allergies||[]).join(', ');
+  document.getElementById('onboard-dislikes').value=(onboardDraft.dislikes||[]).join(', ');
+  document.getElementById('onboard-budget').value=onboardDraft.budget||'';
+  document.getElementById('onboard-household-disp').innerText=`${onboardDraft.householdSize} PERS.`;
+  document.getElementById('app-shell').style.display='none';
+  document.getElementById('auth-screen').classList.remove('show');
+  goToOnboardStep(1);
+  document.getElementById('onboard-screen').classList.add('show');
+}
+function goToOnboardStep(n){
+  onboardStep=n;
+  document.querySelectorAll('.onboard-step').forEach((el,i)=>el.classList.toggle('active',i===n-1));
+  document.getElementById('onboard-progress-fill').style.width=`${n*25}%`;
+  document.getElementById('onboard-back-btn').style.visibility=n===1?'hidden':'visible';
+  document.getElementById('onboard-next-btn').innerText=n===4?(onboardEditMode?'✓ Enregistrer':'✓ Terminer'):'Suivant →';
+}
+function onboardNext(){if(onboardStep<4)goToOnboardStep(onboardStep+1);else finishOnboarding();}
+function onboardBack(){if(onboardStep>1)goToOnboardStep(onboardStep-1);}
+function setOnboardRegime(r){onboardDraft.regime=r;document.querySelectorAll('#onboard-regime-options .onboard-opt').forEach(b=>b.classList.toggle('active',b.innerText===r));}
+function setOnboardCookTime(v){onboardDraft.cookTime=v;document.querySelectorAll('#onboard-cooktime-options .onboard-opt').forEach((b,i)=>b.classList.toggle('active',COOKTIME_OPTIONS[i].v===v));}
+function onboardHousehold(delta){onboardDraft.householdSize=Math.max(1,onboardDraft.householdSize+delta);document.getElementById('onboard-household-disp').innerText=`${onboardDraft.householdSize} PERS.`;}
+function finishOnboarding(){
+  onboardDraft.allergies=document.getElementById('onboard-allergies').value.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
+  onboardDraft.dislikes=document.getElementById('onboard-dislikes').value.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
+  onboardDraft.budget=document.getElementById('onboard-budget').value;
+  currentUser.profile=onboardDraft;
+  currentUser.onboarded=true;
+  persistCurrentUser();
+  document.getElementById('onboard-screen').classList.remove('show');
+  setServingsAbsolute(currentUser.profile.householdSize);
+  enterApp();
+  showToast(onboardEditMode?'✓ Préférences mises à jour !':`Bienvenue ${currentUser.pseudo} ! 🎉`);
+  if(document.getElementById('page-profile').classList.contains('active'))renderProfilePage();
+  refreshAllergyAwareViews();
+}
+function persistCurrentUser(){
+  saveLocalProfile(currentUser.uid,{
+    pseudo:currentUser.pseudo,avatar:currentUser.avatar,createdAt:currentUser.createdAt,
+    onboarded:currentUser.onboarded,shareCode:currentUser.shareCode,profile:currentUser.profile
+  });
+}
+
+/* ---------- Entrée dans l'app ---------- */
+function enterApp(){
+  document.getElementById('auth-screen').classList.remove('show');
+  document.getElementById('onboard-screen').classList.remove('show');
+  document.getElementById('app-shell').style.display='block';
+  init();
+}
+function setServingsAbsolute(n){
+  servings=Math.max(1,parseInt(n)||2);
+  localStorage.setItem('holli_servings',servings);
+  updateServings(0);
+}
+
+/* ---------- Page Profil ---------- */
+function cycleAvatar(){
+  if(!currentUser)return;
+  const idx=AVATAR_CHOICES.indexOf(currentUser.avatar);
+  currentUser.avatar=AVATAR_CHOICES[(idx+1)%AVATAR_CHOICES.length];
+  persistCurrentUser();
+  renderProfilePage();
+}
+function openEditPseudo(){
+  if(!currentUser)return;
+  const val=prompt('Nouveau pseudo :',currentUser.pseudo);
+  if(val&&val.trim()){
+    currentUser.pseudo=val.trim();persistCurrentUser();renderProfilePage();
+    fbAuth.currentUser?.updateProfile({displayName:currentUser.pseudo}).catch(()=>{});
+  }
+}
+function copyShareCode(){
+  if(!currentUser)return;
+  navigator.clipboard?.writeText(currentUser.shareCode).then(()=>showToast('📋 Code copié !','#3b82f6'));
+}
+function regenShareCode(){
+  if(!currentUser)return;
+  currentUser.shareCode=genShareCode();
+  persistCurrentUser();renderProfilePage();
+  showToast('🔄 Nouveau code généré !','#3b82f6');
+}
+function joinShareCode(){
+  const code=(document.getElementById('join-code-input').value||'').trim().toUpperCase();
+  if(!code)return;
+  currentUser.shareCode=code;
+  persistCurrentUser();renderProfilePage();
+  showToast('✓ Foyer synchronisé (code enregistré) !','#22c55e');
+}
+const REGIME_LABELS={};
+function renderProfilePage(){
+  if(!currentUser)return;
+  document.getElementById('profile-avatar').innerText=currentUser.avatar||'🙂';
+  document.getElementById('profile-pseudo-disp').innerText=currentUser.pseudo;
+  document.getElementById('profile-email-disp').innerText=currentUser.email;
+  const d=new Date(currentUser.createdAt);
+  document.getElementById('profile-since-disp').innerText=`Membre depuis ${d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}`;
+  document.getElementById('profile-share-code').innerText=currentUser.shareCode;
+  const p=currentUser.profile;
+  const cookLabel=(COOKTIME_OPTIONS.find(c=>c.v===p.cookTime)||{}).l||p.cookTime;
+  document.getElementById('profile-prefs-card').innerHTML=`
+    <div class="pref-row"><span class="pref-label">Régime</span><span class="pref-value">${p.regime}</span></div>
+    <div class="pref-row"><span class="pref-label">Foyer</span><span class="pref-value">${p.householdSize} pers.</span></div>
+    <div class="pref-row"><span class="pref-label">Budget hebdo</span><span class="pref-value">${p.budget?p.budget+' €':'—'}</span></div>
+    <div class="pref-row"><span class="pref-label">Temps de cuisine</span><span class="pref-value">${cookLabel}</span></div>
+    <div class="pref-row" style="display:block">
+      <span class="pref-label">Allergies</span>
+      <div class="mt-2">${p.allergies.length?p.allergies.map(a=>`<span class="chip allergy">⚠️ ${a}</span>`).join(''):'<span class="text-slate-300 text-[11px] font-bold">Aucune</span>'}</div>
+    </div>
+    <div class="pref-row" style="display:block">
+      <span class="pref-label">Ingrédients détestés</span>
+      <div class="mt-2">${p.dislikes.length?p.dislikes.map(a=>`<span class="chip">${a}</span>`).join(''):'<span class="text-slate-300 text-[11px] font-bold">Aucun</span>'}</div>
+    </div>`;
+}
+
+/* ---------- Adaptation intelligente des recettes (allergènes / exclusions) ---------- */
+function getAvoidList(){
+  if(!currentUser)return[];
+  const p=currentUser.profile;
+  return[...(p.allergies||[]),...(p.dislikes||[])].filter(Boolean);
+}
+function getAllergyMatches(recipe){
+  const avoid=getAvoidList();
+  if(!avoid.length||!recipe)return[];
+  const ing=recipe.ing.toLowerCase();
+  return avoid.filter(a=>ing.includes(a.toLowerCase()));
+}
+function allergyBadgeHTML(recipe,style){
+  const matches=getAllergyMatches(recipe);
+  if(!matches.length)return'';
+  const title=`Contient : ${matches.join(', ')}`;
+  if(style==='inline')return`<span title="${title}" style="display:inline-flex;align-items:center;gap:4px;background:#fef2f2;color:#dc2626;font-size:9px;font-weight:900;padding:4px 10px;border-radius:99px;margin-left:6px">⚠️ ${matches[0]}${matches.length>1?` +${matches.length-1}`:''}</span>`;
+  return`<div class="allergy-warning-badge" title="${title}">⚠️ ${matches[0]}${matches.length>1?` +${matches.length-1}`:''}</div>`;
+}
+function refreshAllergyAwareViews(){
+  if(document.getElementById('page-home').classList.contains('active'))renderGrid();
+  if(document.getElementById('page-favs').classList.contains('active'))renderFavs();
+  if(document.getElementById('page-week').classList.contains('active'))renderWeekMenu();
+  if(document.getElementById('page-cooking').classList.contains('active'))renderCooking();
+}
+
+/* ---------- Démarrage : écoute de la session Firebase ---------- */
+let appAlreadyEntered=false;
+fbAuth.getRedirectResult().catch(err=>{if(err&&err.code)showAuthError(authErrorMessage(err));});
+
+fbAuth.onAuthStateChanged(function(fbUser){
+  if(fbUser){
+    currentUser=buildCurrentUserFromFirebaseUser(fbUser);
+    document.getElementById('login-email').value='';document.getElementById('login-password').value='';
+    if(!currentUser.onboarded){startOnboarding(false);return;}
+    appAlreadyEntered=true;
+    enterApp();
+  } else {
+    currentUser=null;
+    appAlreadyEntered=false;
+    document.getElementById('app-shell').style.display='none';
+    document.getElementById('onboard-screen').classList.remove('show');
+    setAuthTab('login');
+    document.getElementById('auth-screen').classList.add('show');
+  }
+});
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js').then(() => console.log('SW OK')).catch(e => console.error('SW error', e));
