@@ -662,7 +662,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const fbAuth = firebase.auth();
-// const db = firebase.firestore(); // prêt pour la prochaine étape (migration panier/favoris/Maison)
+const db = firebase.firestore();
 </script>
 
 <script>
@@ -816,6 +816,7 @@ function updateServings(v){
   if(document.getElementById('page-cooking').classList.contains('active'))renderCooking();
   if(document.getElementById('cook-modal').classList.contains('open'))renderCookContent();
   if(document.getElementById('page-week').classList.contains('active'))renderWeekMenu();
+  if(v!==0)pushToFirestore();
 }
 
 function parseIng(raw){
@@ -871,6 +872,7 @@ function save(){
   localStorage.setItem('holli_week_count',weekCount);
   localStorage.setItem('holli_old_recipes',JSON.stringify(oldRecipes));
   updateUI();
+  pushToFirestore();
 }
 
 function updateUI(){
@@ -1195,11 +1197,11 @@ function renderWeekMenu(){
 function addToCart(r){if(!r)return;if(!cart.find(x=>x.n===r.n)){cart.push(r);resetRecipeChecked(r);save();showToast(`✓ ${r.n} ajouté !`);}}
 function handleAddRecipe(id){const r=recipes.find(x=>x.id==id);if(!r)return;if(cart.find(x=>x.n===r.n)){if(confirm(`"${r.n}" est déjà dans le panier. Réinitialiser ?`))resetRecipeChecked(r);}else addToCart(r);}
 function removeFromCart(name){cart=cart.filter(r=>r.n!==name);save();renderCart();renderCooking();}
-function resetRecipeChecked(recipe){recipe.ing.split(',').forEach(l=>{const p=parseIng(l);checkedItems.delete(normName(p.name));});localStorage.setItem('holli_checked',JSON.stringify([...checkedItems]));if(document.getElementById('page-cart').classList.contains('active'))renderCart();}
+function resetRecipeChecked(recipe){recipe.ing.split(',').forEach(l=>{const p=parseIng(l);checkedItems.delete(normName(p.name));});localStorage.setItem('holli_checked',JSON.stringify([...checkedItems]));pushToFirestore();if(document.getElementById('page-cart').classList.contains('active'))renderCart();}
 function openAddItem(){document.getElementById('add-item-modal').style.display='block';setTimeout(()=>document.getElementById('add-item-input').focus(),100);}
 function closeAddItem(){document.getElementById('add-item-modal').style.display='none';document.getElementById('add-item-input').value='';}
-function confirmAddItem(){const val=document.getElementById('add-item-input').value.trim();if(val){extraItems.push(val);localStorage.setItem('holli_extras',JSON.stringify(extraItems));closeAddItem();renderCart();}}
-function removeExtra(name){extraItems=extraItems.filter(e=>e!==name);localStorage.setItem('holli_extras',JSON.stringify(extraItems));renderCart();}
+function confirmAddItem(){const val=document.getElementById('add-item-input').value.trim();if(val){extraItems.push(val);localStorage.setItem('holli_extras',JSON.stringify(extraItems));pushToFirestore();closeAddItem();renderCart();}}
+function removeExtra(name){extraItems=extraItems.filter(e=>e!==name);localStorage.setItem('holli_extras',JSON.stringify(extraItems));pushToFirestore();renderCart();}
 function removeMaisonFromCart(name){homeCart=homeCart.filter(n=>n!==name);save();renderCart();renderMaison();}
 
 function renderCart(){
@@ -1272,10 +1274,11 @@ function toggleCheck(key){
   if(checkedItems.has(key)) checkedItems.delete(key);
   else checkedItems.add(key);
   localStorage.setItem('holli_checked', JSON.stringify([...checkedItems]));
+  pushToFirestore();
   renderCart();
   updateCartBadge(); // met à jour la pastille
 }
-function saveManualQty(key,value){manualQtys[`qty_${key}`]=value;localStorage.setItem('holli_manual_qtys',JSON.stringify(manualQtys));}
+function saveManualQty(key,value){manualQtys[`qty_${key}`]=value;localStorage.setItem('holli_manual_qtys',JSON.stringify(manualQtys));pushToFirestore();}
 function shareCart(){
   const merged=buildMerged();
   extraItems.forEach(n=>{const k=normName(n);if(!merged.find(m=>m.key===k))merged.push({key:k,displayName:n,qty:null,unit:'',adjustedQty:null,recipes:[]});});
@@ -1483,12 +1486,18 @@ function defaultProfileRecord(pseudo,avatar){
   return{pseudo,avatar:avatar||'🙂',createdAt:new Date().toISOString(),onboarded:false,shareCode:genShareCode(),
     profile:{regime:'Omnivore',householdSize:2,allergies:[],dislikes:[],budget:'',cookTime:'normal'}};
 }
-function buildCurrentUserFromFirebaseUser(fbUser){
-  let local=getLocalProfile(fbUser.uid);
+async function buildCurrentUserFromFirebaseUser(fbUser){
+  let local=null;
+  try{
+    const snap=await db.collection('users').doc(fbUser.uid).get();
+    if(snap.exists)local=snap.data();
+  }catch(e){console.warn('Lecture profil Firestore échouée, fallback local',e);}
+  if(!local)local=getLocalProfile(fbUser.uid);
   if(!local){
     local=defaultProfileRecord(fbUser.displayName||(fbUser.email?fbUser.email.split('@')[0]:'Utilisateur'),'🙂');
-    saveLocalProfile(fbUser.uid,local);
+    db.collection('users').doc(fbUser.uid).set(local).catch(e=>console.warn('Création profil Firestore échouée',e));
   }
+  saveLocalProfile(fbUser.uid,local);
   const isGoogle=(fbUser.providerData[0]?.providerId||'').includes('google');
   return{
     uid:fbUser.uid,email:fbUser.email,pseudo:local.pseudo,avatar:local.avatar,
@@ -1543,14 +1552,21 @@ function handleLogin(){
 }
 function handleGoogleAuth(){
   const provider=new firebase.auth.GoogleAuthProvider();
+  const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   showAuthError('Connexion avec Google…');
+  if(isMobile){
+    // Safari iOS ferme les popups OAuth (protection ITP) → redirection, plus fiable sur mobile
+    fbAuth.signInWithRedirect(provider).catch(err=>showAuthError(authErrorMessage(err)));
+    return;
+  }
   fbAuth.signInWithPopup(provider).catch(err=>{
     if(err.code==='auth/popup-blocked'||err.code==='auth/cancelled-popup-request'){
-      fbAuth.signInWithRedirect(provider);
+      fbAuth.signInWithRedirect(provider).catch(e2=>showAuthError(authErrorMessage(e2)));
     } else showAuthError(authErrorMessage(err));
   });
 }
 function handleLogout(){
+  if(householdUnsub){householdUnsub();householdUnsub=null;}
   fbAuth.signOut();
 }
 
@@ -1597,10 +1613,12 @@ function finishOnboarding(){
   refreshAllergyAwareViews();
 }
 function persistCurrentUser(){
-  saveLocalProfile(currentUser.uid,{
+  const record={
     pseudo:currentUser.pseudo,avatar:currentUser.avatar,createdAt:currentUser.createdAt,
     onboarded:currentUser.onboarded,shareCode:currentUser.shareCode,profile:currentUser.profile
-  });
+  };
+  saveLocalProfile(currentUser.uid,record);
+  db.collection('users').doc(currentUser.uid).set(record,{merge:true}).catch(e=>console.warn('Sync profil Firestore échouée',e));
 }
 
 /* ---------- Entrée dans l'app ---------- */
@@ -1614,6 +1632,7 @@ function setServingsAbsolute(n){
   servings=Math.max(1,parseInt(n)||2);
   localStorage.setItem('holli_servings',servings);
   updateServings(0);
+  pushToFirestore();
 }
 
 /* ---------- Page Profil ---------- */
@@ -1640,6 +1659,7 @@ function regenShareCode(){
   if(!currentUser)return;
   currentUser.shareCode=genShareCode();
   persistCurrentUser();renderProfilePage();
+  subscribeHousehold();
   showToast('🔄 Nouveau code généré !','#3b82f6');
 }
 function joinShareCode(){
@@ -1647,7 +1667,8 @@ function joinShareCode(){
   if(!code)return;
   currentUser.shareCode=code;
   persistCurrentUser();renderProfilePage();
-  showToast('✓ Foyer synchronisé (code enregistré) !','#22c55e');
+  subscribeHousehold();
+  showToast('✓ Foyer synchronisé — vos données se rejoignent !','#22c55e');
 }
 const REGIME_LABELS={};
 function renderProfilePage(){
@@ -1701,18 +1722,89 @@ function refreshAllergyAwareViews(){
   if(document.getElementById('page-cooking').classList.contains('active'))renderCooking();
 }
 
+/* ---------- Synchro Firestore du foyer (panier/favoris/Maison/semaine) ----------
+   Collection 'households/{shareCode}' — partagée entre tous les comptes qui
+   utilisent le même code (voir Profil > Partage foyer). Écriture débouncée
+   pour éviter une écriture Firestore à chaque frappe/coche. */
+let householdUnsub=null;
+let suppressNextSnapshot=false;
+let pushTimer=null;
+
+function pushToFirestore(){
+  if(!currentUser||!currentUser.shareCode)return;
+  clearTimeout(pushTimer);
+  pushTimer=setTimeout(()=>{
+    const data={
+      cart,homeCart,extraItems,
+      checkedItems:[...checkedItems],manualQtys,
+      favorites:[...favorites],
+      weekMenu,weekCount,oldRecipes,
+      itemLastBought,itemPurchaseHistory,
+      servings,
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    };
+    suppressNextSnapshot=true;
+    db.collection('households').doc(currentUser.shareCode).set(data,{merge:true})
+      .catch(e=>console.warn('Synchro Firestore échouée (courses/favoris/maison)',e));
+  },400);
+}
+
+function applyHouseholdSnapshot(d){
+  cart=d.cart||[];
+  homeCart=d.homeCart||[];
+  extraItems=d.extraItems||[];
+  checkedItems=new Set(d.checkedItems||[]);
+  manualQtys=d.manualQtys||{};
+  favorites=new Set(d.favorites||[]);
+  weekMenu=d.weekMenu||[];
+  weekCount=d.weekCount||7;
+  oldRecipes=d.oldRecipes||[];
+  itemLastBought=d.itemLastBought||{};
+  itemPurchaseHistory=d.itemPurchaseHistory||{};
+  if(d.servings)servings=d.servings;
+  renderAllAfterSync();
+}
+
+function renderAllAfterSync(){
+  updateServings(0);
+  if(document.getElementById('page-home')?.classList.contains('active')){renderGrid();renderCard();}
+  if(document.getElementById('page-cart')?.classList.contains('active'))renderCart();
+  if(document.getElementById('page-cooking')?.classList.contains('active'))renderCooking();
+  if(document.getElementById('page-favs')?.classList.contains('active'))renderFavs();
+  if(document.getElementById('page-week')?.classList.contains('active'))renderWeekMenu();
+  if(document.getElementById('page-maison')?.classList.contains('active'))renderMaison();
+  updateUI();
+}
+
+function subscribeHousehold(){
+  if(householdUnsub){householdUnsub();householdUnsub=null;}
+  if(!currentUser||!currentUser.shareCode)return;
+  const ref=db.collection('households').doc(currentUser.shareCode);
+  householdUnsub=ref.onSnapshot(doc=>{
+    if(suppressNextSnapshot){suppressNextSnapshot=false;return;}
+    if(!doc.exists){
+      // Première synchro pour ce code : on pousse l'état local actuel comme base commune
+      pushToFirestore();
+      return;
+    }
+    applyHouseholdSnapshot(doc.data());
+  },err=>console.warn('Écoute Firestore échouée (foyer)',err));
+}
+
 /* ---------- Démarrage : écoute de la session Firebase ---------- */
 let appAlreadyEntered=false;
 fbAuth.getRedirectResult().catch(err=>{if(err&&err.code)showAuthError(authErrorMessage(err));});
 
-fbAuth.onAuthStateChanged(function(fbUser){
+fbAuth.onAuthStateChanged(async function(fbUser){
   if(fbUser){
-    currentUser=buildCurrentUserFromFirebaseUser(fbUser);
+    currentUser=await buildCurrentUserFromFirebaseUser(fbUser);
     document.getElementById('login-email').value='';document.getElementById('login-password').value='';
     if(!currentUser.onboarded){startOnboarding(false);return;}
     appAlreadyEntered=true;
     enterApp();
+    subscribeHousehold();
   } else {
+    if(householdUnsub){householdUnsub();householdUnsub=null;}
     currentUser=null;
     appAlreadyEntered=false;
     document.getElementById('app-shell').style.display='none';
