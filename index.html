@@ -223,6 +223,8 @@ body.dark #detail-modal{background:#0f172a;}
 #catalogue-modal{position:fixed;inset:0;background:var(--bg);z-index:400;display:none;overflow-y:auto;padding:2rem 1.5rem 2rem;}
 #catalogue-modal.open{display:block;}
 #catalogue-search:focus{border-color:#f97316;}
+#recurring-modal{position:fixed;inset:0;background:var(--bg);z-index:405;display:none;overflow-y:auto;padding:2rem 1.5rem 2rem;}
+#recurring-modal.open{display:block;}
 #add-item-modal{position:fixed;bottom:0;left:0;right:0;background:white;z-index:450;border-radius:2rem 2rem 0 0;padding:24px;display:none;box-shadow:0 -20px 60px rgba(0,0,0,.15);}
 body.dark #add-item-modal{background:#1e293b;}
 #add-item-input{width:100%;border:2px solid #e2e8f0;border-radius:1rem;padding:14px 16px;font-size:15px;font-weight:700;font-family:inherit;outline:none;}
@@ -434,6 +436,13 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   <button id="hide-allergens-btn" onclick="toggleHideAllergens()" class="mais-cat-tab mb-4" style="display:none">🙈 Masquer mes allergènes</button>
   <div id="category-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-5 pb-2"></div>
   <div id="grid" class="grid grid-cols-2 gap-4"></div>
+</div>
+
+<div id="recurring-modal">
+  <button onclick="closeRecurringManager()" class="mb-4 font-black text-orange-500 text-xs uppercase">← Retour</button>
+  <h2 class="text-2xl font-[900] italic uppercase tracking-tighter mb-1">Articles récurrents</h2>
+  <p class="text-slate-400 font-bold text-[11px] mb-4">Coche ce que tu rachètes régulièrement et choisis la fréquence — l'app les ajoute automatiquement à tes courses le moment venu.</p>
+  <div id="recurring-manager-list"></div>
 </div>
 
 <div id="cook-modal">
@@ -655,6 +664,10 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   <div class="section-title">Mes préférences</div>
   <div class="profile-card" id="profile-prefs-card"></div>
   <button onclick="startOnboarding(true)" class="w-full bg-slate-900 text-white font-black text-xs uppercase py-3 rounded-full mb-4 active:scale-95 transition-transform">✎ Modifier mes préférences</button>
+
+  <div class="section-title">Articles récurrents</div>
+  <div class="profile-card" id="profile-recurring-card"></div>
+  <button onclick="openRecurringManager()" class="w-full bg-slate-900 text-white font-black text-xs uppercase py-3 rounded-full mb-4 active:scale-95 transition-transform">✎ Gérer mes articles récurrents</button>
 
   <div class="section-title">Partage foyer / famille</div>
   <div class="profile-card">
@@ -1851,7 +1864,7 @@ function checkRecurringItems(){
 }
 
 document.getElementById('add-item-input')?.addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddItem();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetails();closeCook(true);closeAddItem();closeCatalogueModal();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetails();closeCook(true);closeAddItem();closeCatalogueModal();closeRecurringManager();}});
 
 /* ================================================================
    ========== AUTHENTIFICATION / ONBOARDING / PROFIL ==============
@@ -2145,6 +2158,55 @@ function renderProfilePage(){
       <span class="pref-label">Ingrédients détestés</span>
       <div class="mt-2">${p.dislikes.length?p.dislikes.map(a=>`<span class="chip">${a}</span>`).join(''):'<span class="text-slate-300 text-[11px] font-bold">Aucun</span>'}</div>
     </div>`;
+  const recur=p.recurringItems||[];
+  document.getElementById('profile-recurring-card').innerHTML=recur.length
+    ?recur.map(r=>`<div class="pref-row"><span class="pref-label">${r.icon} ${r.name}</span><span class="pref-value">tous les ${r.freqDays<30?r.freqDays+' j':(r.freqDays/30)+' mois'}</span></div>`).join('')
+    :'<p class="text-[11px] font-bold text-center py-2" style="color:var(--text2)">Aucun article récurrent configuré</p>';
+}
+
+function openRecurringManager(){
+  document.getElementById('recurring-modal').classList.add('open');
+  renderRecurringManager();
+}
+function closeRecurringManager(){
+  document.getElementById('recurring-modal').classList.remove('open');
+  renderProfilePage();
+}
+async function renderRecurringManager(){
+  const el=document.getElementById('recurring-manager-list');if(!el)return;
+  if(!maisonItems.length){el.innerHTML='<p class="text-center py-8 opacity-40 font-bold text-xs">Chargement…</p>';await loadMaisonItems();}
+  if(!currentUser.profile.recurringItems)currentUser.profile.recurringItems=[];
+  const bycat={};
+  maisonItems.forEach(item=>{if(!bycat[item.cat])bycat[item.cat]=[];bycat[item.cat].push(item);});
+  let html='';
+  Object.entries(bycat).forEach(([cat,items])=>{
+    html+=`<p class="onboard-recur-cat">${cat}</p>`;
+    items.forEach(item=>{
+      const safeName=item.n.replace(/'/g,"\\'");
+      const picked=currentUser.profile.recurringItems.find(r=>r.name===item.n);
+      const defDays=freqDays(item.freq);
+      html+=`<div class="onboard-recur-item ${picked?'active':''}" onclick="toggleRecurringItem('${safeName}','${item.i}','${cat.replace(/'/g,"\\'")}',${defDays})">
+        <span>${item.i}</span>
+        <span class="onboard-recur-name">${item.n}</span>
+        ${picked?`<select class="onboard-recur-freq" onclick="event.stopPropagation()" onchange="setRecurringItemFreq('${safeName}',this.value)">
+          ${[7,14,30,60,90].map(d=>`<option value="${d}" ${picked.freqDays===d?'selected':''}>${d<30?d+' j':(d/30)+' mois'}</option>`).join('')}
+        </select>`:''}
+      </div>`;
+    });
+  });
+  el.innerHTML=html;
+}
+function toggleRecurringItem(name,icon,cat,defDays){
+  const items=currentUser.profile.recurringItems;
+  const idx=items.findIndex(r=>r.name===name);
+  if(idx>-1)items.splice(idx,1);
+  else items.push({name,icon,cat,freqDays:defDays});
+  persistCurrentUser();
+  renderRecurringManager();
+}
+function setRecurringItemFreq(name,days){
+  const item=currentUser.profile.recurringItems.find(r=>r.name===name);
+  if(item){item.freqDays=parseInt(days);persistCurrentUser();}
 }
 
 /* ---------- Adaptation intelligente des recettes (allergènes / exclusions) ---------- */
