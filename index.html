@@ -442,6 +442,8 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   <button onclick="closeRecurringManager()" class="mb-4 font-black text-orange-500 text-xs uppercase">← Retour</button>
   <h2 class="text-2xl font-[900] italic uppercase tracking-tighter mb-1">Articles récurrents</h2>
   <p class="text-slate-400 font-bold text-[11px] mb-4">Coche ce que tu rachètes régulièrement et choisis la fréquence — l'app les ajoute automatiquement à tes courses le moment venu.</p>
+  <input id="recurring-search" placeholder="🔍 Rechercher un article…" oninput="renderRecurringManager()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:12px;background:var(--card);color:var(--text)">
+  <div id="recurring-cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-4 pb-1"></div>
   <div id="recurring-manager-list"></div>
 </div>
 
@@ -769,6 +771,7 @@ let servings=2,curIdx=0,currentCat='Tous';
 let isDark=localStorage.getItem('holli_dark')==='true';
 let wakeLock=null;
 let currentMaisonCat='Tous';
+let currentRecurringCat='Tous';
 let itemLastBought={},itemPurchaseHistory={};
 let currentFavCat='Tous';
 let currentFavCourse='Tous';
@@ -1560,6 +1563,7 @@ function renderCart(){
     if(!autoClearTimer)autoClearTimer=setTimeout(()=>{autoClearTimer=null;clearCartIngredients(false);},1800);
   }
   if(unchecked.length>0){
+    html+=`<p class="text-[10px] font-bold mb-3" style="color:var(--text2)">Touche un article pour le cocher trouvé — une fois tous cochés, la liste se vide toute seule.</p>`;
     const byRayon={};
     unchecked.forEach(ing=>{const r=ing.isMaison?'✨ Maison':ing.isExtra?'➕ Ajouts':getRayon(ing.displayName);if(!byRayon[r])byRayon[r]=[];byRayon[r].push(ing);});
     Object.entries(sortRayons(byRayon)).forEach(([rayon,ings])=>{
@@ -1568,6 +1572,7 @@ function renderCart(){
       ings.forEach(ing=>{html+=ingRow(ing);});
       html+='</div>';
     });
+    html+=`<button onclick="clearCartIngredients()" class="w-full bg-slate-900 text-white font-black text-xs uppercase py-4 rounded-full mt-2 mb-4 active:scale-95 transition-transform">✅ Courses finies — tout vider</button>`;
   }
   cartListEl.innerHTML=html;
   updateCartBadge(); // met à jour la pastille après chaque rendu
@@ -2176,8 +2181,19 @@ async function renderRecurringManager(){
   const el=document.getElementById('recurring-manager-list');if(!el)return;
   if(!maisonItems.length){el.innerHTML='<p class="text-center py-8 opacity-40 font-bold text-xs">Chargement…</p>';await loadMaisonItems();}
   if(!currentUser.profile.recurringItems)currentUser.profile.recurringItems=[];
+  const catBarEl=document.getElementById('recurring-cat-bar');
+  if(catBarEl){
+    const allCats=['Tous',...new Set(maisonItems.map(i=>i.cat))];
+    catBarEl.innerHTML=allCats.map(c=>`<button onclick="setRecurringCat('${c.replace(/'/g,"\\'")}')" class="mais-cat-tab ${c===currentRecurringCat?'active':''}">${c}</button>`).join('');
+  }
+  const rawSearch=(document.getElementById('recurring-search')?.value||'').trim();
+  const searchTerms=normalizeSearchText(rawSearch).split(/\s+/).filter(Boolean);
+  let visibleItems=maisonItems;
+  if(currentRecurringCat!=='Tous')visibleItems=visibleItems.filter(i=>i.cat===currentRecurringCat);
+  if(searchTerms.length)visibleItems=visibleItems.filter(i=>searchTerms.every(t=>normalizeSearchText(i.n).includes(t)));
+  if(!visibleItems.length){el.innerHTML='<p class="text-center py-16 opacity-20 font-black">Aucun article trouvé</p>';return;}
   const bycat={};
-  maisonItems.forEach(item=>{if(!bycat[item.cat])bycat[item.cat]=[];bycat[item.cat].push(item);});
+  visibleItems.forEach(item=>{if(!bycat[item.cat])bycat[item.cat]=[];bycat[item.cat].push(item);});
   let html='';
   Object.entries(bycat).forEach(([cat,items])=>{
     html+=`<p class="onboard-recur-cat">${cat}</p>`;
@@ -2208,6 +2224,7 @@ function setRecurringItemFreq(name,days){
   const item=currentUser.profile.recurringItems.find(r=>r.name===name);
   if(item){item.freqDays=parseInt(days);persistCurrentUser();}
 }
+function setRecurringCat(cat){currentRecurringCat=cat;renderRecurringManager();}
 
 /* ---------- Adaptation intelligente des recettes (allergènes / exclusions) ---------- */
 function getAvoidList(){
