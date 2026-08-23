@@ -290,6 +290,13 @@ body.dark .onboard-progress{background:#334155;}
 .onboard-next-btn:active{transform:scale(.96);}
 .onboard-textarea{width:100%;border:2px solid var(--border);border-radius:1.1rem;padding:12px 14px;font-size:13px;font-weight:700;font-family:inherit;outline:none;resize:none;min-height:70px;background:var(--card);color:var(--text);margin-bottom:12px;}
 .onboard-textarea:focus{border-color:#f97316;}
+.onboard-recur-cat{font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin:12px 0 6px;}
+.onboard-recur-cat:first-child{margin-top:0;}
+.onboard-recur-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:1rem;border:1.5px solid var(--border);margin-bottom:6px;background:var(--card);cursor:pointer;}
+.onboard-recur-item.active{border-color:#f97316;background:#fff7ed;}
+body.dark .onboard-recur-item.active{background:#3a2415;}
+.onboard-recur-name{flex:1;font-size:12px;font-weight:800;color:var(--text);}
+.onboard-recur-freq{font-size:10px;font-weight:800;border:1.5px solid var(--border);border-radius:8px;padding:5px 6px;background:var(--card);color:var(--text);font-family:inherit;}
 
 .profile-avatar{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#f97316,#fb923c);display:flex;align-items:center;justify-content:center;font-size:34px;box-shadow:0 8px 20px rgba(249,115,22,.3);cursor:pointer;flex-shrink:0;}
 .profile-card{background:var(--card);border-radius:2rem;border:1.5px solid var(--border);padding:18px;margin-bottom:14px;}
@@ -399,6 +406,12 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
       <input id="onboard-budget" class="auth-input" type="number" min="0" placeholder="Ex: 80" style="margin-bottom:18px">
       <p class="pref-label" style="margin-bottom:6px">Temps de cuisine préféré</p>
       <div class="onboard-options" id="onboard-cooktime-options"></div>
+    </div>
+
+    <div class="onboard-step" id="onboard-step-5">
+      <h2>🔁 Articles récurrents</h2>
+      <p class="sub">Coche ce que tu rachètes régulièrement (papier toilette, lessive…) et dis-nous tous les combien — l'app te les ajoutera automatiquement à ta liste de courses au bon moment.</p>
+      <div id="onboard-recurring-list" style="max-height:280px;overflow-y:auto"></div>
     </div>
 
     <div class="onboard-nav">
@@ -1078,7 +1091,7 @@ async function init(){
   putWeeklyFeaturedFirst();
   renderCard();renderCataloguePreview();
   if(weekMenu.length===0)generateWeekMenu();
-  renderMaison();updateUI();initTouchSystem();
+  renderMaison();updateUI();initTouchSystem();checkRecurringItems();
 }
 function formatImg(url){const id=url.match(/\/d\/(.+?)\//)  ||url.match(/id=(.+?)(&|$)/);return id?`https://wsrv.nl/?url=https://docs.google.com/uc?id=${id[1].trim()}&w=800&h=1000&fit=cover`:'';}
 
@@ -1805,6 +1818,38 @@ function toggleHome(name){
 }
 function clearMaison(){if(!homeCart.length)return;if(confirm('Retirer tous les articles maison du panier ?')){homeCart=[];save();renderMaison();updateUI();}}
 
+// Articles récurrents déclarés à l'inscription (profile.recurringItems, avec
+// leur propre fréquence en jours) : au premier lancement après leur ajout on
+// pose juste une date de départ (pas encore "en retard"), puis à chaque
+// lancement suivant, si le délai personnel est dépassé on les ajoute tout
+// seuls à la liste de courses et on prévient — sans action de l'utilisateur.
+function checkRecurringItems(){
+  const items=currentUser?.profile?.recurringItems;
+  if(!items||!items.length)return;
+  const now=new Date();
+  const newlyAdded=[];
+  let changed=false;
+  items.forEach(item=>{
+    if(!itemLastBought[item.name]){
+      itemLastBought[item.name]=now.toISOString();
+      changed=true;
+      return;
+    }
+    if(homeCart.includes(item.name))return;
+    const elapsedDays=(now-new Date(itemLastBought[item.name]))/864e5;
+    if(elapsedDays>=item.freqDays){
+      homeCart.push(item.name);
+      newlyAdded.push(item.name);
+      changed=true;
+    }
+  });
+  if(changed)save();
+  if(newlyAdded.length){
+    renderMaison();
+    showToast(`🔔 Bientôt à court de : ${newlyAdded.join(', ')} — ajouté${newlyAdded.length>1?'s':''} aux courses`,'#f59e0b');
+  }
+}
+
 document.getElementById('add-item-input')?.addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddItem();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetails();closeCook(true);closeAddItem();closeCatalogueModal();}});
 
@@ -1824,7 +1869,7 @@ let currentUser=null;
 let authTab='login';
 let onboardStep=1;
 let onboardEditMode=false;
-let onboardDraft={regime:'Omnivore',householdSize:2,allergies:[],dislikes:[],budget:'',cookTime:'normal'};
+let onboardDraft={regime:'Omnivore',householdSize:2,allergies:[],dislikes:[],budget:'',cookTime:'normal',recurringItems:[]};
 
 function genShareCode(){return Math.random().toString(36).substring(2,8).toUpperCase();}
 function getLocalProfiles(){return JSON.parse(localStorage.getItem('holli_profiles_v1'))||{};}
@@ -1833,7 +1878,7 @@ function getLocalProfile(uid){return getLocalProfiles()[uid]||null;}
 function saveLocalProfile(uid,record){const all=getLocalProfiles();all[uid]=record;saveLocalProfiles(all);}
 function defaultProfileRecord(pseudo,avatar){
   return{pseudo,avatar:avatar||'🙂',createdAt:new Date().toISOString(),onboarded:false,shareCode:genShareCode(),
-    profile:{regime:'Omnivore',householdSize:2,allergies:[],dislikes:[],budget:'',cookTime:'normal'}};
+    profile:{regime:'Omnivore',householdSize:2,allergies:[],dislikes:[],budget:'',cookTime:'normal',recurringItems:[]}};
 }
 async function buildCurrentUserFromFirebaseUser(fbUser){
   let local=null;
@@ -1928,10 +1973,11 @@ function handleLogout(){
 }
 
 /* ---------- Onboarding ---------- */
-function startOnboarding(editMode){
+async function startOnboarding(editMode){
   onboardEditMode=!!editMode;
   onboardStep=1;
   onboardDraft=JSON.parse(JSON.stringify(currentUser.profile));
+  if(!onboardDraft.recurringItems)onboardDraft.recurringItems=[];
   document.getElementById('onboard-regime-options').innerHTML=REGIME_OPTIONS.map(r=>`<button type="button" class="onboard-opt ${onboardDraft.regime===r?'active':''}" onclick="setOnboardRegime('${r}')">${r}</button>`).join('');
   document.getElementById('onboard-cooktime-options').innerHTML=COOKTIME_OPTIONS.map(c=>`<button type="button" class="onboard-opt ${onboardDraft.cookTime===c.v?'active':''}" onclick="setOnboardCookTime('${c.v}')">${c.l}</button>`).join('');
   document.getElementById('onboard-allergies').value=(onboardDraft.allergies||[]).join(', ');
@@ -1942,15 +1988,50 @@ function startOnboarding(editMode){
   document.getElementById('auth-screen').classList.remove('show');
   goToOnboardStep(1);
   document.getElementById('onboard-screen').classList.add('show');
+  if(!maisonItems.length)await loadMaisonItems();
+  renderOnboardRecurring();
 }
 function goToOnboardStep(n){
   onboardStep=n;
   document.querySelectorAll('.onboard-step').forEach((el,i)=>el.classList.toggle('active',i===n-1));
-  document.getElementById('onboard-progress-fill').style.width=`${n*25}%`;
+  document.getElementById('onboard-progress-fill').style.width=`${n*20}%`;
   document.getElementById('onboard-back-btn').style.visibility=n===1?'hidden':'visible';
-  document.getElementById('onboard-next-btn').innerText=n===4?(onboardEditMode?'✓ Enregistrer':'✓ Terminer'):'Suivant →';
+  document.getElementById('onboard-next-btn').innerText=n===5?(onboardEditMode?'✓ Enregistrer':'✓ Terminer'):'Suivant →';
 }
-function onboardNext(){if(onboardStep<4)goToOnboardStep(onboardStep+1);else finishOnboarding();}
+function onboardNext(){if(onboardStep<5)goToOnboardStep(onboardStep+1);else finishOnboarding();}
+function renderOnboardRecurring(){
+  const el=document.getElementById('onboard-recurring-list');if(!el)return;
+  if(!maisonItems.length){el.innerHTML='<p class="text-center py-8 opacity-40 font-bold text-xs">Chargement…</p>';return;}
+  const bycat={};
+  maisonItems.forEach(item=>{if(!bycat[item.cat])bycat[item.cat]=[];bycat[item.cat].push(item);});
+  let html='';
+  Object.entries(bycat).forEach(([cat,items])=>{
+    html+=`<p class="onboard-recur-cat">${cat}</p>`;
+    items.forEach(item=>{
+      const safeName=item.n.replace(/'/g,"\\'");
+      const picked=onboardDraft.recurringItems.find(r=>r.name===item.n);
+      const defDays=freqDays(item.freq);
+      html+=`<div class="onboard-recur-item ${picked?'active':''}" onclick="toggleOnboardRecurring('${safeName}','${item.i}','${cat.replace(/'/g,"\\'")}',${defDays})">
+        <span>${item.i}</span>
+        <span class="onboard-recur-name">${item.n}</span>
+        ${picked?`<select class="onboard-recur-freq" onclick="event.stopPropagation()" onchange="setOnboardRecurringFreq('${safeName}',this.value)">
+          ${[7,14,30,60,90].map(d=>`<option value="${d}" ${picked.freqDays===d?'selected':''}>${d<30?d+' j':(d/30)+' mois'}</option>`).join('')}
+        </select>`:''}
+      </div>`;
+    });
+  });
+  el.innerHTML=html;
+}
+function toggleOnboardRecurring(name,icon,cat,defDays){
+  const idx=onboardDraft.recurringItems.findIndex(r=>r.name===name);
+  if(idx>-1)onboardDraft.recurringItems.splice(idx,1);
+  else onboardDraft.recurringItems.push({name,icon,cat,freqDays:defDays});
+  renderOnboardRecurring();
+}
+function setOnboardRecurringFreq(name,days){
+  const item=onboardDraft.recurringItems.find(r=>r.name===name);
+  if(item)item.freqDays=parseInt(days);
+}
 function onboardBack(){if(onboardStep>1)goToOnboardStep(onboardStep-1);}
 function setOnboardRegime(r){onboardDraft.regime=r;document.querySelectorAll('#onboard-regime-options .onboard-opt').forEach(b=>b.classList.toggle('active',b.innerText===r));}
 function setOnboardCookTime(v){onboardDraft.cookTime=v;document.querySelectorAll('#onboard-cooktime-options .onboard-opt').forEach((b,i)=>b.classList.toggle('active',COOKTIME_OPTIONS[i].v===v));}
