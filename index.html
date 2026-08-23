@@ -548,6 +548,10 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
     <p class="section-title">Combien de jours ?</p>
     <div class="nb-selector" id="nb-selector"></div>
   </div>
+  <div class="mb-5">
+    <p class="section-title">Quels plats ?</p>
+    <div class="onboard-options" id="week-course-selector" style="margin-bottom:0"></div>
+  </div>
   <div class="flex items-center justify-between mb-5">
     <p class="text-[10px] font-black text-slate-400 uppercase">Nombre de personnes</p>
     <div class="pers-pill">
@@ -722,6 +726,7 @@ let checkedItems=new Set(),manualQtys={};
 let favorites=new Set();
 let weekMenu=[];
 let weekCount=7;
+let weekCourses=new Set(['entree','plat','dessert']);
 let oldRecipes=[];
 let servings=2,curIdx=0,currentCat='Tous';
 let isDark=localStorage.getItem('holli_dark')==='true';
@@ -979,7 +984,7 @@ function switchPage(p){
   if(p==='cooking')renderCooking();
   if(p==='maison')renderMaison();
   if(p==='favs')renderFavs();
-  if(p==='week'){renderNbSelector();renderWeekMenu();}
+  if(p==='week'){renderNbSelector();renderWeekCourseSelector();renderWeekMenu();}
   if(p==='profile')renderProfilePage();
   window.scrollTo(0,0);
 }
@@ -1008,6 +1013,8 @@ async function init(){
     weekMenu=weekMenu.map(item=>({day:item.day,recipes:{entree:null,plat:item.recipeId??null,dessert:null}}));
   }
   weekCount=parseInt(localStorage.getItem('holli_week_count'))||7;
+  const savedCourses=JSON.parse(localStorage.getItem('holli_week_courses'));
+  weekCourses=new Set(savedCourses&&savedCourses.length?savedCourses:['entree','plat','dessert']);
   oldRecipes=JSON.parse(localStorage.getItem('holli_old_recipes'))||[];
   updateServings(0);
 
@@ -1271,10 +1278,26 @@ function renderNbSelector(){
 }
 function setWeekCount(n){weekCount=n;localStorage.setItem('holli_week_count',n);renderNbSelector();generateWeekMenu();}
 
-// Chaque jour propose Entrée / Plat / Dessert. On devine la catégorie d'une
-// recette à partir de son champ "cat" (tolérant aux accents/variantes) ;
-// tout ce qui n'est ni entrée ni dessert est classé "plat" par défaut.
+// Chaque jour propose Entrée / Plat / Dessert (selon la sélection de l'utilisateur).
+// On devine la catégorie d'une recette à partir de son champ "cat" (tolérant
+// aux accents/variantes) ; tout ce qui n'est ni entrée ni dessert est classé
+// "plat" par défaut.
 const COURSES=[{key:'entree',label:'Entrée',article:'une',emoji:'🥗'},{key:'plat',label:'Plat',article:'un',emoji:'🍽️'},{key:'dessert',label:'Dessert',article:'un',emoji:'🍰'}];
+function renderWeekCourseSelector(){
+  const el=document.getElementById('week-course-selector');if(!el)return;
+  el.innerHTML=COURSES.map(c=>`<button type="button" class="onboard-opt ${weekCourses.has(c.key)?'active':''}" onclick="toggleWeekCourse('${c.key}')">${c.emoji} ${c.label}</button>`).join('');
+}
+function toggleWeekCourse(key){
+  if(weekCourses.has(key)){
+    if(weekCourses.size===1){showToast('Garde au moins un type de plat !','#ef4444');return;}
+    weekCourses.delete(key);
+  } else {
+    weekCourses.add(key);
+  }
+  localStorage.setItem('holli_week_courses',JSON.stringify([...weekCourses]));
+  renderWeekCourseSelector();
+  renderWeekMenu();
+}
 function courseKeyForRecipe(r){
   const c=normalizeSearchText(r.cat||'');
   if(c.includes('dessert'))return'dessert';
@@ -1301,7 +1324,8 @@ function generateWeekMenu(){
   if(!recipes.length)return;
   const days=DAYS.slice(0,weekCount);
   const buckets=recipesByCourse();
-  const pools={entree:uniqueSeasonalPool(buckets.entree),plat:uniqueSeasonalPool(buckets.plat),dessert:uniqueSeasonalPool(buckets.dessert)};
+  const pools={};
+  COURSES.forEach(c=>{pools[c.key]=weekCourses.has(c.key)?uniqueSeasonalPool(buckets[c.key]):[];});
   weekMenu=days.map((day,i)=>({
     day,
     recipes:{
@@ -1336,6 +1360,7 @@ function addAllWeekToCart(){
   let count=0;
   weekMenu.forEach(item=>{
     COURSES.forEach(c=>{
+      if(!weekCourses.has(c.key))return;
       const rid=item.recipes[c.key];
       if(rid!==null){const r=recipes.find(x=>x.id===rid);if(r){addToCart(r);count++;}}
     });
@@ -1381,16 +1406,15 @@ function courseSlotHTML(item,dayIdx,course){
 function renderWeekMenu(){
   if(!recipes.length){document.getElementById('week-menu-list').innerHTML='<p class="text-center py-10 opacity-30 font-black">Chargement…</p>';return;}
   if(weekMenu.length===0){generateWeekMenu();return;}
-  const totalSlots=weekMenu.length*COURSES.length;
-  const filledSlots=weekMenu.reduce((sum,item)=>sum+COURSES.filter(c=>item.recipes[c.key]!==null).length,0);
+  const activeCourses=COURSES.filter(c=>weekCourses.has(c.key));
+  const totalSlots=weekMenu.length*activeCourses.length;
+  const filledSlots=weekMenu.reduce((sum,item)=>sum+activeCourses.filter(c=>item.recipes[c.key]!==null).length,0);
   const pct=totalSlots?Math.round((filledSlots/totalSlots)*100):0;
   document.getElementById('week-progress').innerHTML=`<div class="flex items-center justify-between mb-1"><span class="text-[9px] font-black text-slate-400 uppercase">${filledSlots}/${totalSlots} repas planifiés</span><span class="text-[9px] font-black text-orange-500">${pct}%</span></div><div class="cart-progress"><div class="cart-progress-bar" style="width:${pct}%"></div></div>`;
   document.getElementById('week-menu-list').innerHTML=weekMenu.map((item,i)=>`
     <div class="week-day-group" style="animation:slideUp .3s ease-out ${i*.05}s both">
       <div class="week-day-header">${item.day}</div>
-      ${courseSlotHTML(item,i,'entree')}
-      ${courseSlotHTML(item,i,'plat')}
-      ${courseSlotHTML(item,i,'dessert')}
+      ${activeCourses.map(c=>courseSlotHTML(item,i,c.key)).join('')}
     </div>`).join('');
 }
 
