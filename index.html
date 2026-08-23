@@ -572,7 +572,11 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
     <h2 class="text-3xl font-black italic uppercase">❤️ Favoris</h2>
     <span id="fav-count-label" class="text-slate-400 font-black text-xs uppercase"></span>
   </div>
-  <div id="fav-cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-5 pb-1"></div>
+  <input id="fav-search" placeholder="🔍 Rechercher dans mes favoris…" oninput="renderFavs()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:12px;background:var(--card);color:var(--text)">
+  <p class="text-[9px] font-black uppercase tracking-wide mb-2" style="color:var(--text2)">Cuisine</p>
+  <div id="fav-cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-3 pb-1"></div>
+  <p class="text-[9px] font-black uppercase tracking-wide mb-2" style="color:var(--text2)">Type de plat</p>
+  <div id="fav-course-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-5 pb-1"></div>
   <div id="fav-grid"></div>
 </section>
 
@@ -734,6 +738,7 @@ let wakeLock=null;
 let currentMaisonCat='Tous';
 let itemLastBought={},itemPurchaseHistory={};
 let currentFavCat='Tous';
+let currentFavCourse='Tous';
 let currentCookTab='current';
 let cookRecipe=null,cookTimers={},cookIngChecked=new Set(),cookStepsDone=new Set(),ckIngOpen=false;
 let startX=0,moveX=0;
@@ -1107,8 +1112,18 @@ function renderFavs(){
   document.getElementById('fav-count-label').innerText=favRecipes.length?`${favRecipes.length} recette${favRecipes.length>1?'s':''}`:'';
   const cats=['Tous',...new Set(favRecipes.map(r=>r.cat))];
   document.getElementById('fav-cat-bar').innerHTML=cats.map(c=>`<button onclick="setFavCat('${c}')" class="cat-tab ${c===currentFavCat?'active':''}">${c}</button>`).join('');
-  const filtered=currentFavCat==='Tous'?favRecipes:favRecipes.filter(r=>r.cat===currentFavCat);
-  if(!filtered.length){document.getElementById('fav-grid').innerHTML=`<div class="text-center py-20 opacity-25"><div style="font-size:64px;margin-bottom:12px">🤍</div><div class="font-black text-lg uppercase">Aucun favori</div><div class="text-sm font-bold mt-2 text-slate-400">Appuie sur ❤️ sur une recette pour l'ajouter</div></div>`;return;}
+  document.getElementById('fav-course-bar').innerHTML=['Tous',...COURSES.map(c=>c.key)].map(key=>{
+    const label=key==='Tous'?'Tous':COURSES.find(c=>c.key===key).emoji+' '+COURSES.find(c=>c.key===key).label;
+    return`<button onclick="setFavCourse('${key}')" class="cat-tab ${key===currentFavCourse?'active':''}">${label}</button>`;
+  }).join('');
+  let filtered=currentFavCat==='Tous'?favRecipes:favRecipes.filter(r=>r.cat===currentFavCat);
+  if(currentFavCourse!=='Tous')filtered=filtered.filter(r=>courseKeyForRecipe(r)===currentFavCourse);
+  const rawSearch=(document.getElementById('fav-search')?.value||'').trim();
+  if(rawSearch){
+    const terms=normalizeSearchText(rawSearch).split(/\s+/).filter(Boolean);
+    filtered=filtered.filter(r=>terms.every(t=>normalizeSearchText(r.n).includes(t)));
+  }
+  if(!filtered.length){document.getElementById('fav-grid').innerHTML=`<div class="text-center py-20 opacity-25"><div style="font-size:64px;margin-bottom:12px">🤍</div><div class="font-black text-lg uppercase">${favRecipes.length?'Aucun résultat':'Aucun favori'}</div><div class="text-sm font-bold mt-2 text-slate-400">${favRecipes.length?'Essaie une autre recherche ou un autre filtre':"Appuie sur ❤️ sur une recette pour l'ajouter"}</div></div>`;return;}
   document.getElementById('fav-grid').innerHTML=filtered.map(r=>`
     <div class="fav-card" onclick="showDetails(${r.id})">
       <div class="relative">
@@ -1126,6 +1141,7 @@ function renderFavs(){
     </div>`).join('');
 }
 function setFavCat(cat){currentFavCat=cat;renderFavs();}
+function setFavCourse(key){currentFavCourse=key;renderFavs();}
 
 function renderCard(){
   if(!shuffledRecipes.length)return;
