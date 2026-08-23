@@ -758,7 +758,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
 </div>
 
 <footer style="text-align:center; font-size:8px; padding:16px; color:#94a3b8; background:var(--bg); border-top:1px solid var(--border); margin-top:20px;">
-  <a href="privacy.html" target="_blank" style="color:inherit; text-decoration:underline;" id="privacyLinkLabel">🔒 Politique de confidentialité</a>
+  <a href="privacy.html" target="_blank" rel="noopener noreferrer" style="color:inherit; text-decoration:underline;" id="privacyLinkLabel">🔒 Politique de confidentialité</a>
 </footer>
 
 <!-- ========== FIREBASE ========== -->
@@ -929,6 +929,13 @@ function toggleWakeLock(){if(wakeLock)releaseWakeLock();else requestWakeLock();}
 function showToast(msg,color='#22c55e'){const t=document.createElement('div');t.className='toast';t.style.background=color;t.innerText=msg;document.body.appendChild(t);setTimeout(()=>{t.classList.add('hiding');setTimeout(()=>t.remove(),420);},2400);}
 function fmtTime(s){const m=Math.floor(s/60),r=s%60;return m>0?`${m}min${r>0?r+'s':''}`:`${r}s`;}
 function rnd(v){return Math.round(v*10)/10;}
+// Échappe le texte libre saisi par l'utilisateur (articles ajoutés, allergies, noms d'articles
+// récurrents personnalisés…) avant de l'insérer dans du HTML, pour empêcher toute injection.
+function escapeHtml(str){
+  const div=document.createElement('div');
+  div.textContent=str==null?'':String(str);
+  return div.innerHTML;
+}
 
 function updateServings(v){
   servings=Math.max(1,servings+v);
@@ -1636,7 +1643,7 @@ function ingRow(ing){
   return`<div class="cart-ing ${isChecked?'checked':''}" onclick="toggleCheck('${safeKey}')">
     <div class="chk"></div>
     <div class="flex-1 min-w-0">
-      <div class="ing-text capitalize">${ing.displayName}${badge}</div>
+      <div class="ing-text capitalize">${escapeHtml(ing.displayName)}${badge}</div>
       ${ing.recipes.length>1?`<div class="recipe-tag">${[...new Set(ing.recipes)].join(' · ')}</div>`:''}
     </div>
     ${(ing.adjustedQty!==null||hasManual)?`<input class="ing-qty-edit" value="${displayQty}" onclick="event.stopPropagation()" onchange="saveManualQty('${safeKey}',this.value)" onblur="saveManualQty('${safeKey}',this.value)">`:``}
@@ -2123,7 +2130,7 @@ function renderOnboardRecurring(){
       const safeName=item.name.replace(/'/g,"\\'");
       activeHtml+=`<div class="onboard-recur-item active onboard-recur-item-fixed">
         <span>${item.icon}</span>
-        <span class="onboard-recur-name">${item.name}</span>
+        <span class="onboard-recur-name">${escapeHtml(item.name)}</span>
         <select class="onboard-recur-freq" onchange="setOnboardRecurringFreq('${safeName}',this.value)">
           ${[7,14,30,60,90].map(d=>`<option value="${d}" ${item.freqDays===d?'selected':''}>${d<30?d+' j':(d/30)+' mois'}</option>`).join('')}
         </select>
@@ -2306,15 +2313,15 @@ function renderProfilePage(){
     <div class="pref-row"><span class="pref-label">Temps de cuisine</span><span class="pref-value">${cookLabel}</span></div>
     <div class="pref-row" style="display:block">
       <span class="pref-label">Allergies</span>
-      <div class="mt-2">${p.allergies.length?p.allergies.map(a=>`<span class="chip allergy">⚠️ ${a}</span>`).join(''):'<span class="text-slate-300 text-[11px] font-bold">Aucune</span>'}</div>
+      <div class="mt-2">${p.allergies.length?p.allergies.map(a=>`<span class="chip allergy">⚠️ ${escapeHtml(a)}</span>`).join(''):'<span class="text-slate-300 text-[11px] font-bold">Aucune</span>'}</div>
     </div>
     <div class="pref-row" style="display:block">
       <span class="pref-label">Ingrédients détestés</span>
-      <div class="mt-2">${p.dislikes.length?p.dislikes.map(a=>`<span class="chip">${a}</span>`).join(''):'<span class="text-slate-300 text-[11px] font-bold">Aucun</span>'}</div>
+      <div class="mt-2">${p.dislikes.length?p.dislikes.map(a=>`<span class="chip">${escapeHtml(a)}</span>`).join(''):'<span class="text-slate-300 text-[11px] font-bold">Aucun</span>'}</div>
     </div>`;
   const recur=p.recurringItems||[];
   document.getElementById('profile-recurring-card').innerHTML=recur.length
-    ?recur.map(r=>`<div class="pref-row"><span class="pref-label">${r.icon} ${r.name}</span><span class="pref-value">tous les ${r.freqDays<30?r.freqDays+' j':(r.freqDays/30)+' mois'}</span></div>`).join('')
+    ?recur.map(r=>`<div class="pref-row"><span class="pref-label">${r.icon} ${escapeHtml(r.name)}</span><span class="pref-value">tous les ${r.freqDays<30?r.freqDays+' j':(r.freqDays/30)+' mois'}</span></div>`).join('')
     :'<p class="text-[11px] font-bold text-center py-2" style="color:var(--text2)">Aucun article récurrent configuré</p>';
 }
 
@@ -2342,7 +2349,7 @@ async function renderRecurringManager(){
       const safeName=item.name.replace(/'/g,"\\'");
       activeHtml+=`<div class="onboard-recur-item active onboard-recur-item-fixed">
         <span>${item.icon}</span>
-        <span class="onboard-recur-name">${item.name}</span>
+        <span class="onboard-recur-name">${escapeHtml(item.name)}</span>
         <select class="onboard-recur-freq" onchange="setRecurringItemFreq('${safeName}',this.value)">
           ${[7,14,30,60,90].map(d=>`<option value="${d}" ${item.freqDays===d?'selected':''}>${d<30?d+' j':(d/30)+' mois'}</option>`).join('')}
         </select>
