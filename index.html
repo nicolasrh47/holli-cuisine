@@ -1861,7 +1861,7 @@ fbAuth.onAuthStateChanged(async function(fbUser){
 });
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').then(() => console.log('SW OK')).catch(e => console.error('SW error', e));
+  navigator.serviceWorker.register('./sw.js').then(() => console.log('SW OK')).catch(e => console.error('SW error', e));
 }
 </script>
 </body>
