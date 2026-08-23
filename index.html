@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HOLLI. V13</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -15,7 +15,8 @@
 /* ========== STYLE COMPLET (identique à l'original) ========== */
 :root{--bg:#f8fafc;--card:#fff;--text:#1e293b;--text2:#64748b;--border:#e2e8f0;--orange:#f97316;--green:#22c55e;--red:#ef4444;}
 *{-webkit-tap-highlight-color:transparent;box-sizing:border-box;}
-body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);padding-bottom:110px;overflow-x:hidden;user-select:none;-webkit-user-select:none;transition:background .3s;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);padding-bottom:110px;overflow-x:hidden;transition:background .3s;}
+button,.nav-item,.cat-tab,.chk,.wpa-btn{-webkit-user-select:none;user-select:none;}
 body.dark{--bg:#0f172a;--card:#1e293b;--text:#f1f5f9;--text2:#94a3b8;--border:#334155;}
 body.dark .glass{background:rgba(15,23,42,.97);}
 body.dark .nav-bar{border-top-color:#1e293b;}
@@ -465,7 +466,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   </div>
 </header>
 
-<main id="page-home" class="page active">
+<section id="page-home" class="page active" role="tabpanel" aria-label="Menu">
   <div class="flex justify-center mb-4">
     <div class="bg-slate-100 px-4 py-2 rounded-full text-[9px] flex items-center gap-2">
       <span class="text-red-400 font-black">✕ Jeter</span>
@@ -478,7 +479,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   <div id="swipe-container" class="swipe-zone mb-5">
     <div id="miam-badge" class="miam-label">MIAM</div>
     <div id="card" class="swipe-card">
-      <img id="card-img" src="" class="w-full h-full object-cover pointer-events-none">
+      <img id="card-img" src="" alt="" class="w-full h-full object-cover pointer-events-none">
       <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent p-10 flex flex-col justify-end pointer-events-none">
         <h2 id="card-title" class="text-white text-3xl font-[900] italic uppercase leading-tight drop-shadow-lg">…</h2>
       </div>
@@ -507,9 +508,9 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
     <div id="category-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-5 pb-2"></div>
     <div id="grid" class="grid grid-cols-2 gap-4"></div>
   </div>
-</main>
+</section>
 
-<main id="page-week" class="page">
+<section id="page-week" class="page" role="tabpanel" aria-label="Semaine">
   <div class="flex items-center gap-3 mb-5">
     <button onclick="switchPage('home')" class="text-orange-500 font-black text-xs uppercase">← Retour</button>
   </div>
@@ -534,18 +535,18 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
     <button onclick="addAllWeekToCart()" class="flex-1 bg-slate-900 text-white font-black text-xs uppercase py-3 rounded-full active:scale-95 transition-transform">🛒 Tout ajouter</button>
   </div>
   <div id="week-menu-list"></div>
-</main>
+</section>
 
-<main id="page-favs" class="page">
+<section id="page-favs" class="page" role="tabpanel" aria-label="Favoris">
   <div class="flex justify-between items-center mb-4">
     <h2 class="text-3xl font-black italic uppercase">❤️ Favoris</h2>
     <span id="fav-count-label" class="text-slate-400 font-black text-xs uppercase"></span>
   </div>
   <div id="fav-cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-5 pb-1"></div>
   <div id="fav-grid"></div>
-</main>
+</section>
 
-<main id="page-maison" class="page">
+<section id="page-maison" class="page" role="tabpanel" aria-label="Maison">
   <div class="flex justify-between items-center mb-4">
     <h2 class="text-3xl font-black italic uppercase">Maison</h2>
     <div class="flex items-center gap-2">
@@ -559,9 +560,9 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
     <div id="maison-suggestions" class="mb-4"></div>
     <div id="maison-content" class="space-y-3"></div>
   </div>
-</main>
+</section>
 
-<main id="page-cart" class="page">
+<section id="page-cart" class="page" role="tabpanel" aria-label="Courses">
   <div class="flex justify-between items-center mb-3 px-1">
     <h2 class="text-3xl font-black italic uppercase" id="cartTitle">Courses</h2>
     <div class="flex gap-2">
@@ -578,9 +579,9 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   </div>
   <div id="rayon-progress" class="mb-3"></div>
   <div id="cart-list" class="space-y-4"></div>
-</main>
+</section>
 
-<main id="page-cooking" class="page">
+<section id="page-cooking" class="page" role="tabpanel" aria-label="Cuisiner">
   <h2 class="text-3xl font-black italic uppercase mb-4 px-1">Cuisiner</h2>
   <div class="flex gap-2 overflow-x-auto no-scrollbar mb-5 pb-1">
     <button class="cook-tab-btn active" id="cook-tab-current" onclick="setCookTab('current')">🍳 Recettes (0)</button>
@@ -588,9 +589,9 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   </div>
   <div id="cook-tab-content-current"><div id="cook-grid"></div></div>
   <div id="cook-tab-content-old" style="display:none"><div id="old-recipes-grid"></div></div>
-</main>
+</section>
 
-<main id="page-profile" class="page">
+<section id="page-profile" class="page" role="tabpanel" aria-label="Profil">
   <h2 class="text-3xl font-black italic uppercase mb-4 px-1">Profil</h2>
 
   <div class="profile-card flex items-center gap-4">
@@ -634,7 +635,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
       <button onclick="handleLogout()" class="text-red-500 font-black text-[10px] uppercase bg-red-50 px-4 py-2 rounded-full">Déconnexion</button>
     </div>
   </div>
-</main>
+</section>
 
 <nav class="nav-bar glass">
   <button onclick="switchPage('home')" id="btn-home" class="nav-item active">🍴<span>Menu</span></button>
@@ -1046,7 +1047,7 @@ function renderFavs(){
   document.getElementById('fav-grid').innerHTML=filtered.map(r=>`
     <div class="fav-card" onclick="showDetails(${r.id})">
       <div class="relative">
-        <img src="${r.i}" class="w-full h-40 object-cover" loading="lazy">
+        <img src="${r.i}" alt="${r.n}" class="w-full h-40 object-cover" loading="lazy">
         <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-4">
           <div class="flex-1"><span class="text-white/60 text-[9px] font-black uppercase">${r.cat}</span>
           <h3 class="text-white font-black uppercase italic text-base leading-tight">${r.n}</h3></div>
@@ -1065,6 +1066,7 @@ function renderCard(){
   if(!shuffledRecipes.length)return;
   const r=shuffledRecipes[curIdx];if(!r)return;
   document.getElementById('card-img').src=r.i;
+  document.getElementById('card-img').alt=r.n;
   document.getElementById('card-title').innerText=r.n;
   document.getElementById('card').style.transform='';
   document.getElementById('miam-badge').style.opacity=0;
@@ -1092,7 +1094,7 @@ function renderWeekly(){
         <p class="text-slate-400 text-[9px] font-bold mt-1 uppercase">Découvrir →</p>
       </div>
       <div class="w-1/3 h-full relative">
-        <img src="${r.i}" class="absolute inset-0 w-full h-full object-cover opacity-60" loading="lazy">
+        <img src="${r.i}" alt="${r.n}" class="absolute inset-0 w-full h-full object-cover opacity-60" loading="lazy">
         <div class="absolute inset-0 bg-gradient-to-r from-[#0f172a] to-transparent"></div>
       </div>
     </div>`;
@@ -1105,7 +1107,7 @@ function renderGrid(){
   document.getElementById('grid').innerHTML=filtered.map(r=>`
     <div class="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm cursor-pointer active:scale-95 transition-transform recipe-card">
       <div onclick="showDetails(${r.id})">
-        <img src="${r.i}" class="h-32 w-full object-cover" loading="lazy">
+        <img src="${r.i}" alt="${r.n}" class="h-32 w-full object-cover" loading="lazy">
         <div class="p-3"><p class="text-[10px] font-black uppercase truncate text-slate-800">${r.n}</p></div>
       </div>
       <button class="fav-btn ${favorites.has(r.id)?'active':''}" data-fav-id="${r.id}" onclick="toggleFav(${r.id},event)">${favorites.has(r.id)?'❤️':'🤍'}</button>
@@ -1121,7 +1123,7 @@ function showDetails(id){
   const ings=r.ing.split(',').map(l=>{const p=parseIng(l);const aq=p.qty!==null?rnd(p.qty*ratio):null;return`<p class="mb-2 flex justify-between gap-2"><span>○ ${p.name||l.trim()}</span><span class="text-orange-500 font-black text-xs">${aq!==null?fmtQtyDetailed(aq,p.unit):''}</span></p>`;}).join('');
   document.getElementById('modal-content').innerHTML=`
     <div class="relative mb-5">
-      <img src="${r.i}" class="w-full h-56 object-cover rounded-[2.5rem] shadow-xl border-4 border-white">
+      <img src="${r.i}" alt="${r.n}" class="w-full h-56 object-cover rounded-[2.5rem] shadow-xl border-4 border-white">
       <button onclick="toggleFav(${r.id},event)" class="absolute top-4 left-4 w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-lg border-none cursor-pointer" data-fav-id="${r.id}" style="background:${isFav?'rgba(239,68,68,.25)':'rgba(255,255,255,.9)'}">${isFav?'❤️':'🤍'}</button>
     </div>
     <div class="flex items-center justify-between mb-4">
@@ -1193,7 +1195,7 @@ function renderWeekMenu(){
     const r=recipes.find(x=>x.id===item.recipeId);if(!r)return'';
     const isFav=favorites.has(r.id);
     return`<div class="week-page-card" style="animation:slideUp .3s ease-out ${i*.05}s both">
-      <img class="week-page-img" src="${r.i}" loading="lazy" onclick="showDetails(${r.id})">
+      <img class="week-page-img" src="${r.i}" alt="${r.n}" loading="lazy" onclick="showDetails(${r.id})">
       <div class="week-page-body" onclick="showDetails(${r.id})">
         <div class="week-page-day">${item.day}</div>
         <div class="week-page-name">${r.n}${allergyBadgeHTML(r,'inline')}</div>
@@ -1323,7 +1325,7 @@ function renderCooking(){
     <button onclick="openCookModal(0)" class="cook-all-btn mb-4"><span class="em">🔥</span><span>Cuisiner tous les plats</span><span class="em">🍽️</span></button>
     ${cart.map((r,idx)=>`
       <div class="bg-white rounded-[2.2rem] border p-4 flex gap-4 items-center mb-2" style="animation:slideUp .4s ease-out ${idx*.08}s both">
-        <img src="${r.i}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0" loading="lazy">
+        <img src="${r.i}" alt="${r.n}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0" loading="lazy">
         <div class="flex-1 min-w-0">
           <h3 class="font-black uppercase text-[11px] italic text-slate-800 leading-tight">${r.n}${allergyBadgeHTML(r,'inline')}</h3>
           <p class="text-[9px] text-slate-400 font-bold mt-1">${r.prep.split('.').filter(s=>s.trim().length>5).length} étapes</p>
@@ -1338,7 +1340,7 @@ function renderOldRecipes(){
   if(!oldRecipes.length){document.getElementById('old-recipes-grid').innerHTML=`<div class="text-center py-16 opacity-25"><div class="text-5xl mb-4">📚</div><div class="font-black text-base uppercase">Aucune ancienne recette</div><div class="text-sm font-bold mt-1">Les recettes terminées apparaissent ici</div></div>`;return;}
   document.getElementById('old-recipes-grid').innerHTML=oldRecipes.slice().reverse().map((r,i)=>`
     <div class="old-recipe-card" style="animation:slideUp .3s ease-out ${i*.05}s both">
-      <img src="${r.i}" class="w-14 h-14 rounded-2xl object-cover flex-shrink-0" loading="lazy">
+      <img src="${r.i}" alt="${r.n}" class="w-14 h-14 rounded-2xl object-cover flex-shrink-0" loading="lazy">
       <div class="flex-1 min-w-0">
         <p class="font-black text-[11px] uppercase italic text-slate-800 leading-tight truncate">${r.n}</p>
         <p class="text-[9px] text-slate-400 font-bold mt-1">${r.cat}</p>
