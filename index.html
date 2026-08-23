@@ -1621,9 +1621,9 @@ function renderCooking(){
           <h3 class="font-black uppercase text-[11px] italic text-slate-800 leading-tight">${r.n}${allergyBadgeHTML(r,'inline')}</h3>
           <p class="text-[9px] text-slate-400 font-bold mt-1">${splitPrepSteps(r.prep).length} étapes${r.temps?` · ⏱ ${r.temps}`:''}</p>
         </div>
-        <div class="flex flex-col gap-2 flex-shrink-0">
-          <button onclick="openCookModal(${idx})" class="bg-slate-900 text-white px-4 py-2 rounded-full font-black text-[9px] uppercase border-none cursor-pointer">Cuisiner →</button>
-          <button onclick="removeFromCart('${r.n.replace(/'/g,"\\'")}');event.stopPropagation();" class="text-red-400 bg-red-50 px-4 py-1.5 rounded-full font-black text-[9px] uppercase border-none cursor-pointer">Retirer</button>
+        <div class="flex gap-3 flex-shrink-0">
+          <button onclick="openCookModal(${idx})" class="bg-slate-900 text-white px-3 py-2 rounded-full font-black text-[9px] uppercase border-none cursor-pointer">Cuisiner →</button>
+          <button onclick="removeFromCart('${r.n.replace(/'/g,"\\'")}');event.stopPropagation();" class="text-red-400 bg-red-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase border-none cursor-pointer">Retirer</button>
         </div>
       </div>`).join('')}`;
 }
