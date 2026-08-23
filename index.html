@@ -762,7 +762,7 @@ async function loadMaisonItems() {
   } catch(e) {
     console.warn('Impossible de charger le Google Sheet Maison, tentative maison.json', e);
     try {
-      const res2 = await fetch('/maison.json');
+      const res2 = await fetch('./maison.json');
       const data = await res2.json();
       maisonItems = data.articles || [];
     } catch(e2) {
@@ -777,7 +777,7 @@ async function loadMaisonItems() {
 
 async function loadSiteContent() {
   try {
-    const res = await fetch('/content.json');
+    const res = await fetch('./content.json');
     siteContent = await res.json();
   } catch(e) {
     console.warn('content.json non trouvé, utilisation valeurs par défaut');
@@ -957,6 +957,12 @@ function switchPage(p){
   window.scrollTo(0,0);
 }
 
+// id stable dérivé du nom de la recette (djb2) : ne bouge pas si des lignes
+// sont ajoutées/supprimées/réordonnées dans la Google Sheet, contrairement à
+// un id basé sur la position de la ligne — sinon favoris/menus enregistrés
+// pointent silencieusement vers la mauvaise recette après une modification du Sheet.
+function hashId(str){let h=5381;for(let i=0;i<str.length;i++){h=((h<<5)+h)+str.charCodeAt(i);h|=0;}return Math.abs(h);}
+
 async function init(){
   if(isDark)document.body.classList.add('dark');
   document.getElementById('dark-btn').innerText=isDark?'☀️':'🌓';
@@ -981,20 +987,20 @@ async function init(){
     const r=await fetch(DATA_URL);
     const t=await r.text();
     const j=JSON.parse(t.substring(47).slice(0,-2));
-    recipes=j.table.rows.map((row,i)=>({
-      id:i,n:row.c[1]?.v||'Sans nom',cat:row.c[2]?.v||'Plat',
+    recipes=j.table.rows.map((row)=>({
+      n:row.c[1]?.v||'Sans nom',cat:row.c[2]?.v||'Plat',
       ing:row.c[3]?.v||'',prep:row.c[4]?.v||'',i:formatImg(row.c[7]?.v||'')
-    })).filter(r=>r.n!=='Nom de la Recette'&&r.i!=='');
+    })).filter(r=>r.n!=='Nom de la Recette'&&r.i!=='').map(r=>({...r,id:hashId(r.n)}));
     if(recipes.length===0)throw new Error('Aucune recette');
   }catch(e){
     console.warn('Fallback recettes locales');
     recipes = [
-      {id:0,n:'Omelette',cat:'Plat',ing:'2 oeufs, sel, poivre',prep:'Casser les oeufs. Battre. Cuire à la poêle.',i:'https://picsum.photos/id/127/400/300'},
-      {id:1,n:'Pâtes carbonara',cat:'Plat',ing:'200g pâtes, 50g lardons, 20cl crème, 1 oeuf',prep:'Cuire les pâtes. Revenir les lardons. Mélanger crème et oeuf.',i:'https://picsum.photos/id/127/400/300'},
-      {id:2,n:'Salade de tomates',cat:'Entrée',ing:'3 tomates, huile d\'olive, vinaigre, basilic',prep:'Laver et couper les tomates. Assaisonner.',i:'https://picsum.photos/id/127/400/300'},
-      {id:3,n:'Poulet curry',cat:'Plat',ing:'2 blancs de poulet, 10cl crème, curry, sel',prep:'Cuire le poulet. Ajouter crème et curry.',i:'https://picsum.photos/id/127/400/300'},
-      {id:4,n:'Crêpes',cat:'Dessert',ing:'250g farine, 3 oeufs, 500ml lait, 50g beurre',prep:'Mélanger. Laisser reposer 30 min. Cuire.',i:'https://picsum.photos/id/127/400/300'}
-    ];
+      {n:'Omelette',cat:'Plat',ing:'2 oeufs, sel, poivre',prep:'Casser les oeufs. Battre. Cuire à la poêle.',i:'https://picsum.photos/id/127/400/300'},
+      {n:'Pâtes carbonara',cat:'Plat',ing:'200g pâtes, 50g lardons, 20cl crème, 1 oeuf',prep:'Cuire les pâtes. Revenir les lardons. Mélanger crème et oeuf.',i:'https://picsum.photos/id/127/400/300'},
+      {n:'Salade de tomates',cat:'Entrée',ing:'3 tomates, huile d\'olive, vinaigre, basilic',prep:'Laver et couper les tomates. Assaisonner.',i:'https://picsum.photos/id/127/400/300'},
+      {n:'Poulet curry',cat:'Plat',ing:'2 blancs de poulet, 10cl crème, curry, sel',prep:'Cuire le poulet. Ajouter crème et curry.',i:'https://picsum.photos/id/127/400/300'},
+      {n:'Crêpes',cat:'Dessert',ing:'250g farine, 3 oeufs, 500ml lait, 50g beurre',prep:'Mélanger. Laisser reposer 30 min. Cuire.',i:'https://picsum.photos/id/127/400/300'}
+    ].map(r=>({...r,id:hashId(r.n)}));
   }
   shuffledRecipes=shuffleWithSeason(recipes);
   setupCategoryBar();renderCard();renderGrid();renderWeekly();
@@ -1481,8 +1487,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetails();clos
    ================================================================
    Auth : gérée par Firebase Authentication (e-mail/mot de passe + Google).
    Données de profil (pseudo, avatar, régime, allergies, foyer, code de
-   partage) : stockées en localStorage sous 'holli_profiles_v1', indexées
-   par uid Firebase — en attente de la prochaine étape (migration Firestore).
+   partage) : synchronisées sur Firestore (collection 'users'), avec un
+   cache local en localStorage sous 'holli_profiles_v1' indexé par uid.
 ================================================================= */
 const REGIME_OPTIONS=['Omnivore','Végétarien','Vegan','Sans gluten','Sans lactose','Halal','Kasher','Keto','Low Carb'];
 const COOKTIME_OPTIONS=[{v:'express',l:'⚡ Express (<15min)'},{v:'normal',l:'🍳 Normal'},{v:'passionne',l:'👨‍🍳 Passionné'}];
