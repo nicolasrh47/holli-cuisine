@@ -2017,11 +2017,37 @@ function getAvoidList(){
   const p=currentUser.profile;
   return[...(p.allergies||[]),...(p.dislikes||[])].filter(Boolean);
 }
+// Une allergie déclarée comme "gluten" ou "lactose" ne matche rien en
+// recherche littérale (le mot "gluten" n'apparaît jamais dans "farine de
+// blé"). On étend chaque grande famille d'allergène vers ses ingrédients
+// concrets ; tout ce qui n'est pas dans cette liste reste comparé tel quel
+// (ex: un ingrédient précis comme "coriandre" continue de matcher direct).
+const ALLERGEN_KEYWORDS={
+  'gluten':['farine','ble','pain','pates','chapelure','semoule','orge','seigle','avoine','couscous','biscuit','brioche','pate feuilletee','pate brisee','tortilla','nouilles','vermicelle','crepe'],
+  'lactose':['lait','creme','beurre','fromage','yaourt','mascarpone','parmesan','gruyere','mozzarella','ricotta','camembert','emmental','feta','chevre','beaufort'],
+  'produits laitiers':['lait','creme','beurre','fromage','yaourt','mascarpone','parmesan','gruyere','mozzarella','ricotta','camembert','emmental','feta','chevre','beaufort'],
+  'oeuf':['oeuf'],'oeufs':['oeuf'],
+  'fruits a coque':['amande','noisette','noix','pistache','cajou','pecan','macadamia','pralin'],
+  'arachide':['arachide','cacahuete'],'arachides':['arachide','cacahuete'],'cacahuete':['arachide','cacahuete'],
+  'poisson':['saumon','thon','cabillaud','poisson','truite','anchois','sardine','colin','merlan','dorade'],
+  'poissons':['saumon','thon','cabillaud','poisson','truite','anchois','sardine','colin','merlan','dorade'],
+  'crustaces':['crevette','crabe','homard','langouste','langoustine'],
+  'fruits de mer':['crevette','crabe','homard','langouste','langoustine','moule','huitre','escargot','calamar','poulpe','saint-jacques'],
+  'mollusques':['moule','huitre','escargot','calamar','poulpe','saint-jacques'],
+  'soja':['soja','tofu','edamame'],
+  'celeri':['celeri'],
+  'moutarde':['moutarde'],
+  'sesame':['sesame','tahini']
+};
 function getAllergyMatches(recipe){
   const avoid=getAvoidList();
   if(!avoid.length||!recipe)return[];
-  const ing=recipe.ing.toLowerCase();
-  return avoid.filter(a=>ing.includes(a.toLowerCase()));
+  const ing=normalizeSearchText(recipe.ing);
+  return avoid.filter(a=>{
+    const na=normalizeSearchText(a);
+    const keywords=ALLERGEN_KEYWORDS[na]||[na];
+    return keywords.some(k=>ing.includes(normalizeSearchText(k)));
+  });
 }
 // Recettes utilisées par les parcours "automatiques" (swipe, semaine, aperçu
 // catalogue) : celles qui contiennent une allergie/un ingrédient détesté sont
