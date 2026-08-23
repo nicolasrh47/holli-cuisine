@@ -1,4 +1,4 @@
-const CACHE_NAME = 'holli-shell-v1';
+const CACHE_NAME = 'holli-shell-v2';
 const SHELL_ASSETS = [
   './',
   './index.html',
@@ -35,8 +35,11 @@ self.addEventListener('fetch', (event) => {
     SHELL_ASSETS.some((asset) => url.pathname.endsWith(asset.replace('./', '')));
 
   if (request.mode === 'navigate' || isShellAsset) {
+    // no-store : on veut toujours la dernière version depuis le réseau, jamais
+    // celle du cache HTTP du navigateur (GitHub Pages renvoie max-age=600, donc
+    // sans ça une page rechargée dans les 10 minutes resterait périmée).
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: 'no-store' })
         .then((response) => {
           const copy = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
