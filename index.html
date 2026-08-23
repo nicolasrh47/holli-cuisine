@@ -1519,7 +1519,10 @@ function renderCart(){
     html+='</div>';
   }
   html+=`<div class="section-title">À trouver — ${unchecked.length} restant(s)</div>`;
-  if(allFound){html+=`<button class="tout-trouve-btn" onclick="clearCartIngredients()"><span class="tt-emoji">🎉</span><span class="tt-label">Tout trouvé !</span><span class="tt-sub">Appuie pour vider les courses · Les recettes restent dans Cook !</span></button>`;}
+  if(allFound){
+    html+=`<button class="tout-trouve-btn" onclick="clearCartIngredients()"><span class="tt-emoji">🎉</span><span class="tt-label">Tout trouvé !</span><span class="tt-sub">Les courses se vident automatiquement… (ou appuie pour aller cuisiner)</span></button>`;
+    if(!autoClearTimer)autoClearTimer=setTimeout(()=>{autoClearTimer=null;clearCartIngredients(false);},1800);
+  }
   if(unchecked.length>0){
     const byRayon={};
     unchecked.forEach(ing=>{const r=ing.isMaison?'✨ Maison':ing.isExtra?'➕ Ajouts':getRayon(ing.displayName);if(!byRayon[r])byRayon[r]=[];byRayon[r].push(ing);});
@@ -1533,13 +1536,16 @@ function renderCart(){
   cartListEl.innerHTML=html;
   updateCartBadge(); // met à jour la pastille après chaque rendu
 }
-function clearCartIngredients(){
+let autoClearTimer=null;
+function clearCartIngredients(goToCooking){
+  if(goToCooking===undefined)goToCooking=true;
+  if(autoClearTimer){clearTimeout(autoClearTimer);autoClearTimer=null;}
   homeCart=[];extraItems=[];checkedItems.clear();manualQtys={};
   localStorage.removeItem('holli_checked');localStorage.removeItem('holli_manual_qtys');localStorage.removeItem('holli_extras');
   localStorage.setItem('holli_home_v4',JSON.stringify(homeCart));
   save();renderCart();renderMaison();
   showToast('✓ Courses vidées ! Les recettes restent dans Cook 👨‍🍳');
-  setTimeout(()=>switchPage('cooking'),1400);
+  if(goToCooking)setTimeout(()=>switchPage('cooking'),1400);
 }
 function ingRow(ing){
   const isChecked=checkedItems.has(ing.key);
