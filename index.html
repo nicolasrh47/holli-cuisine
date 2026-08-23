@@ -1298,8 +1298,28 @@ function toggleWeekCourse(key){
   renderWeekCourseSelector();
   renderWeekMenu();
 }
+// Table construite à partir des catégories réelles du Google Sheet (classement
+// par cuisine/thème, pas par type de plat — donc pas de mot "dessert"/"entrée"
+// à détecter automatiquement dans la plupart des cas). Toute nouvelle catégorie
+// pas encore listée ici retombe sur l'heuristique par mot-clé, puis "plat" par défaut.
+const CAT_COURSE_MAP={
+  '🇫🇷 terroir francais':'plat','🇮🇹 italien':'plat','🏮 asiatique':'plat',
+  '🇺🇸 americain / street food':'plat','🇪🇸 espagnol / mediterranee':'plat','🐪 oriental / maghreb':'plat',
+  '🐟 poissons & crustaces':'plat','🥔 accompagnements & gratins':'plat','🥩 viandes & volailles':'plat',
+  '🇮🇹':'plat','🇱🇧':'plat','🇯🇵':'plat','🇪🇸':'plat','🇺🇸':'plat','🇮🇳':'plat','🇲🇦':'plat',
+  '🇲🇽':'plat','🇬🇷':'plat','🇹🇭':'plat','🇵🇪':'plat','🇹🇷':'plat','🇧🇷':'plat',
+  '🌾':'plat','🍞':'plat','🍢':'plat','🥚':'plat','🌯':'plat','🍗':'plat','🍄':'plat','🐟':'plat','🥩':'plat','🥢':'plat','🌴':'plat',
+  '🥗 entrees & salades':'entree','🍲 soupes & veloutes':'entree','🍤 tapas & apero':'entree','🥧 tartes & quiches salees':'entree',
+  '🍲':'entree','🥗':'entree','🍤':'entree','🥒':'entree','🥑':'entree',
+  '🍫 tout chocolat':'dessert','🍏 tartes & crumbles':'dessert','🍮 cremes & entremets':'dessert',
+  '🍦 glaces & fruits frais':'dessert','🥐 patisseries de fete':'dessert','🥞 gouters & crepes':'dessert',
+  '🍮':'dessert','🍰':'dessert','🍪':'dessert','🍫':'dessert','☕':'dessert','🍏':'dessert','🥧':'dessert',
+  '🧁':'dessert','🍋':'dessert','🍊':'dessert','🍧':'dessert','🍓':'dessert','🍌':'dessert','🥥':'dessert',
+  '🍯':'dessert','🍇':'dessert','pineapple':'dessert','🍐':'dessert','🥞':'dessert'
+};
 function courseKeyForRecipe(r){
   const c=normalizeSearchText(r.cat||'');
+  if(CAT_COURSE_MAP[c])return CAT_COURSE_MAP[c];
   if(c.includes('dessert'))return'dessert';
   if(c.includes('entree'))return'entree';
   return'plat';
