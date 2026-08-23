@@ -416,8 +416,10 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
 
 <div id="catalogue-modal">
   <button onclick="closeCatalogueModal()" class="mb-4 font-black text-orange-500 text-xs uppercase">← Retour</button>
-  <h2 class="text-2xl font-[900] italic uppercase tracking-tighter mb-4">Toutes les recettes</h2>
-  <input id="catalogue-search" placeholder="🔍 Rechercher une recette…" oninput="renderGrid()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:14px;background:var(--card);color:var(--text)">
+  <h2 class="text-2xl font-[900] italic uppercase tracking-tighter mb-1" id="catalogue-modal-title">Toutes les recettes</h2>
+  <p class="text-slate-400 font-bold text-[11px] mb-4" id="catalogue-count"></p>
+  <input id="catalogue-search" placeholder="🔍 Rechercher une recette…" oninput="renderGrid()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:12px;background:var(--card);color:var(--text)">
+  <button id="hide-allergens-btn" onclick="toggleHideAllergens()" class="mais-cat-tab mb-4" style="display:none">🙈 Masquer mes allergènes</button>
   <div id="category-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-5 pb-2"></div>
   <div id="grid" class="grid grid-cols-2 gap-4"></div>
 </div>
@@ -542,6 +544,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
     <h2 class="text-2xl font-[900] italic uppercase tracking-tighter mb-1" id="weekTitle">🗓 Crée ta semaine</h2>
     <p class="text-slate-400 font-bold text-sm" id="weekSubtitle">Choisis le nombre de repas, on s'occupe du reste.</p>
   </div>
+  <div id="week-progress" class="mb-4"></div>
   <div class="mb-2">
     <p class="section-title">Combien de repas ?</p>
     <div class="nb-selector" id="nb-selector"></div>
@@ -1175,12 +1178,17 @@ function renderCataloguePreview(){
   el.innerHTML=sample.map(r=>`<img src="${r.i}" alt="" loading="lazy">`).join('');
 }
 
+let hideAllergens=false;
+function toggleHideAllergens(){hideAllergens=!hideAllergens;document.getElementById('hide-allergens-btn').classList.toggle('active',hideAllergens);renderGrid();}
 function openCatalogueModal(){
   document.getElementById('catalogue-modal').classList.add('open');
   document.getElementById('catalogue-search').value='';
+  document.getElementById('catalogue-modal-title').innerText=weekPickerDayIdx!==null?'Choisis une recette':'Toutes les recettes';
+  const allergenBtn=document.getElementById('hide-allergens-btn');
+  allergenBtn.style.display=getAvoidList().length?'inline-block':'none';
   setupCategoryBar();renderGrid();
 }
-function closeCatalogueModal(){document.getElementById('catalogue-modal').classList.remove('open');}
+function closeCatalogueModal(){document.getElementById('catalogue-modal').classList.remove('open');weekPickerDayIdx=null;}
 
 function setupCategoryBar(){const cats=['Tous',...new Set(recipes.map(r=>r.cat))];document.getElementById('category-bar').innerHTML=cats.map(c=>`<button onclick="filterGrid('${c}')" class="cat-tab ${c===currentCat?'active':''}" id="tab-${c}">${c}</button>`).join('');}
 function filterGrid(cat){currentCat=cat;document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));document.getElementById('tab-'+cat)?.classList.add('active');renderGrid();}
@@ -1188,9 +1196,13 @@ function renderGrid(){
   const search=(document.getElementById('catalogue-search')?.value||'').toLowerCase().trim();
   let filtered=currentCat==='Tous'?recipes:recipes.filter(r=>r.cat===currentCat);
   if(search)filtered=filtered.filter(r=>r.n.toLowerCase().includes(search));
-  document.getElementById('grid').innerHTML=filtered.length?filtered.map(r=>`
-    <div class="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm cursor-pointer active:scale-95 transition-transform recipe-card">
-      <div onclick="showDetails(${r.id})">
+  if(hideAllergens)filtered=filtered.filter(r=>getAllergyMatches(r).length===0);
+  const countEl=document.getElementById('catalogue-count');
+  if(countEl)countEl.innerText=`${filtered.length} recette${filtered.length>1?'s':''}`;
+  const clickAction=weekPickerDayIdx!==null?'assignWeekDay':'showDetails';
+  document.getElementById('grid').innerHTML=filtered.length?filtered.map((r,idx)=>`
+    <div class="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm cursor-pointer active:scale-95 transition-transform recipe-card" style="animation:slideUp .3s ease-out ${Math.min(idx,10)*.03}s both">
+      <div onclick="${clickAction}(${r.id})">
         <img src="${r.i}" alt="${r.n}" class="h-32 w-full object-cover" loading="lazy">
         <div class="p-3"><p class="text-[10px] font-black uppercase truncate text-slate-800">${r.n}</p></div>
       </div>
@@ -1239,17 +1251,31 @@ function renderNbSelector(){
   document.getElementById('nb-selector').innerHTML=options.map(n=>`<button class="nb-btn ${weekCount===n?'active':''}" onclick="setWeekCount(${n})">${n} repas</button>`).join('');
 }
 function setWeekCount(n){weekCount=n;localStorage.setItem('holli_week_count',n);renderNbSelector();generateWeekMenu();}
+// Pioche sans remise dans une liste dédupliquée (pondérée par saison) : évite
+// que la même recette tombe deux fois dans la semaine — sauf si le nombre de
+// repas demandé dépasse le nombre de recettes disponibles.
+function uniqueSeasonalPool(exclude){
+  const seen=new Set();
+  return shuffleWithSeason(recipes).filter(r=>{
+    if(exclude&&exclude.has(r.id))return false;
+    if(seen.has(r.id))return false;
+    seen.add(r.id);return true;
+  });
+}
 function generateWeekMenu(){
   if(!recipes.length)return;
-  const pool=shuffleWithSeason([...recipes]);
   const days=DAYS.slice(0,weekCount);
+  const pool=uniqueSeasonalPool();
   weekMenu=days.map((day,i)=>({day,recipeId:pool[i%pool.length].id}));
   save();renderWeekMenu();
 }
 function swapWeekDay(dayIdx,e){
   if(e)e.stopPropagation();
   if(!recipes.length)return;
-  let pool=shuffleWithSeason(recipes.filter(r=>r.id!==weekMenu[dayIdx].recipeId));
+  const usedElsewhere=new Set(weekMenu.filter((m,i)=>i!==dayIdx&&m.recipeId!==null).map(m=>m.recipeId));
+  usedElsewhere.add(weekMenu[dayIdx].recipeId);
+  let pool=uniqueSeasonalPool(usedElsewhere);
+  if(!pool.length)pool=uniqueSeasonalPool(new Set([weekMenu[dayIdx].recipeId]));
   if(!pool.length)pool=shuffleWithSeason(recipes);
   weekMenu[dayIdx].recipeId=pool[0].id;
   save();renderWeekMenu();
@@ -1263,32 +1289,57 @@ function addAllWeekToCart(){
   weekMenu.forEach(item=>{if(item.recipeId!==null){const r=recipes.find(x=>x.id===item.recipeId);if(r)addToCart(r);}});
   showToast(`🛒 ${weekMenu.filter(m=>m.recipeId!==null).length} recettes ajoutées au panier !`);
 }
+// Estimation grossière du temps total en secondes, à partir des durées
+// détectées dans les étapes (même logique que le mode Cuisiner).
+function estimateRecipeSeconds(r){
+  const steps=r.prep.split('.').filter(s=>s.trim().length>5);
+  return steps.reduce((total,s)=>total+(detectTimer(s)||0),0);
+}
+let weekPickerDayIdx=null;
+function openWeekPicker(dayIdx,e){
+  if(e)e.stopPropagation();
+  weekPickerDayIdx=dayIdx;
+  openCatalogueModal();
+}
+function assignWeekDay(recipeId){
+  if(weekPickerDayIdx===null)return;
+  weekMenu[weekPickerDayIdx].recipeId=recipeId;
+  save();renderWeekMenu();
+  closeCatalogueModal();
+  showToast('✓ Recette choisie pour ce jour !','#3b82f6');
+}
 function renderWeekMenu(){
   if(!recipes.length){document.getElementById('week-menu-list').innerHTML='<p class="text-center py-10 opacity-30 font-black">Chargement…</p>';return;}
   if(weekMenu.length===0){generateWeekMenu();return;}
+  const planned=weekMenu.filter(m=>m.recipeId!==null).length;
+  const total=weekMenu.length;
+  const pct=total?Math.round((planned/total)*100):0;
+  document.getElementById('week-progress').innerHTML=`<div class="flex items-center justify-between mb-1"><span class="text-[9px] font-black text-slate-400 uppercase">${planned}/${total} jours planifiés</span><span class="text-[9px] font-black text-orange-500">${pct}%</span></div><div class="cart-progress"><div class="cart-progress-bar" style="width:${pct}%"></div></div>`;
   document.getElementById('week-menu-list').innerHTML=weekMenu.map((item,i)=>{
     if(item.recipeId===null){
       return`<div class="week-page-card" style="opacity:.45">
         <div class="w-20 h-20 bg-slate-100 flex items-center justify-center text-3xl flex-shrink-0">🍽️</div>
         <div class="week-page-body"><div class="week-page-day">${item.day}</div><div class="week-page-name text-slate-400">Aucune recette</div></div>
         <div class="week-page-actions">
-          <button class="wpa-btn wpa-swap" onclick="swapWeekDay(${i},event)" title="Changer">🔄</button>
+          <button class="wpa-btn wpa-swap" onclick="openWeekPicker(${i},event)" title="Choisir">🔍</button>
+          <button class="wpa-btn wpa-swap" onclick="swapWeekDay(${i},event)" title="Aléatoire">🔄</button>
         </div>
       </div>`;
     }
     const r=recipes.find(x=>x.id===item.recipeId);if(!r)return'';
-    const isFav=favorites.has(r.id);
+    const secs=estimateRecipeSeconds(r);
+    const timeLabel=secs>0?` · ⏱ ~${Math.max(1,Math.round(secs/60))} min`:'';
     return`<div class="week-page-card" style="animation:slideUp .3s ease-out ${i*.05}s both">
       <img class="week-page-img" src="${r.i}" alt="${r.n}" loading="lazy" onclick="showDetails(${r.id})">
       <div class="week-page-body" onclick="showDetails(${r.id})">
         <div class="week-page-day">${item.day}</div>
         <div class="week-page-name">${r.n}${allergyBadgeHTML(r,'inline')}</div>
-        <div style="font-size:9px;color:#94a3b8;font-weight:700;margin-top:2px">${r.cat}</div>
+        <div style="font-size:9px;color:#94a3b8;font-weight:700;margin-top:2px">${r.cat}${timeLabel}</div>
       </div>
       <div class="week-page-actions">
         <button class="wpa-btn wpa-add" onclick="addToCart(recipes.find(x=>x.id===${r.id}));event.stopPropagation();" title="Ajouter au panier">+</button>
-        <button class="wpa-btn wpa-fav ${isFav?'active':''}" data-fav-id="${r.id}" onclick="toggleFav(${r.id},event)" title="Favori">${isFav?'❤️':'🤍'}</button>
-        <button class="wpa-btn wpa-swap" onclick="swapWeekDay(${i},event)" title="Changer">🔄</button>
+        <button class="wpa-btn wpa-swap" onclick="openWeekPicker(${i},event)" title="Choisir">🔍</button>
+        <button class="wpa-btn wpa-swap" onclick="swapWeekDay(${i},event)" title="Aléatoire">🔄</button>
         <button class="wpa-btn wpa-del" onclick="removeWeekDay(${i},event)" title="Supprimer">✕</button>
       </div>
     </div>`;
