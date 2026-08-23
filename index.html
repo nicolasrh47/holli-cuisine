@@ -1769,7 +1769,8 @@ function shouldAlert(n,f){if(!f||!itemLastBought[n])return false;return(new Date
 function predictNextBuy(n,f){if(!f||!itemLastBought[n])return null;const d=new Date(itemLastBought[n]);d.setDate(d.getDate()+freqDays(f));return d;}
 function getSuggestions(){const now=new Date();return maisonItems.filter(item=>{if(homeCart.includes(item.n))return false;const next=predictNextBuy(item.n,item.freq);if(!next)return false;const diff=(next-now)/864e5;return diff<=3&&diff>-7;}).slice(0,5);}
 function renderMaison(){
-  const search=(document.getElementById('maison-search')?.value||'').toLowerCase();
+  const rawSearch=(document.getElementById('maison-search')?.value||'').trim();
+  const searchTerms=normalizeSearchText(rawSearch).split(/\s+/).filter(Boolean);
   const allCats=['Tous',...new Set(maisonItems.map(i=>i.cat))];
   document.getElementById('maison-cat-bar').innerHTML=allCats.map(c=>`<button onclick="setMaisonCat('${c.replace(/'/g,"\\'")}')" class="mais-cat-tab ${c===currentMaisonCat?'active':''}">${c}</button>`).join('');
   const alertItems=maisonItems.filter(item=>shouldAlert(item.n,item.freq)&&!homeCart.includes(item.n));
@@ -1778,7 +1779,7 @@ function renderMaison(){
   document.getElementById('maison-suggestions').innerHTML=sugs.length?`<p class="text-[9px] font-black text-purple-500 uppercase mb-2">💡 Suggestions</p><div class="flex flex-wrap gap-2 mb-3">${sugs.map(item=>`<span class="suggestion-chip" onclick="toggleHome('${item.n.replace(/'/g,"\\'")}')">${item.i} ${item.n}</span>`).join('')}</div>`:'';
   let filtered=maisonItems;
   if(currentMaisonCat!=='Tous')filtered=filtered.filter(i=>i.cat===currentMaisonCat);
-  if(search)filtered=filtered.filter(i=>i.n.toLowerCase().includes(search));
+  if(searchTerms.length)filtered=filtered.filter(i=>searchTerms.every(t=>normalizeSearchText(i.n).includes(t)));
   if(!filtered.length){document.getElementById('maison-content').innerHTML='<p class="text-center py-16 opacity-20 font-black">Aucun article trouvé</p>';return;}
   const bycat={};filtered.forEach(item=>{if(!bycat[item.cat])bycat[item.cat]=[];bycat[item.cat].push(item);});
   let html='';
