@@ -735,6 +735,12 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
       <button onclick="handleLogout()" class="text-red-500 font-black text-[10px] uppercase bg-red-50 px-4 py-2 rounded-full">Déconnexion</button>
     </div>
   </div>
+
+  <div class="section-title" style="color:#ef4444">Zone dangereuse</div>
+  <div class="profile-card">
+    <p class="text-[11px] font-bold text-slate-400 mb-3">Supprime définitivement ton compte, ton profil et tes préférences. Cette action est irréversible.</p>
+    <button onclick="handleDeleteAccount()" class="w-full bg-red-50 text-red-600 font-black text-xs uppercase py-3 rounded-full active:scale-95 transition-transform">🗑️ Supprimer mon compte</button>
+  </div>
 </section>
 
 <nav class="nav-bar glass">
@@ -2061,6 +2067,48 @@ function handleGoogleAuth(){
 function handleLogout(){
   if(householdUnsub){householdUnsub();householdUnsub=null;}
   fbAuth.signOut();
+}
+
+// Suppression de compte (profil Firestore + compte Firebase Auth). Ne touche pas aux données
+// du foyer partagé (Firestore households/{shareCode}) : elles ne sont pas propres à un seul
+// membre et restent utiles au reste du foyer si le code est encore partagé.
+function handleDeleteAccount(){
+  if(!currentUser)return;
+  if(!confirm('Supprimer définitivement ton compte ? Ton profil, tes préférences et tes allergies seront effacés. Cette action est irréversible.'))return;
+  const uid=currentUser.uid;
+  const all=getLocalProfiles();
+  delete all[uid];
+  saveLocalProfiles(all);
+  db.collection('users').doc(uid).delete().catch(e=>console.warn('Suppression profil Firestore échouée',e));
+  const fbUser=fbAuth.currentUser;
+  if(!fbUser){finishAccountDeletion();return;}
+  fbUser.delete().then(finishAccountDeletion).catch(err=>{
+    if(err.code==='auth/requires-recent-login')reauthenticateAndDeleteAccount(fbUser);
+    else showToast('Erreur : '+(err.message||'réessaie plus tard'),'#ef4444');
+  });
+}
+function reauthenticateAndDeleteAccount(fbUser){
+  const isGoogle=(fbUser.providerData[0]?.providerId||'').includes('google');
+  if(isGoogle){
+    const isStandalone=window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;
+    if(isStandalone){
+      showToast('Ouvre l\'app dans Safari (pas depuis l\'icône) pour confirmer la suppression.','#ef4444');
+      return;
+    }
+    fbUser.reauthenticateWithPopup(new firebase.auth.GoogleAuthProvider()).then(()=>{
+      fbUser.delete().then(finishAccountDeletion).catch(e=>showToast('Erreur : '+(e.message||'réessaie'),'#ef4444'));
+    }).catch(()=>showToast('Ré-authentification annulée.','#ef4444'));
+    return;
+  }
+  const pw=prompt('Pour confirmer la suppression, entre à nouveau ton mot de passe :');
+  if(!pw)return;
+  fbUser.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(fbUser.email,pw)).then(()=>{
+    fbUser.delete().then(finishAccountDeletion).catch(e=>showToast('Erreur : '+(e.message||'réessaie'),'#ef4444'));
+  }).catch(e=>showToast(authErrorMessage(e),'#ef4444'));
+}
+function finishAccountDeletion(){
+  if(householdUnsub){householdUnsub();householdUnsub=null;}
+  showToast('✓ Compte supprimé.','#64748b');
 }
 
 /* ---------- Onboarding ---------- */
