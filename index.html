@@ -279,10 +279,13 @@ body.dark .auth-tabs{background:#334155;}
 .auth-pw-toggle{position:absolute;right:6px;top:50%;transform:translateY(calc(-50% - 5px));width:32px;height:32px;border:none;background:none;color:var(--text);font-size:15px;cursor:pointer;opacity:.55;}
 .auth-submit[disabled],.auth-google-btn[disabled]{opacity:.6;pointer-events:none;}
 
-.onboard-card{width:100%;max-width:420px;background:var(--card);border-radius:2.5rem;padding:28px 24px 24px;box-shadow:0 24px 60px -12px rgba(0,0,0,.15);border:1.5px solid var(--border);}
-.onboard-progress{height:5px;background:#f1f5f9;border-radius:99px;overflow:hidden;margin-bottom:22px;}
+.onboard-card{position:relative;width:100%;max-width:420px;background:var(--card);border-radius:2.5rem;padding:28px 24px 24px;box-shadow:0 24px 60px -12px rgba(0,0,0,.15);border:1.5px solid var(--border);}
+.onboard-cancel-btn{position:absolute;top:18px;right:18px;width:30px;height:30px;border-radius:50%;border:none;background:#f1f5f9;color:#64748b;font-size:13px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:1;}
+body.dark .onboard-cancel-btn{background:#334155;color:#cbd5e1;}
+.onboard-progress{height:5px;background:#f1f5f9;border-radius:99px;overflow:hidden;margin-bottom:6px;}
 body.dark .onboard-progress{background:#334155;}
 .onboard-progress-fill{height:100%;background:linear-gradient(90deg,#f97316,#fb923c);border-radius:99px;transition:width .35s;}
+.onboard-step-indicator{font-size:9px;font-weight:900;color:var(--text2);text-transform:uppercase;letter-spacing:1px;text-align:center;margin-bottom:16px;}
 .onboard-step{display:none;animation:fadeIn .3s ease-out;}
 .onboard-step.active{display:block;}
 .onboard-step h2{font-size:19px;font-weight:900;font-style:italic;text-transform:uppercase;color:var(--text);margin-bottom:4px;letter-spacing:-.5px;}
@@ -296,6 +299,10 @@ body.dark .onboard-progress{background:#334155;}
 .onboard-next-btn:active{transform:scale(.96);}
 .onboard-textarea{width:100%;border:2px solid var(--border);border-radius:1.1rem;padding:12px 14px;font-size:13px;font-weight:700;font-family:inherit;outline:none;resize:none;min-height:70px;background:var(--card);color:var(--text);margin-bottom:12px;}
 .onboard-textarea:focus{border-color:#f97316;}
+.allergy-chip-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.allergy-chip-btn{padding:6px 12px;border-radius:99px;font-size:10px;font-weight:800;border:1.5px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;transition:.2s;}
+.allergy-chip-btn.active{background:#fef2f2;border-color:#ef4444;color:#b91c1c;}
+body.dark .allergy-chip-btn.active{background:#3f1d1d;border-color:#b91c1c;color:#fca5a5;}
 .onboard-recur-cat{font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin:12px 0 6px;}
 .onboard-recur-cat:first-child{margin-top:0;}
 .onboard-recur-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:1rem;border:1.5px solid var(--border);margin-bottom:6px;background:var(--card);cursor:pointer;}
@@ -386,11 +393,13 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
 <!-- ========== ONBOARDING ========== -->
 <div id="onboard-screen">
   <div class="onboard-card">
-    <div class="onboard-progress"><div class="onboard-progress-fill" id="onboard-progress-fill" style="width:25%"></div></div>
+    <button id="onboard-cancel-btn" onclick="cancelOnboarding()" class="onboard-cancel-btn" style="display:none" type="button">✕</button>
+    <div class="onboard-progress"><div class="onboard-progress-fill" id="onboard-progress-fill" style="width:20%"></div></div>
+    <p class="onboard-step-indicator" id="onboard-step-indicator">Étape 1/5</p>
 
     <div class="onboard-step active" id="onboard-step-1">
       <h2>🍽️ Ton régime alimentaire</h2>
-      <p class="sub">On adaptera les recettes en conséquence.</p>
+      <p class="sub">On adaptera les recettes en conséquence. Tu peux en choisir plusieurs.</p>
       <div class="onboard-options" id="onboard-regime-options"></div>
     </div>
 
@@ -410,7 +419,8 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
       <h2>⚠️ Allergies &amp; à éviter</h2>
       <p class="sub">Sépare les ingrédients par des virgules.</p>
       <p class="pref-label" style="margin-bottom:6px">Allergies</p>
-      <textarea id="onboard-allergies" class="onboard-textarea" placeholder="Ex: arachide, fruits de mer…"></textarea>
+      <div class="allergy-chip-bar" id="onboard-allergy-chips"></div>
+      <textarea id="onboard-allergies" class="onboard-textarea" placeholder="Ex: arachide, fruits de mer…" oninput="renderAllergyChips()"></textarea>
       <p class="pref-label" style="margin-bottom:6px">Ingrédients détestés</p>
       <textarea id="onboard-dislikes" class="onboard-textarea" placeholder="Ex: champignons, coriandre…"></textarea>
     </div>
@@ -427,6 +437,8 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
     <div class="onboard-step" id="onboard-step-5">
       <h2>🔁 Articles récurrents</h2>
       <p class="sub">Coche ce que tu rachètes régulièrement (papier toilette, lessive…) et dis-nous tous les combien — l'app te les ajoutera automatiquement à ta liste de courses au bon moment.</p>
+      <input id="onboard-recurring-search" placeholder="🔍 Rechercher un article…" oninput="renderOnboardRecurring()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:12px;background:var(--card);color:var(--text)">
+      <div id="onboard-recurring-cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-4 pb-1"></div>
       <div id="onboard-recurring-list" style="max-height:280px;overflow-y:auto"></div>
     </div>
 
@@ -1893,12 +1905,18 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetails();clos
 const REGIME_OPTIONS=['Omnivore','Végétarien','Vegan','Sans gluten','Sans lactose','Halal','Kasher','Keto','Low Carb'];
 const COOKTIME_OPTIONS=[{v:'express',l:'⚡ Express (<15min)'},{v:'normal',l:'🍳 Normal'},{v:'passionne',l:'👨‍🍳 Passionné'}];
 const AVATAR_CHOICES=['🙂','😎','🧑‍🍳','👩‍🍳','🥑','🍕','🍜','🐱','🐶','🌶️'];
+const COMMON_ALLERGENS=['Gluten','Lactose','Œuf','Fruits à coque','Arachide','Poisson','Crustacés','Soja','Moutarde','Sésame'];
 
 let currentUser=null;
 let authTab='login';
 let onboardStep=1;
 let onboardEditMode=false;
-let onboardDraft={regime:'Omnivore',householdSize:2,allergies:[],dislikes:[],budget:'',cookTime:'normal',recurringItems:[]};
+let currentOnboardRecurringCat='Tous';
+let onboardDraft={regime:['Omnivore'],householdSize:2,allergies:[],dislikes:[],budget:'',cookTime:'normal',recurringItems:[]};
+function normalizeRegime(profile){
+  if(!profile)return;
+  if(!Array.isArray(profile.regime))profile.regime=profile.regime?[profile.regime]:['Omnivore'];
+}
 
 function genShareCode(){return Math.random().toString(36).substring(2,8).toUpperCase();}
 function getLocalProfiles(){return JSON.parse(localStorage.getItem('holli_profiles_v1'))||{};}
@@ -1907,7 +1925,7 @@ function getLocalProfile(uid){return getLocalProfiles()[uid]||null;}
 function saveLocalProfile(uid,record){const all=getLocalProfiles();all[uid]=record;saveLocalProfiles(all);}
 function defaultProfileRecord(pseudo,avatar){
   return{pseudo,avatar:avatar||'🙂',createdAt:new Date().toISOString(),onboarded:false,shareCode:genShareCode(),
-    profile:{regime:'Omnivore',householdSize:2,allergies:[],dislikes:[],budget:'',cookTime:'normal',recurringItems:[]}};
+    profile:{regime:['Omnivore'],householdSize:2,allergies:[],dislikes:[],budget:'',cookTime:'normal',recurringItems:[]}};
 }
 async function buildCurrentUserFromFirebaseUser(fbUser){
   let local=null;
@@ -1920,6 +1938,7 @@ async function buildCurrentUserFromFirebaseUser(fbUser){
     local=defaultProfileRecord(fbUser.displayName||(fbUser.email?fbUser.email.split('@')[0]:'Utilisateur'),'🙂');
     db.collection('users').doc(fbUser.uid).set(local).catch(e=>console.warn('Création profil Firestore échouée',e));
   }
+  normalizeRegime(local.profile);
   saveLocalProfile(fbUser.uid,local);
   const isGoogle=(fbUser.providerData[0]?.providerId||'').includes('google');
   return{
@@ -2027,14 +2046,19 @@ function handleLogout(){
 async function startOnboarding(editMode){
   onboardEditMode=!!editMode;
   onboardStep=1;
+  currentOnboardRecurringCat='Tous';
   onboardDraft=JSON.parse(JSON.stringify(currentUser.profile));
   if(!onboardDraft.recurringItems)onboardDraft.recurringItems=[];
-  document.getElementById('onboard-regime-options').innerHTML=REGIME_OPTIONS.map(r=>`<button type="button" class="onboard-opt ${onboardDraft.regime===r?'active':''}" onclick="setOnboardRegime('${r}')">${r}</button>`).join('');
+  normalizeRegime(onboardDraft);
+  document.getElementById('onboard-regime-options').innerHTML=REGIME_OPTIONS.map(r=>`<button type="button" class="onboard-opt ${onboardDraft.regime.includes(r)?'active':''}" onclick="toggleOnboardRegime('${r}')">${r}</button>`).join('');
   document.getElementById('onboard-cooktime-options').innerHTML=COOKTIME_OPTIONS.map(c=>`<button type="button" class="onboard-opt ${onboardDraft.cookTime===c.v?'active':''}" onclick="setOnboardCookTime('${c.v}')">${c.l}</button>`).join('');
   document.getElementById('onboard-allergies').value=(onboardDraft.allergies||[]).join(', ');
   document.getElementById('onboard-dislikes').value=(onboardDraft.dislikes||[]).join(', ');
   document.getElementById('onboard-budget').value=onboardDraft.budget||'';
   document.getElementById('onboard-household-disp').innerText=`${onboardDraft.householdSize} PERS.`;
+  document.getElementById('onboard-recurring-search').value='';
+  document.getElementById('onboard-cancel-btn').style.display=onboardEditMode?'flex':'none';
+  renderAllergyChips();
   document.getElementById('app-shell').style.display='none';
   document.getElementById('auth-screen').classList.remove('show');
   goToOnboardStep(1);
@@ -2042,20 +2066,65 @@ async function startOnboarding(editMode){
   if(!maisonItems.length)await loadMaisonItems();
   renderOnboardRecurring();
 }
+function cancelOnboarding(){
+  document.getElementById('onboard-screen').classList.remove('show');
+  document.getElementById('app-shell').style.display='block';
+}
 function goToOnboardStep(n){
   onboardStep=n;
   document.querySelectorAll('.onboard-step').forEach((el,i)=>el.classList.toggle('active',i===n-1));
   document.getElementById('onboard-progress-fill').style.width=`${n*20}%`;
+  document.getElementById('onboard-step-indicator').innerText=`Étape ${n}/5`;
   document.getElementById('onboard-back-btn').style.visibility=n===1?'hidden':'visible';
   document.getElementById('onboard-next-btn').innerText=n===5?(onboardEditMode?'✓ Enregistrer':'✓ Terminer'):'Suivant →';
 }
 function onboardNext(){if(onboardStep<5)goToOnboardStep(onboardStep+1);else finishOnboarding();}
+function renderAllergyChips(){
+  const el=document.getElementById('onboard-allergy-chips');if(!el)return;
+  const current=(document.getElementById('onboard-allergies').value||'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
+  el.innerHTML=COMMON_ALLERGENS.map(a=>`<button type="button" class="allergy-chip-btn ${current.includes(a.toLowerCase())?'active':''}" onclick="toggleAllergyChip('${a.replace(/'/g,"\\'")}')">${a}</button>`).join('');
+}
+function toggleAllergyChip(term){
+  const ta=document.getElementById('onboard-allergies');
+  const norm=t=>t.trim().toLowerCase();
+  const vals=ta.value.split(',').map(s=>s.trim()).filter(Boolean);
+  const idx=vals.findIndex(v=>norm(v)===norm(term));
+  if(idx>-1)vals.splice(idx,1);else vals.push(term);
+  ta.value=vals.join(', ');
+  renderAllergyChips();
+}
 function renderOnboardRecurring(){
   const el=document.getElementById('onboard-recurring-list');if(!el)return;
   if(!maisonItems.length){el.innerHTML='<p class="text-center py-8 opacity-40 font-bold text-xs">Chargement…</p>';return;}
+  const catBarEl=document.getElementById('onboard-recurring-cat-bar');
+  if(catBarEl){
+    const allCats=['Tous',...new Set(maisonItems.map(i=>i.cat))];
+    catBarEl.innerHTML=allCats.map(c=>`<button onclick="setOnboardRecurringCat('${c.replace(/'/g,"\\'")}')" class="mais-cat-tab ${c===currentOnboardRecurringCat?'active':''}">${c}</button>`).join('');
+  }
+  let activeHtml='';
+  if(onboardDraft.recurringItems.length){
+    activeHtml+='<p class="onboard-recur-cat">Mes articles actifs</p>';
+    onboardDraft.recurringItems.forEach(item=>{
+      const safeName=item.name.replace(/'/g,"\\'");
+      activeHtml+=`<div class="onboard-recur-item active onboard-recur-item-fixed">
+        <span>${item.icon}</span>
+        <span class="onboard-recur-name">${item.name}</span>
+        <select class="onboard-recur-freq" onchange="setOnboardRecurringFreq('${safeName}',this.value)">
+          ${[7,14,30,60,90].map(d=>`<option value="${d}" ${item.freqDays===d?'selected':''}>${d<30?d+' j':(d/30)+' mois'}</option>`).join('')}
+        </select>
+        <button class="onboard-recur-remove" onclick="removeOnboardRecurring('${safeName}')">✕</button>
+      </div>`;
+    });
+  }
+  const rawSearch=(document.getElementById('onboard-recurring-search')?.value||'').trim();
+  const searchTerms=normalizeSearchText(rawSearch).split(/\s+/).filter(Boolean);
+  let visibleItems=maisonItems;
+  if(currentOnboardRecurringCat!=='Tous')visibleItems=visibleItems.filter(i=>i.cat===currentOnboardRecurringCat);
+  if(searchTerms.length)visibleItems=visibleItems.filter(i=>searchTerms.every(t=>normalizeSearchText(i.n).includes(t)));
+  if(!visibleItems.length){el.innerHTML=activeHtml+'<p class="text-center py-16 opacity-20 font-black">Aucun article trouvé</p>';return;}
   const bycat={};
-  maisonItems.forEach(item=>{if(!bycat[item.cat])bycat[item.cat]=[];bycat[item.cat].push(item);});
-  let html='';
+  visibleItems.forEach(item=>{if(!bycat[item.cat])bycat[item.cat]=[];bycat[item.cat].push(item);});
+  let html='<p class="onboard-recur-cat">Ajouter un article</p>';
   Object.entries(bycat).forEach(([cat,items])=>{
     html+=`<p class="onboard-recur-cat">${cat}</p>`;
     items.forEach(item=>{
@@ -2065,13 +2134,17 @@ function renderOnboardRecurring(){
       html+=`<div class="onboard-recur-item ${picked?'active':''}" onclick="toggleOnboardRecurring('${safeName}','${item.i}','${cat.replace(/'/g,"\\'")}',${defDays})">
         <span>${item.i}</span>
         <span class="onboard-recur-name">${item.n}</span>
-        ${picked?`<select class="onboard-recur-freq" onclick="event.stopPropagation()" onchange="setOnboardRecurringFreq('${safeName}',this.value)">
-          ${[7,14,30,60,90].map(d=>`<option value="${d}" ${picked.freqDays===d?'selected':''}>${d<30?d+' j':(d/30)+' mois'}</option>`).join('')}
-        </select>`:''}
+        ${picked?'<span class="onboard-recur-check">✓</span>':''}
       </div>`;
     });
   });
-  el.innerHTML=html;
+  el.innerHTML=activeHtml+html;
+}
+function setOnboardRecurringCat(cat){currentOnboardRecurringCat=cat;renderOnboardRecurring();}
+function removeOnboardRecurring(name){
+  const idx=onboardDraft.recurringItems.findIndex(r=>r.name===name);
+  if(idx>-1)onboardDraft.recurringItems.splice(idx,1);
+  renderOnboardRecurring();
 }
 function toggleOnboardRecurring(name,icon,cat,defDays){
   const idx=onboardDraft.recurringItems.findIndex(r=>r.name===name);
@@ -2084,7 +2157,11 @@ function setOnboardRecurringFreq(name,days){
   if(item)item.freqDays=parseInt(days);
 }
 function onboardBack(){if(onboardStep>1)goToOnboardStep(onboardStep-1);}
-function setOnboardRegime(r){onboardDraft.regime=r;document.querySelectorAll('#onboard-regime-options .onboard-opt').forEach(b=>b.classList.toggle('active',b.innerText===r));}
+function toggleOnboardRegime(r){
+  const idx=onboardDraft.regime.indexOf(r);
+  if(idx>-1)onboardDraft.regime.splice(idx,1);else onboardDraft.regime.push(r);
+  document.querySelectorAll('#onboard-regime-options .onboard-opt').forEach(b=>b.classList.toggle('active',onboardDraft.regime.includes(b.innerText)));
+}
 function setOnboardCookTime(v){onboardDraft.cookTime=v;document.querySelectorAll('#onboard-cooktime-options .onboard-opt').forEach((b,i)=>b.classList.toggle('active',COOKTIME_OPTIONS[i].v===v));}
 function onboardHousehold(delta){onboardDraft.householdSize=Math.max(1,onboardDraft.householdSize+delta);document.getElementById('onboard-household-disp').innerText=`${onboardDraft.householdSize} PERS.`;}
 function finishOnboarding(){
@@ -2184,7 +2261,7 @@ function renderProfilePage(){
   const p=currentUser.profile;
   const cookLabel=(COOKTIME_OPTIONS.find(c=>c.v===p.cookTime)||{}).l||p.cookTime;
   document.getElementById('profile-prefs-card').innerHTML=`
-    <div class="pref-row"><span class="pref-label">Régime</span><span class="pref-value">${p.regime}</span></div>
+    <div class="pref-row"><span class="pref-label">Régime</span><span class="pref-value">${(Array.isArray(p.regime)?p.regime:[p.regime]).join(', ')}</span></div>
     <div class="pref-row"><span class="pref-label">Foyer</span><span class="pref-value">${p.householdSize} pers.</span></div>
     <div class="pref-row"><span class="pref-label">Budget hebdo</span><span class="pref-value">${p.budget?p.budget+' €':'—'}</span></div>
     <div class="pref-row"><span class="pref-label">Temps de cuisine</span><span class="pref-value">${cookLabel}</span></div>
