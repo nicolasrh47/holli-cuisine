@@ -18,7 +18,7 @@
 :root{--bg:#f8fafc;--card:#fff;--text:#1e293b;--text2:#64748b;--border:#e2e8f0;--orange:#f97316;--green:#22c55e;--red:#ef4444;}
 *{-webkit-tap-highlight-color:transparent;box-sizing:border-box;}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);padding-bottom:calc(110px + env(safe-area-inset-bottom));padding-top:env(safe-area-inset-top);overflow-x:hidden;transition:background .3s;}
-button,.nav-item,.cat-tab,.chk,.wpa-btn{-webkit-user-select:none;user-select:none;}
+button,.nav-item,.cat-tab,.chk{-webkit-user-select:none;user-select:none;}
 body.dark{--bg:#0f172a;--card:#1e293b;--text:#f1f5f9;--text2:#94a3b8;--border:#334155;}
 body.dark .glass{background:rgba(15,23,42,.97);}
 body.dark .nav-bar{border-top-color:#1e293b;}
@@ -33,7 +33,8 @@ body.dark .fav-card{background:#1e293b;border-color:#334155;}
 body.dark .week-recipe-card{background:#1e293b;border-color:#334155;}
 body.dark .pers-pill{background:#1e293b;border-color:#334155;}
 body.dark .old-recipe-card{background:#1e293b;border-color:#334155;}
-body.dark .week-page-card{background:#1e293b;border-color:#334155;}
+body.dark .week-card-wrap{background:#1e293b;border-color:#334155;}
+body.dark .week-empty-card{background:#1e293b;border-color:#334155;}
 body.dark .cook-tab-btn{background:#1e293b;border-color:#334155;color:#94a3b8;}
 body.dark .cook-tab-btn.active{background:#f97316;border-color:#f97316;color:white;}
 
@@ -108,21 +109,23 @@ body.dark .pers-pill span{color:#f1f5f9;}
 .fav-card{background:white;border-radius:2rem;overflow:hidden;border:1.5px solid #e2e8f0;box-shadow:0 2px 12px rgba(0,0,0,.05);cursor:pointer;transition:transform .15s;margin-bottom:12px;}
 .fav-card:active{transform:scale(.97);}
 
-.week-page-card{background:white;border-radius:1.8rem;overflow:hidden;border:1.5px solid #e2e8f0;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:10px;display:flex;align-items:center;position:relative;transition:transform .15s;}
-.week-page-card:active{transform:scale(.98);}
-.week-page-img{width:80px;height:80px;object-fit:cover;flex-shrink:0;}
-.week-page-body{flex:1;padding:12px 14px;min-width:0;}
-.week-page-day{font-size:9px;font-weight:900;color:#f97316;text-transform:uppercase;letter-spacing:1px;}
-.week-page-name{font-size:12px;font-weight:900;color:#1e293b;text-transform:uppercase;font-style:italic;line-height:1.3;margin-top:2px;}
-body.dark .week-page-name{color:#f1f5f9;}
-.week-page-actions{display:flex;flex-direction:column;gap:5px;padding:8px 10px 8px 0;flex-shrink:0;}
-.wpa-btn{width:34px;height:34px;border-radius:50%;border:none;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;transition:transform .15s;}
-.wpa-btn:active{transform:scale(.88);}
-.wpa-add{background:#f97316;color:white;}
-.wpa-fav{background:#fef2f2;color:#ef4444;}
-.wpa-fav.active{background:#ef4444;color:white;}
-.wpa-swap{background:#f1f5f9;color:#64748b;}
-.wpa-del{background:#fef2f2;color:#ef4444;}
+.week-card-wrap{border-radius:1.8rem;overflow:hidden;border:1.5px solid var(--border);box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:12px;background:var(--card);}
+.week-swipe-card{position:relative;height:150px;touch-action:pan-y;cursor:grab;}
+.week-swipe-card img{width:100%;height:100%;object-fit:cover;pointer-events:none;-webkit-user-drag:none;}
+.week-swipe-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.88),rgba(0,0,0,.05) 62%,transparent);pointer-events:none;}
+.week-day-tag{position:absolute;top:12px;left:12px;background:#f97316;color:#fff;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;padding:5px 12px;border-radius:99px;pointer-events:none;z-index:2;}
+.week-swipe-hint{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.92);color:#94a3b8;font-size:8px;font-weight:800;padding:4px 9px;border-radius:99px;pointer-events:none;z-index:2;}
+.week-swipe-info{position:absolute;bottom:0;left:0;right:0;padding:14px 16px;pointer-events:none;}
+.week-swipe-name{color:#fff;font-size:15px;font-weight:900;text-transform:uppercase;font-style:italic;line-height:1.25;}
+.week-swipe-meta{color:rgba(255,255,255,.72);font-size:10px;font-weight:700;margin-top:3px;}
+.week-card-actions{display:flex;border-top:1px solid var(--border);}
+.week-card-actions button{flex:1;padding:12px 0;font-size:10px;font-weight:900;text-transform:uppercase;border:none;background:transparent;cursor:pointer;color:var(--text2);}
+.week-card-actions button:active{background:#f8fafc;}
+body.dark .week-card-actions button:active{background:#334155;}
+.week-card-actions button.danger{color:#ef4444;}
+.week-card-actions .sep{width:1px;background:var(--border);}
+.week-empty-card{border-radius:1.8rem;border:2px dashed var(--border);background:var(--card);padding:22px 16px;text-align:center;margin-bottom:12px;}
+.week-empty-day{font-size:9px;font-weight:900;color:#f97316;text-transform:uppercase;letter-spacing:1px;}
 
 .nb-selector{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
 .nb-btn{padding:10px 20px;border-radius:14px;font-size:13px;font-weight:900;border:2px solid #e2e8f0;background:white;color:#64748b;cursor:pointer;transition:all .2s;}
@@ -1325,33 +1328,70 @@ function renderWeekMenu(){
   document.getElementById('week-progress').innerHTML=`<div class="flex items-center justify-between mb-1"><span class="text-[9px] font-black text-slate-400 uppercase">${planned}/${total} jours planifiés</span><span class="text-[9px] font-black text-orange-500">${pct}%</span></div><div class="cart-progress"><div class="cart-progress-bar" style="width:${pct}%"></div></div>`;
   document.getElementById('week-menu-list').innerHTML=weekMenu.map((item,i)=>{
     if(item.recipeId===null){
-      return`<div class="week-page-card" style="opacity:.45">
-        <div class="w-20 h-20 bg-slate-100 flex items-center justify-center text-3xl flex-shrink-0">🍽️</div>
-        <div class="week-page-body"><div class="week-page-day">${item.day}</div><div class="week-page-name text-slate-400">Aucune recette</div></div>
-        <div class="week-page-actions">
-          <button class="wpa-btn wpa-swap" onclick="openWeekPicker(${i},event)" title="Choisir">🔍</button>
-          <button class="wpa-btn wpa-swap" onclick="swapWeekDay(${i},event)" title="Aléatoire">🔄</button>
+      return`<div class="week-empty-card" style="animation:slideUp .3s ease-out ${i*.05}s both">
+        <div class="week-empty-day mb-1">${item.day}</div>
+        <div class="text-3xl mb-2">🍽️</div>
+        <div class="font-black text-xs uppercase mb-3" style="color:var(--text2)">Aucune recette</div>
+        <div class="flex gap-2 justify-center">
+          <button onclick="openWeekPicker(${i},event)" class="bg-orange-500 text-white font-black text-[10px] uppercase px-4 py-2 rounded-full border-none cursor-pointer">🔍 Choisir</button>
+          <button onclick="swapWeekDay(${i},event)" class="bg-slate-100 font-black text-[10px] uppercase px-4 py-2 rounded-full border-none cursor-pointer" style="color:var(--text2)">🔄 Aléatoire</button>
         </div>
       </div>`;
     }
     const r=recipes.find(x=>x.id===item.recipeId);if(!r)return'';
     const secs=estimateRecipeSeconds(r);
     const timeLabel=secs>0?` · ⏱ ~${Math.max(1,Math.round(secs/60))} min`:'';
-    return`<div class="week-page-card" style="animation:slideUp .3s ease-out ${i*.05}s both">
-      <img class="week-page-img" src="${r.i}" alt="${r.n}" loading="lazy" onclick="showDetails(${r.id})">
-      <div class="week-page-body" onclick="showDetails(${r.id})">
-        <div class="week-page-day">${item.day}</div>
-        <div class="week-page-name">${r.n}${allergyBadgeHTML(r,'inline')}</div>
-        <div style="font-size:9px;color:#94a3b8;font-weight:700;margin-top:2px">${r.cat}${timeLabel}</div>
+    return`<div class="week-card-wrap" style="animation:slideUp .3s ease-out ${i*.05}s both">
+      <div class="week-swipe-card" id="week-card-${i}">
+        <img src="${r.i}" alt="${r.n}" loading="lazy">
+        <div class="week-swipe-overlay"></div>
+        <div class="week-day-tag">${item.day}</div>
+        <div class="week-swipe-hint">↔ Glisse</div>
+        <div class="week-swipe-info">
+          <div class="week-swipe-name">${r.n}${allergyBadgeHTML(r,'inline')}</div>
+          <div class="week-swipe-meta">${r.cat}${timeLabel}</div>
+        </div>
       </div>
-      <div class="week-page-actions">
-        <button class="wpa-btn wpa-add" onclick="addToCart(recipes.find(x=>x.id===${r.id}));event.stopPropagation();" title="Ajouter au panier">+</button>
-        <button class="wpa-btn wpa-swap" onclick="openWeekPicker(${i},event)" title="Choisir">🔍</button>
-        <button class="wpa-btn wpa-swap" onclick="swapWeekDay(${i},event)" title="Aléatoire">🔄</button>
-        <button class="wpa-btn wpa-del" onclick="removeWeekDay(${i},event)" title="Supprimer">✕</button>
+      <div class="week-card-actions">
+        <button onclick="openWeekPicker(${i},event)">🔍 Choisir</button>
+        <div class="sep"></div>
+        <button onclick="removeWeekDay(${i},event)" class="danger">✕ Retirer</button>
       </div>
     </div>`;
   }).join('');
+  weekMenu.forEach((item,i)=>{if(item.recipeId!==null)attachWeekCardSwipe(i);});
+}
+function attachWeekCardSwipe(dayIdx){
+  const el=document.getElementById('week-card-'+dayIdx);
+  if(!el)return;
+  let dragging=false,startX=0,curX=0;
+  el.addEventListener('pointerdown',e=>{
+    dragging=true;startX=e.clientX;curX=0;
+    el.style.transition='none';
+    try{el.setPointerCapture(e.pointerId);}catch(err){}
+  });
+  el.addEventListener('pointermove',e=>{
+    if(!dragging)return;
+    curX=e.clientX-startX;
+    el.style.transform=`translateX(${curX}px) rotate(${curX/20}deg)`;
+  });
+  el.addEventListener('pointerup',()=>{
+    if(!dragging)return;
+    dragging=false;
+    el.style.transition='.3s cubic-bezier(.23,1,.32,1)';
+    if(Math.abs(curX)>90){
+      el.style.transform=`translateX(${curX>0?520:-520}px) rotate(${curX>0?24:-24}deg)`;
+      el.style.opacity='0';
+      setTimeout(()=>swapWeekDay(dayIdx),200);
+    } else if(Math.abs(curX)<8){
+      el.style.transform='';
+      showDetails(weekMenu[dayIdx].recipeId);
+    } else {
+      el.style.transform='';
+    }
+    curX=0;
+  });
+  el.addEventListener('pointercancel',()=>{dragging=false;curX=0;el.style.transition='.3s';el.style.transform='';});
 }
 
 function addToCart(r){if(!r)return;if(!cart.find(x=>x.n===r.n)){cart.push(r);resetRecipeChecked(r);save();showToast(`✓ ${r.n} ajouté !`);}}
