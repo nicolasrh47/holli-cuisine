@@ -70,7 +70,7 @@ body.dark .cook-tab-btn.active{background:#f97316;border-color:#f97316;color:whi
 body.dark .pers-pill button{background:#334155;color:#e2e8f0;}
 body.dark .pers-pill span{color:#f1f5f9;}
 
-.swipe-zone{position:relative;height:380px;width:100%;touch-action:none;}
+.swipe-zone{position:relative;height:300px;width:100%;touch-action:none;}
 .swipe-card{position:absolute;inset:0;border-radius:3.5rem;overflow:hidden;box-shadow:0 28px 56px -10px rgba(0,0,0,.22);border:4px solid white;z-index:10;}
 .miam-label{position:absolute;top:38px;left:38px;border:5px solid #22c55e;color:#22c55e;padding:4px 18px;border-radius:14px;font-weight:900;font-size:36px;transform:rotate(-15deg);opacity:0;z-index:50;pointer-events:none;background:rgba(255,255,255,.9);}
 .nope-label{position:absolute;top:38px;right:38px;border:5px solid #ef4444;color:#ef4444;padding:4px 18px;border-radius:14px;font-weight:900;font-size:36px;transform:rotate(15deg);opacity:0;z-index:50;pointer-events:none;background:rgba(255,255,255,.9);}
@@ -90,10 +90,10 @@ body.dark .pers-pill span{color:#f1f5f9;}
 
 .week-menu-banner{
   background:linear-gradient(135deg,#f97316 0%,#ea580c 50%,#c2410c 100%);
-  border-radius:2rem;position:relative;overflow:hidden;
-  height:120px;display:flex;align-items:center;
+  border-radius:1.6rem;position:relative;overflow:hidden;
+  height:84px;display:flex;align-items:center;
   box-shadow:0 10px 30px rgba(249,115,22,.4);cursor:pointer;
-  margin-bottom:20px;transition:transform .15s;
+  margin-bottom:10px;transition:transform .15s;
 }
 .week-menu-banner:active{transform:scale(.98);}
 .week-menu-banner-deco{position:absolute;right:-20px;top:-20px;font-size:100px;opacity:.15;transform:rotate(15deg);pointer-events:none;}
@@ -299,6 +299,10 @@ body.dark .onboard-progress{background:#334155;}
 body.dark .onboard-recur-item.active{background:#3a2415;}
 .onboard-recur-name{flex:1;font-size:12px;font-weight:800;color:var(--text);}
 .onboard-recur-freq{font-size:10px;font-weight:800;border:1.5px solid var(--border);border-radius:8px;padding:5px 6px;background:var(--card);color:var(--text);font-family:inherit;}
+.onboard-recur-item-fixed{cursor:default;}
+.onboard-recur-remove{width:24px;height:24px;flex-shrink:0;border-radius:50%;border:none;background:#fee2e2;color:#dc2626;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+body.dark .onboard-recur-remove{background:#4a1d1d;color:#f87171;}
+.onboard-recur-check{color:#f97316;font-weight:900;font-size:14px;}
 
 .profile-avatar{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#f97316,#fb923c);display:flex;align-items:center;justify-content:center;font-size:34px;box-shadow:0 8px 20px rgba(249,115,22,.3);cursor:pointer;flex-shrink:0;}
 .profile-card{background:var(--card);border-radius:2rem;border:1.5px solid var(--border);padding:18px;margin-bottom:14px;}
@@ -511,8 +515,8 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
 </header>
 
 <section id="page-home" class="page active" role="tabpanel" aria-label="Menu">
-  <div class="flex justify-center mb-4">
-    <div class="bg-slate-100 px-4 py-2 rounded-full text-[9px] flex items-center gap-2">
+  <div class="flex justify-center mb-2">
+    <div class="bg-slate-100 px-4 py-1.5 rounded-full text-[9px] flex items-center gap-2">
       <span class="text-red-400 font-black">✕ Jeter</span>
       <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
       <span class="text-slate-500 italic font-semibold" id="swipeHintText">Glisse la carte</span>
@@ -520,7 +524,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
       <span class="text-green-500 font-black" id="miamLabelText">MIAM</span>
     </div>
   </div>
-  <div id="swipe-container" class="swipe-zone mb-5">
+  <div id="swipe-container" class="swipe-zone mb-3">
     <div id="miam-badge" class="miam-label">MIAM</div>
     <div id="nope-badge" class="nope-label">NOPE</div>
     <div id="card" class="swipe-card">
@@ -532,22 +536,21 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
       <button id="swipe-fav-btn" class="swipe-fav-btn" onclick="toggleSwipeFav(event)">🤍</button>
     </div>
   </div>
-  <div class="flex justify-center gap-6 mb-6">
+  <div class="flex justify-center gap-6 mb-3">
     <button onclick="handleNope()" class="w-14 h-14 bg-white rounded-full shadow-lg flex items-center justify-center text-red-500 border border-red-50 active:scale-90 transition-transform">✕</button>
     <button onclick="handleLike()" class="w-14 h-14 bg-orange-500 rounded-full shadow-lg flex items-center justify-center text-white text-2xl active:scale-90 transition-transform">✓</button>
   </div>
 
   <div class="week-menu-banner" onclick="switchPage('week')">
     <div class="week-menu-banner-deco">🗓</div>
-    <div class="flex-1 p-6 z-10">
-      <div class="text-white/70 text-[9px] font-black uppercase tracking-widest mb-1" id="weekBannerSub">Menu personnalisé</div>
-      <div class="text-white text-xl font-black uppercase italic leading-tight" id="weekBannerTitle">Crée ta semaine<br>de menus 🍽️</div>
-      <div class="text-white/60 text-[10px] font-bold mt-2" id="weekBannerFooter">Choisis tes repas · Modifie à volonté →</div>
+    <div class="flex-1 px-5 z-10">
+      <div class="text-white/70 text-[9px] font-black uppercase tracking-widest mb-0.5" id="weekBannerSub">Menu personnalisé</div>
+      <div class="text-white text-base font-black uppercase italic leading-tight" id="weekBannerTitle">Crée ta semaine de menus 🍽️</div>
     </div>
-    <div class="pr-5 text-white/30 text-4xl">›</div>
+    <div class="pr-5 text-white/30 text-3xl">›</div>
   </div>
 
-  <button onclick="openCatalogueModal()" class="w-full flex items-center justify-between bg-white border border-slate-100 rounded-[1.8rem] shadow-sm px-4 py-4 mt-2 active:scale-[.98] transition-transform" style="border:1.5px solid var(--border);background:var(--card)">
+  <button onclick="openCatalogueModal()" class="w-full flex items-center justify-between bg-white border border-slate-100 rounded-[1.8rem] shadow-sm px-4 py-3 active:scale-[.98] transition-transform" style="border:1.5px solid var(--border);background:var(--card)">
     <span class="flex items-center gap-3">
       <span id="catalogue-preview" class="catalogue-preview-stack"></span>
       <span class="text-left">
@@ -866,10 +869,8 @@ async function loadSiteContent() {
   document.getElementById('privacyLinkLabel').innerHTML = siteContent.footer?.privacyLinkLabel || '🔒 Politique de confidentialité';
   const bannerSub = document.getElementById('weekBannerSub');
   const bannerTitle = document.getElementById('weekBannerTitle');
-  const bannerFooter = document.getElementById('weekBannerFooter');
   if(bannerSub) bannerSub.innerText = siteContent.week?.bannerSub || 'Menu personnalisé';
-  if(bannerTitle) bannerTitle.innerHTML = siteContent.week?.bannerTitle || 'Crée ta semaine<br>de menus 🍽️';
-  if(bannerFooter) bannerFooter.innerText = siteContent.week?.bannerFooter || 'Choisis tes repas · Modifie à volonté →';
+  if(bannerTitle) bannerTitle.innerHTML = siteContent.week?.bannerTitle || 'Crée ta semaine de menus 🍽️';
 }
 
 const RAYONS_ORDER=['🥦 Fruits & Légumes','🥩 Viandes & Poissons','🥛 Produits Laitiers','🥚 Oeufs','🍞 Boulangerie','🌾 Épicerie Sèche','🥫 Conserves','🌿 Herbes & Épices','🧴 Condiments','🛒 Divers'];
@@ -2186,15 +2187,30 @@ async function renderRecurringManager(){
     const allCats=['Tous',...new Set(maisonItems.map(i=>i.cat))];
     catBarEl.innerHTML=allCats.map(c=>`<button onclick="setRecurringCat('${c.replace(/'/g,"\\'")}')" class="mais-cat-tab ${c===currentRecurringCat?'active':''}">${c}</button>`).join('');
   }
+  let activeHtml='';
+  if(currentUser.profile.recurringItems.length){
+    activeHtml+='<p class="onboard-recur-cat">Mes articles actifs</p>';
+    currentUser.profile.recurringItems.forEach(item=>{
+      const safeName=item.name.replace(/'/g,"\\'");
+      activeHtml+=`<div class="onboard-recur-item active onboard-recur-item-fixed">
+        <span>${item.icon}</span>
+        <span class="onboard-recur-name">${item.name}</span>
+        <select class="onboard-recur-freq" onchange="setRecurringItemFreq('${safeName}',this.value)">
+          ${[7,14,30,60,90].map(d=>`<option value="${d}" ${item.freqDays===d?'selected':''}>${d<30?d+' j':(d/30)+' mois'}</option>`).join('')}
+        </select>
+        <button class="onboard-recur-remove" onclick="removeRecurringItem('${safeName}')">✕</button>
+      </div>`;
+    });
+  }
   const rawSearch=(document.getElementById('recurring-search')?.value||'').trim();
   const searchTerms=normalizeSearchText(rawSearch).split(/\s+/).filter(Boolean);
   let visibleItems=maisonItems;
   if(currentRecurringCat!=='Tous')visibleItems=visibleItems.filter(i=>i.cat===currentRecurringCat);
   if(searchTerms.length)visibleItems=visibleItems.filter(i=>searchTerms.every(t=>normalizeSearchText(i.n).includes(t)));
-  if(!visibleItems.length){el.innerHTML='<p class="text-center py-16 opacity-20 font-black">Aucun article trouvé</p>';return;}
+  if(!visibleItems.length){el.innerHTML=activeHtml+'<p class="text-center py-16 opacity-20 font-black">Aucun article trouvé</p>';return;}
   const bycat={};
   visibleItems.forEach(item=>{if(!bycat[item.cat])bycat[item.cat]=[];bycat[item.cat].push(item);});
-  let html='';
+  let html='<p class="onboard-recur-cat">Ajouter un article</p>';
   Object.entries(bycat).forEach(([cat,items])=>{
     html+=`<p class="onboard-recur-cat">${cat}</p>`;
     items.forEach(item=>{
@@ -2204,19 +2220,24 @@ async function renderRecurringManager(){
       html+=`<div class="onboard-recur-item ${picked?'active':''}" onclick="toggleRecurringItem('${safeName}','${item.i}','${cat.replace(/'/g,"\\'")}',${defDays})">
         <span>${item.i}</span>
         <span class="onboard-recur-name">${item.n}</span>
-        ${picked?`<select class="onboard-recur-freq" onclick="event.stopPropagation()" onchange="setRecurringItemFreq('${safeName}',this.value)">
-          ${[7,14,30,60,90].map(d=>`<option value="${d}" ${picked.freqDays===d?'selected':''}>${d<30?d+' j':(d/30)+' mois'}</option>`).join('')}
-        </select>`:''}
+        ${picked?'<span class="onboard-recur-check">✓</span>':''}
       </div>`;
     });
   });
-  el.innerHTML=html;
+  el.innerHTML=activeHtml+html;
 }
 function toggleRecurringItem(name,icon,cat,defDays){
   const items=currentUser.profile.recurringItems;
   const idx=items.findIndex(r=>r.name===name);
   if(idx>-1)items.splice(idx,1);
   else items.push({name,icon,cat,freqDays:defDays});
+  persistCurrentUser();
+  renderRecurringManager();
+}
+function removeRecurringItem(name){
+  const items=currentUser.profile.recurringItems;
+  const idx=items.findIndex(r=>r.name===name);
+  if(idx>-1)items.splice(idx,1);
   persistCurrentUser();
   renderRecurringManager();
 }
