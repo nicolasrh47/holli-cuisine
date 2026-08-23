@@ -867,14 +867,32 @@ function updateServings(v){
   if(v!==0)pushToFirestore();
 }
 
+// Les ingrédients du Sheet arrivent dans deux ordres différents selon la recette
+// ("150g Veau" *et* "Veau (épaule ou tendron) 150g"), parfois même collés sans
+// espace ("10gBeurre"). On essaie les deux sens plutôt que de supposer un seul
+// format, sinon la quantité ne se met pas à jour avec le nombre de personnes
+// pour toute recette écrite "nom d'abord".
 function parseIng(raw){
   raw=raw.trim();
-  const frac=raw.match(/^(\d+)\/(\d+)\s*([a-zA-ZÀ-ÿ]*)\s*(.*)/);
-  if(frac)return{qty:parseFloat(frac[1])/parseFloat(frac[2]),unit:(frac[3]||'').toLowerCase(),name:(frac[4]||'').trim().toLowerCase()};
-  const nu=raw.match(/^(\d+(?:[.,]\d+)?)\s*([a-zA-ZÀ-ÿ]+)?\s+(.*)/);
-  if(nu){const qty=parseFloat(nu[1].replace(',','.'));const unit=nu[2]?nu[2].toLowerCase():'';const name=nu[3]?nu[3].trim().toLowerCase():(nu[2]||'').toLowerCase();if(!nu[3]&&nu[2])return{qty,unit:'',name:nu[2].trim().toLowerCase()};return{qty,unit,name:name.trim()};}
-  const no=raw.match(/^(\d+(?:[.,]\d+)?)\s+(.*)/);
-  if(no)return{qty:parseFloat(no[1].replace(',','.')),unit:'',name:no[2].trim().toLowerCase()};
+  let m;
+  // Nombre collé à l'unité sans espace : "10gBeurre"
+  m=raw.match(/^(\d+(?:[.,]\d+)?)(g|kg|ml|cl|dl|l|cs|cc|tsp|tbsp)([A-Za-zÀ-ÿ].*)$/i);
+  if(m)return{qty:parseFloat(m[1].replace(',','.')),unit:m[2].toLowerCase(),name:m[3].trim().toLowerCase()};
+  // Fraction en préfixe : "1/2 oignon"
+  m=raw.match(/^(\d+)\/(\d+)\s*([a-zA-ZÀ-ÿ]*)\s+(.+)$/);
+  if(m)return{qty:parseFloat(m[1])/parseFloat(m[2]),unit:(m[3]||'').toLowerCase(),name:m[4].trim().toLowerCase()};
+  // Nombre en préfixe : "150g Veau", "1 Carotte", "3cs sauce soja"
+  m=raw.match(/^(\d+(?:[.,]\d+)?)\s*([a-zA-ZÀ-ÿ]*)\s+(.+)$/);
+  if(m)return{qty:parseFloat(m[1].replace(',','.')),unit:(m[2]||'').toLowerCase(),name:m[3].trim().toLowerCase()};
+  // Nombre seul, sans rien après : "1"
+  m=raw.match(/^(\d+(?:[.,]\d+)?)\s*([a-zA-ZÀ-ÿ]*)$/);
+  if(m&&m[2])return{qty:parseFloat(m[1].replace(',','.')),unit:'',name:m[2].trim().toLowerCase()};
+  // Fraction en suffixe : "Oignon 1/2"
+  m=raw.match(/^(.+?)\s+(\d+)\/(\d+)\s*([a-zA-ZÀ-ÿ]*)$/);
+  if(m)return{qty:parseFloat(m[2])/parseFloat(m[3]),unit:(m[4]||'').toLowerCase(),name:m[1].trim().toLowerCase()};
+  // Nombre en suffixe : "Veau (épaule ou tendron) 150g", "Carotte 1"
+  m=raw.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*([a-zA-ZÀ-ÿ]*)$/);
+  if(m)return{qty:parseFloat(m[2].replace(',','.')),unit:(m[3]||'').toLowerCase(),name:m[1].trim().toLowerCase()};
   return{qty:null,unit:'',name:raw.toLowerCase()};
 }
 function normName(n){return n.toLowerCase().replace(/\s+/g,' ').trim().replace(/s\b/g,'');}
@@ -1040,7 +1058,7 @@ async function init(){
       {n:'Crêpes',cat:'Dessert',ing:'250g farine, 3 oeufs, 500ml lait, 50g beurre',prep:'Mélanger. Laisser reposer 30 min. Cuire.',i:'https://picsum.photos/id/127/400/300'}
     ].map(r=>({...r,id:hashId(r.n)}));
   }
-  shuffledRecipes=shuffleWithSeason(recipes);
+  shuffledRecipes=shuffleWithSeason(safeRecipes());
   putWeeklyFeaturedFirst();
   renderCard();renderCataloguePreview();
   if(weekMenu.length===0)generateWeekMenu();
@@ -1167,11 +1185,12 @@ function initTouchSystem(){
 // de semaine. Se retrouve en 1ère carte du deck de swipe avec un badge,
 // au lieu d'un bloc séparé qui dupliquait l'info.
 function pickWeeklyFeatured(){
-  if(!recipes.length)return null;
+  const pool0=safeRecipes();
+  if(!pool0.length)return null;
   const now=new Date(),oj=new Date(now.getFullYear(),0,1);
   const wk=Math.ceil((((now-oj)/86400000)+oj.getDay()+1)/7);
-  const seasonal=recipes.filter(r=>seasonWeight(r)===2);
-  const pool=seasonal.length?seasonal:recipes;
+  const seasonal=pool0.filter(r=>seasonWeight(r)===2);
+  const pool=seasonal.length?seasonal:pool0;
   return pool[wk%pool.length]||null;
 }
 function putWeeklyFeaturedFirst(){
@@ -1184,7 +1203,7 @@ function putWeeklyFeaturedFirst(){
 }
 function renderCataloguePreview(){
   const el=document.getElementById('catalogue-preview');if(!el||!recipes.length)return;
-  const sample=shuffleWithSeason(recipes).slice(0,4);
+  const sample=shuffleWithSeason(safeRecipes()).slice(0,4);
   el.innerHTML=sample.map(r=>`<img src="${r.i}" alt="" loading="lazy">`).join('');
 }
 
@@ -1326,7 +1345,7 @@ function courseKeyForRecipe(r){
 }
 function recipesByCourse(){
   const buckets={entree:[],plat:[],dessert:[]};
-  recipes.forEach(r=>buckets[courseKeyForRecipe(r)].push(r));
+  safeRecipes().forEach(r=>buckets[courseKeyForRecipe(r)].push(r));
   return buckets;
 }
 // Pioche sans remise dans une liste dédupliquée (pondérée par saison) : évite
@@ -1973,6 +1992,17 @@ function getAllergyMatches(recipe){
   const ing=recipe.ing.toLowerCase();
   return avoid.filter(a=>ing.includes(a.toLowerCase()));
 }
+// Recettes utilisées par les parcours "automatiques" (swipe, semaine, aperçu
+// catalogue) : celles qui contiennent une allergie/un ingrédient détesté sont
+// exclues d'office, plutôt que juste signalées par un badge. Le Catalogue en
+// recherche manuelle, lui, continue de tout montrer (avec le badge + le
+// toggle "masquer mes allergènes") puisque c'est une recherche volontaire.
+function safeRecipes(){
+  const avoid=getAvoidList();
+  if(!avoid.length)return recipes;
+  const filtered=recipes.filter(r=>getAllergyMatches(r).length===0);
+  return filtered.length?filtered:recipes;
+}
 function allergyBadgeHTML(recipe,style){
   const matches=getAllergyMatches(recipe);
   if(!matches.length)return'';
@@ -1981,6 +2011,11 @@ function allergyBadgeHTML(recipe,style){
   return`<div class="allergy-warning-badge" title="${title}">⚠️ ${matches[0]}${matches.length>1?` +${matches.length-1}`:''}</div>`;
 }
 function refreshAllergyAwareViews(){
+  // Le profil (allergies/dislikes) vient de changer : on refait le deck de
+  // swipe et l'aperçu catalogue à partir des recettes encore sûres.
+  shuffledRecipes=shuffleWithSeason(safeRecipes());
+  putWeeklyFeaturedFirst();
+  if(document.getElementById('page-home').classList.contains('active')){renderCard();renderCataloguePreview();}
   if(document.getElementById('catalogue-modal').classList.contains('open'))renderGrid();
   if(document.getElementById('page-favs').classList.contains('active'))renderFavs();
   if(document.getElementById('page-week').classList.contains('active'))renderWeekMenu();
