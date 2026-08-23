@@ -76,6 +76,12 @@ body.dark .pers-pill span{color:#f1f5f9;}
 .swipe-fav-btn{position:absolute;top:16px;right:16px;width:40px;height:40px;background:rgba(255,255,255,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;z-index:20;cursor:pointer;border:none;box-shadow:0 2px 10px rgba(0,0,0,.15);transition:transform .15s;}
 .swipe-fav-btn:active{transform:scale(.88);}
 .swipe-fav-btn.active{background:rgba(254,242,242,.95);}
+.swipe-seasonal-badge{position:absolute;top:16px;left:16px;background:#f97316;color:#fff;font-size:9px;font-weight:900;padding:6px 14px;border-radius:99px;text-transform:uppercase;z-index:20;box-shadow:0 4px 12px rgba(0,0,0,.2);display:none;align-items:center;gap:4px;}
+.swipe-seasonal-badge.show{display:flex;}
+
+.catalogue-preview-stack{display:flex;flex-shrink:0;}
+.catalogue-preview-stack img{width:38px;height:38px;border-radius:12px;object-fit:cover;border:2px solid var(--card);margin-left:-14px;box-shadow:0 2px 6px rgba(0,0,0,.12);}
+.catalogue-preview-stack img:first-child{margin-left:0;}
 
 .cat-tab{font-size:10px;font-weight:900;color:#64748b;padding:10px 18px;border-radius:14px;text-transform:uppercase;border:1.5px solid #e2e8f0;white-space:nowrap;background:white;transition:.3s;cursor:pointer;}
 .cat-tab.active{background:linear-gradient(135deg,#f97316,#fb923c);color:white;border-color:#f97316;}
@@ -491,6 +497,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   <div id="swipe-container" class="swipe-zone mb-5">
     <div id="miam-badge" class="miam-label">MIAM</div>
     <div id="card" class="swipe-card">
+      <div id="seasonal-badge" class="swipe-seasonal-badge">⭐ Recette de la semaine</div>
       <img id="card-img" src="" alt="" class="w-full h-full object-cover pointer-events-none">
       <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent p-10 flex flex-col justify-end pointer-events-none">
         <h2 id="card-title" class="text-white text-3xl font-[900] italic uppercase leading-tight drop-shadow-lg">…</h2>
@@ -503,8 +510,6 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
     <button onclick="handleLike()" class="w-14 h-14 bg-orange-500 rounded-full shadow-lg flex items-center justify-center text-white text-2xl active:scale-90 transition-transform">✓</button>
   </div>
 
-  <div id="weekly-section" class="mb-4"></div>
-
   <div class="week-menu-banner" onclick="switchPage('week')">
     <div class="week-menu-banner-deco">🗓</div>
     <div class="flex-1 p-6 z-10">
@@ -515,9 +520,9 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
     <div class="pr-5 text-white/30 text-4xl">›</div>
   </div>
 
-  <button onclick="openCatalogueModal()" class="w-full flex items-center justify-between bg-white border border-slate-100 rounded-[1.8rem] shadow-sm px-5 py-4 mt-2 active:scale-[.98] transition-transform" style="border:1.5px solid var(--border);background:var(--card)">
+  <button onclick="openCatalogueModal()" class="w-full flex items-center justify-between bg-white border border-slate-100 rounded-[1.8rem] shadow-sm px-4 py-4 mt-2 active:scale-[.98] transition-transform" style="border:1.5px solid var(--border);background:var(--card)">
     <span class="flex items-center gap-3">
-      <span class="text-2xl">🔍</span>
+      <span id="catalogue-preview" class="catalogue-preview-stack"></span>
       <span class="text-left">
         <span class="block font-[900] text-sm uppercase italic" style="color:var(--text)" id="catalogueTitle">Voir tout le catalogue</span>
         <span class="block text-[10px] font-bold" style="color:var(--text2)">Toutes les recettes, par catégorie</span>
@@ -707,6 +712,7 @@ const BASE_SERVINGS=2;
 const DAYS=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
 
 let recipes=[],shuffledRecipes=[];
+let weeklyFeaturedId=null;
 let cart=[],homeCart=[],extraItems=[];
 let checkedItems=new Set(),manualQtys={};
 let favorites=new Set();
@@ -1020,7 +1026,8 @@ async function init(){
     ].map(r=>({...r,id:hashId(r.n)}));
   }
   shuffledRecipes=shuffleWithSeason(recipes);
-  renderCard();renderWeekly();
+  putWeeklyFeaturedFirst();
+  renderCard();renderCataloguePreview();
   if(weekMenu.length===0)generateWeekMenu();
   renderMaison();updateUI();initTouchSystem();
 }
@@ -1093,6 +1100,7 @@ function renderCard(){
   document.getElementById('card-title').innerText=r.n;
   document.getElementById('card').style.transform='';
   document.getElementById('miam-badge').style.opacity=0;
+  document.getElementById('seasonal-badge').classList.toggle('show',r.id===weeklyFeaturedId);
   updateSwipeFavBtn();
 }
 function handleLike(){addToCart(shuffledRecipes[curIdx]);nextCard();}
@@ -1105,16 +1113,30 @@ function initTouchSystem(){
   card.addEventListener('touchend',()=>{card.style.transition='.4s cubic-bezier(.23,1,.32,1)';if(moveX>120)handleLike();else if(moveX<-120)handleNope();else{card.style.transform='';document.getElementById('miam-badge').style.opacity=0;}moveX=0;});
 }
 
-function renderWeekly(){
+// Recette de la semaine : choisie parmi les recettes de saison en cours
+// (mêmes critères que shuffleWithSeason), stable sur 7 jours via le numéro
+// de semaine. Se retrouve en 1ère carte du deck de swipe avec un badge,
+// au lieu d'un bloc séparé qui dupliquait l'info.
+function pickWeeklyFeatured(){
+  if(!recipes.length)return null;
   const now=new Date(),oj=new Date(now.getFullYear(),0,1);
   const wk=Math.ceil((((now-oj)/86400000)+oj.getDay()+1)/7);
-  const r=recipes[wk%recipes.length];if(!r)return;
-  document.getElementById('weekly-section').innerHTML=`
-    <button onclick="showDetails(${r.id})" class="w-full flex items-center gap-2 bg-transparent border-none cursor-pointer p-0 text-left">
-      <span class="text-orange-500 font-black text-[10px] uppercase">⭐ Recette de la semaine</span>
-      <span class="font-[900] text-[11px] uppercase italic truncate flex-1" style="color:var(--text)">${r.n}</span>
-      <span class="text-orange-500 text-sm">→</span>
-    </button>`;
+  const seasonal=recipes.filter(r=>seasonWeight(r)===2);
+  const pool=seasonal.length?seasonal:recipes;
+  return pool[wk%pool.length]||null;
+}
+function putWeeklyFeaturedFirst(){
+  const featured=pickWeeklyFeatured();
+  weeklyFeaturedId=featured?featured.id:null;
+  if(!featured)return;
+  shuffledRecipes=shuffledRecipes.filter(r=>r.id!==featured.id);
+  shuffledRecipes.unshift(featured);
+  curIdx=0;
+}
+function renderCataloguePreview(){
+  const el=document.getElementById('catalogue-preview');if(!el||!recipes.length)return;
+  const sample=shuffleWithSeason(recipes).slice(0,4);
+  el.innerHTML=sample.map(r=>`<img src="${r.i}" alt="" loading="lazy">`).join('');
 }
 
 function openCatalogueModal(){
