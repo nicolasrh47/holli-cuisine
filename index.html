@@ -1973,7 +1973,15 @@ function handleForgotPassword(){
 }
 function handleGoogleAuth(){
   const provider=new firebase.auth.GoogleAuthProvider();
+  const isStandalone=window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;
   const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if(isStandalone){
+    // App ajoutée à l'écran d'accueil (iOS) : signInWithRedirect perd l'état de connexion
+    // au retour de Safari (contexte isolé) → on reste bloqué sur l'écran de connexion sans erreur.
+    // Impossible à fiabiliser depuis l'app installée : on redirige vers Safari.
+    showAuthError('Pour te connecter avec Google, ouvre le site dans Safari (pas depuis l\'icône sur ton écran d\'accueil), connecte-toi là-bas, puis reviens sur l\'app.');
+    return;
+  }
   showAuthError('Connexion avec Google…');
   if(isMobile){
     // Safari iOS ferme les popups OAuth (protection ITP) → redirection, plus fiable sur mobile
