@@ -1128,14 +1128,12 @@ function renderFavs(){
     <div class="fav-card" onclick="showDetails(${r.id})">
       <div class="relative">
         <img src="${r.i}" alt="${r.n}" class="w-full h-40 object-cover" loading="lazy">
+        <button onclick="toggleFav(${r.id},event)" class="fav-btn active" data-fav-id="${r.id}">❤️</button>
+        ${allergyBadgeHTML(r)}
         <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-4">
           <div class="flex-1"><span class="text-white/60 text-[9px] font-black uppercase">${r.cat}</span>
           <h3 class="text-white font-black uppercase italic text-base leading-tight">${r.n}</h3></div>
-          <div class="flex flex-col gap-2 flex-shrink-0 items-center">
-            ${allergyBadgeHTML(r,'inline')}
-            <button onclick="toggleFav(${r.id},event)" class="fav-btn active" data-fav-id="${r.id}" style="position:relative;width:36px;height:36px;background:rgba(239,68,68,.2);border:none">❤️</button>
-            <button onclick="addToCart(recipes.find(x=>x.id==${r.id}));event.stopPropagation();" class="w-9 h-9 bg-orange-500 rounded-full flex items-center justify-center text-white font-black text-lg" style="position:relative;border:none;cursor:pointer">+</button>
-          </div>
+          <button onclick="addToCart(recipes.find(x=>x.id==${r.id}));event.stopPropagation();" class="flex-shrink-0 bg-orange-500 text-white font-black text-[11px] uppercase px-4 py-2.5 rounded-full flex items-center gap-1.5" style="border:none;cursor:pointer">+ Ajouter</button>
         </div>
       </div>
     </div>`).join('');
