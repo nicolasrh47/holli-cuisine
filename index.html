@@ -425,7 +425,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
 
 <div id="cook-modal">
   <div class="ck-header">
-    <button onclick="closeCook()" class="font-black text-orange-500 text-xs uppercase flex-shrink-0">← Fin</button>
+    <button onclick="closeCook(true)" class="font-black text-orange-500 text-xs uppercase flex-shrink-0">← Fin</button>
     <div class="ck-title" id="ck-title"></div>
     <button onclick="toggleWakeLock()" id="wakelock-btn" class="bg-slate-700 text-white rounded-full px-3 py-1.5 font-black text-[9px] uppercase flex-shrink-0">🔒 Veille</button>
   </div>
@@ -748,6 +748,7 @@ let currentFavCat='Tous';
 let currentFavCourse='Tous';
 let currentCookTab='current';
 let cookRecipe=null,cookTimers={},cookIngChecked=new Set(),cookStepsDone=new Set(),ckIngOpen=false;
+let cookAllActive=false,cookAllTotal=0;
 let startX=0,moveX=0;
 
 let maisonItems = [];
@@ -1612,7 +1613,7 @@ function renderCooking(){
   document.getElementById('cook-tab-current').innerText=`🍳 Recettes (${cart.length})`;
   if(cart.length===0){document.getElementById('cook-grid').innerHTML=`<div class="text-center py-20 opacity-25"><div class="text-6xl mb-4">👨‍🍳</div><div class="font-black text-lg uppercase">Aucune recette</div><div class="text-sm font-bold mt-1 text-slate-400">Ajoute des recettes depuis le menu</div></div>`;return;}
   document.getElementById('cook-grid').innerHTML=`
-    <button onclick="openCookModal(0)" class="cook-all-btn mb-4"><span class="em">🔥</span><span>Cuisiner tous les plats</span><span class="em">🍽️</span></button>
+    <button onclick="cookAll()" class="cook-all-btn mb-4"><span class="em">🔥</span><span>Cuisiner tous les plats</span><span class="em">🍽️</span></button>
     ${cart.map((r,idx)=>`
       <div class="bg-white rounded-[2.2rem] border p-4 flex gap-4 items-center mb-2" style="animation:slideUp .4s ease-out ${idx*.08}s both">
         <img src="${r.i}" alt="${r.n}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0" loading="lazy">
@@ -1665,9 +1666,16 @@ function splitPrepSteps(prep){
   return steps;
 }
 function getStepIcons(text){const icons=[],t=text.toLowerCase();if(t.includes('couper')||t.includes('découp'))icons.push('🔪 Couper');if(t.includes('mélanger')||t.includes('remuer'))icons.push('🥄 Mélanger');if(t.includes('cuire')||t.includes('four')||t.includes('feu'))icons.push('🔥 Cuire');if(t.includes('bouillir')||t.includes('ébullition'))icons.push('💧 Bouillir');if(t.includes('reposer')||t.includes('attendre'))icons.push('⏳ Repos');if(t.includes('mixer'))icons.push('🌀 Mixer');if(t.includes('frire')||t.includes('poêle'))icons.push('🍳 Frire');return icons;}
+function cookAll(){
+  if(!cart.length)return;
+  cookAllActive=true;
+  cookAllTotal=cart.length;
+  openCookModal(0);
+}
 function openCookModal(idx){
+  if(!cart[idx]){cookAllActive=false;return;}
   cookRecipe=cart[idx];cookTimers={};cookIngChecked=new Set();cookStepsDone=new Set();ckIngOpen=false;
-  document.getElementById('ck-title').innerText=cookRecipe.n;
+  document.getElementById('ck-title').innerText=cookAllActive?`${cookRecipe.n} (${cookAllTotal-cart.length+1}/${cookAllTotal})`:cookRecipe.n;
   document.getElementById('ck-ing-wrap').classList.remove('open');
   document.getElementById('ck-ing-icon').classList.remove('open');
   renderCookContent();requestWakeLock();
@@ -1733,12 +1741,27 @@ function toggleTimer(stepIdx,totalSecs){
 function finishCooking(){
   if(navigator.vibrate)navigator.vibrate([200,100,200,100,400]);
   if(cookRecipe){const toSave={...cookRecipe,cookedAt:new Date().toISOString()};oldRecipes.push(toSave);if(oldRecipes.length>50)oldRecipes.shift();const i=cart.findIndex(r=>r.n===cookRecipe.n);if(i!==-1)cart.splice(i,1);save();resetRecipeChecked(cookRecipe);}
+  // "Cuisiner tous les plats" : on enchaîne sur la recette suivante du panier
+  // au lieu de juste fermer — sinon le bouton ne cuisinait en réalité que la
+  // toute première recette malgré son nom.
+  const continueQueue=cookAllActive&&cart.length>0;
+  if(!continueQueue)cookAllActive=false;
   closeCook();
   const ov=document.getElementById('bonappetit-overlay');ov.classList.add('show');
-  setTimeout(()=>{ov.classList.add('hide');setTimeout(()=>{ov.classList.remove('show','hide');},460);},2600);
+  setTimeout(()=>{
+    ov.classList.add('hide');
+    setTimeout(()=>{
+      ov.classList.remove('show','hide');
+      if(continueQueue)openCookModal(0);
+    },460);
+  },2600);
   if(document.getElementById('page-cooking').classList.contains('active'))renderCooking();
 }
-function closeCook(){Object.values(cookTimers).forEach(t=>{if(t&&t.interval)clearInterval(t.interval);});cookTimers={};releaseWakeLock();document.getElementById('cook-modal').classList.remove('open');}
+function closeCook(userInitiated){
+  if(userInitiated)cookAllActive=false;
+  Object.values(cookTimers).forEach(t=>{if(t&&t.interval)clearInterval(t.interval);});
+  cookTimers={};releaseWakeLock();document.getElementById('cook-modal').classList.remove('open');
+}
 
 function freqDays(f){return{hebdo:7,mensuel:30,trim:90}[f]||30;}
 function getStockLevel(n,f){if(!f||!itemLastBought[n])return'good';const d=(new Date()-new Date(itemLastBought[n]))/864e5,m=freqDays(f);if(d>m*.95)return'danger';if(d>m*.7)return'warning';return'good';}
@@ -1783,7 +1806,7 @@ function toggleHome(name){
 function clearMaison(){if(!homeCart.length)return;if(confirm('Retirer tous les articles maison du panier ?')){homeCart=[];save();renderMaison();updateUI();}}
 
 document.getElementById('add-item-input')?.addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddItem();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetails();closeCook();closeAddItem();closeCatalogueModal();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetails();closeCook(true);closeAddItem();closeCatalogueModal();}});
 
 /* ================================================================
    ========== AUTHENTIFICATION / ONBOARDING / PROFIL ==============
