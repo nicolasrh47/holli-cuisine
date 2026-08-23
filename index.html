@@ -1045,17 +1045,19 @@ async function init(){
     const j=JSON.parse(t.substring(47).slice(0,-2));
     recipes=j.table.rows.map((row)=>({
       n:row.c[1]?.v||'Sans nom',cat:row.c[2]?.v||'Plat',
-      ing:row.c[3]?.v||'',prep:row.c[4]?.v||'',i:formatImg(row.c[7]?.v||'')
+      ing:row.c[3]?.v||'',prep:row.c[4]?.v||'',
+      temps:row.c[5]?.v||'',prix:row.c[6]?.v||'',
+      i:formatImg(row.c[7]?.v||'')
     })).filter(r=>r.n!=='Nom de la Recette'&&r.i!=='').map(r=>({...r,id:hashId(r.n)}));
     if(recipes.length===0)throw new Error('Aucune recette');
   }catch(e){
     console.warn('Fallback recettes locales');
     recipes = [
-      {n:'Omelette',cat:'Plat',ing:'2 oeufs, sel, poivre',prep:'Casser les oeufs. Battre. Cuire à la poêle.',i:'https://picsum.photos/id/127/400/300'},
-      {n:'Pâtes carbonara',cat:'Plat',ing:'200g pâtes, 50g lardons, 20cl crème, 1 oeuf',prep:'Cuire les pâtes. Revenir les lardons. Mélanger crème et oeuf.',i:'https://picsum.photos/id/127/400/300'},
-      {n:'Salade de tomates',cat:'Entrée',ing:'3 tomates, huile d\'olive, vinaigre, basilic',prep:'Laver et couper les tomates. Assaisonner.',i:'https://picsum.photos/id/127/400/300'},
-      {n:'Poulet curry',cat:'Plat',ing:'2 blancs de poulet, 10cl crème, curry, sel',prep:'Cuire le poulet. Ajouter crème et curry.',i:'https://picsum.photos/id/127/400/300'},
-      {n:'Crêpes',cat:'Dessert',ing:'250g farine, 3 oeufs, 500ml lait, 50g beurre',prep:'Mélanger. Laisser reposer 30 min. Cuire.',i:'https://picsum.photos/id/127/400/300'}
+      {n:'Omelette',cat:'Plat',ing:'2 oeufs, sel, poivre',prep:'1. Casser les oeufs. 2. Battre. 3. Cuire à la poêle.',temps:'Prép : 5 min | Cuisson : 5 min',prix:'Faible',i:'https://picsum.photos/id/127/400/300'},
+      {n:'Pâtes carbonara',cat:'Plat',ing:'200g pâtes, 50g lardons, 20cl crème, 1 oeuf',prep:'1. Cuire les pâtes. 2. Revenir les lardons. 3. Mélanger crème et oeuf.',temps:'Prép : 10 min | Cuisson : 15 min',prix:'Faible',i:'https://picsum.photos/id/127/400/300'},
+      {n:'Salade de tomates',cat:'Entrée',ing:'3 tomates, huile d\'olive, vinaigre, basilic',prep:'1. Laver et couper les tomates. 2. Assaisonner.',temps:'Prép : 10 min',prix:'Faible',i:'https://picsum.photos/id/127/400/300'},
+      {n:'Poulet curry',cat:'Plat',ing:'2 blancs de poulet, 10cl crème, curry, sel',prep:'1. Cuire le poulet. 2. Ajouter crème et curry.',temps:'Prép : 10 min | Cuisson : 20 min',prix:'Moyen',i:'https://picsum.photos/id/127/400/300'},
+      {n:'Crêpes',cat:'Dessert',ing:'250g farine, 3 oeufs, 500ml lait, 50g beurre',prep:'1. Mélanger. 2. Laisser reposer 30 min. 3. Cuire.',temps:'Prép : 10 min | Repos : 30 min | Cuisson : 15 min',prix:'Faible',i:'https://picsum.photos/id/127/400/300'}
     ].map(r=>({...r,id:hashId(r.n)}));
   }
   shuffledRecipes=shuffleWithSeason(safeRecipes());
@@ -1275,11 +1277,21 @@ function showDetails(id){
         <button onclick="updateServings(1);refreshDetailModal(${r.id})">+</button>
       </div>
     </div>
+    ${(r.temps||r.prix)?`<div class="flex flex-wrap gap-2 mb-4">
+      ${r.temps?`<span class="bg-slate-100 text-slate-600 text-[10px] font-black px-3 py-1.5 rounded-full">⏱ ${r.temps}</span>`:''}
+      ${r.prix?`<span class="bg-slate-100 text-slate-600 text-[10px] font-black px-3 py-1.5 rounded-full">${prixDisplay(r.prix)}</span>`:''}
+    </div>`:''}
     ${getAllergyMatches(r).length?`<div class="bg-red-50 border-2 border-red-200 rounded-2xl p-4 mb-4"><p class="text-red-600 font-black text-xs uppercase">⚠️ Attention</p><p class="text-red-500 font-bold text-[11px] mt-1">Cette recette contient : ${getAllergyMatches(r).join(', ')}</p></div>`:''}
     <p class="text-[9px] font-black text-orange-500 uppercase mb-1" id="detail-ing-label">Ingrédients · ${servings} pers.</p>
     <div class="bg-orange-50 p-5 rounded-[2rem] mb-5 font-bold text-slate-700 text-sm" id="detail-ing-list">${ings}</div>
+    <p class="text-[9px] font-black text-orange-500 uppercase mb-2">Préparation</p>
+    <div class="space-y-3 mb-5">${splitPrepSteps(r.prep).map((s,i)=>`<div class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 rounded-full bg-slate-900 text-white text-[11px] font-black flex items-center justify-center">${i+1}</span><p class="text-sm font-semibold text-slate-700 leading-snug pt-0.5">${s}</p></div>`).join('')}</div>
     <button onclick="addToCart(recipes.find(x=>x.id==${id}));closeDetails();" class="w-full bg-orange-500 text-white p-5 rounded-full font-black uppercase shadow-lg border-none cursor-pointer">Ajouter au panier</button>`;
   document.getElementById('detail-modal').style.display='block';
+}
+function prixDisplay(prix){
+  const map={'Faible':'💰 Économique','Moyen':'💰💰 Moyen','Élevé':'💰💰💰 Élevé'};
+  return map[prix]||('💰 '+prix);
 }
 function refreshDetailModal(id){
   const el=document.getElementById('detail-pers-disp');if(el)el.innerText=`${servings} PERS.`;
@@ -1574,7 +1586,7 @@ function renderCooking(){
         <img src="${r.i}" alt="${r.n}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0" loading="lazy">
         <div class="flex-1 min-w-0">
           <h3 class="font-black uppercase text-[11px] italic text-slate-800 leading-tight">${r.n}${allergyBadgeHTML(r,'inline')}</h3>
-          <p class="text-[9px] text-slate-400 font-bold mt-1">${r.prep.split('.').filter(s=>s.trim().length>5).length} étapes</p>
+          <p class="text-[9px] text-slate-400 font-bold mt-1">${splitPrepSteps(r.prep).length} étapes</p>
         </div>
         <div class="flex flex-col gap-2 flex-shrink-0">
           <button onclick="openCookModal(${idx})" class="bg-slate-900 text-white px-4 py-2 rounded-full font-black text-[9px] uppercase border-none cursor-pointer">Cuisiner →</button>
@@ -1601,6 +1613,25 @@ function renderOldRecipes(){
 function restoreRecipe(reversedIdx){const idx=oldRecipes.length-1-reversedIdx;const r=oldRecipes[idx];if(!r)return;oldRecipes.splice(idx,1);addToCart(r);save();renderOldRecipes();renderCooking();showToast(`↩ ${r.n} remis dans le panier !`,'#8b5cf6');}
 
 function detectTimer(text){const m=text.match(/(\d+)\s*(min|minute|heure|h|seconde|sec)/i);if(!m)return null;const v=parseInt(m[1]),u=m[2].toLowerCase();if(u.startsWith('h'))return v*3600;if(u.startsWith('sec'))return v;return v*60;}
+// Les instructions sont toujours numérotées "1. ... 2. ... 3. ...". Découper
+// sur CHAQUE point (comme avant) casse une étape dès qu'elle contient plusieurs
+// phrases ("1h30." était même tronqué en "1h"). On découpe uniquement sur les
+// vrais marqueurs d'étape (un nombre suivi d'un point, en début de texte ou
+// juste après une phrase déjà terminée par ". ").
+function splitPrepSteps(prep){
+  prep=(prep||'').trim();
+  const re=/(?:^|(?<=\.\s))(\d+)\.\s+/g;
+  const marks=[...prep.matchAll(re)];
+  if(!marks.length)return prep.split('.').map(s=>s.trim()).filter(s=>s.length>5);
+  const steps=[];
+  for(let i=0;i<marks.length;i++){
+    const start=marks[i].index+marks[i][0].length;
+    const end=i+1<marks.length?marks[i+1].index:prep.length;
+    const text=prep.slice(start,end).trim();
+    if(text)steps.push(text);
+  }
+  return steps;
+}
 function getStepIcons(text){const icons=[],t=text.toLowerCase();if(t.includes('couper')||t.includes('découp'))icons.push('🔪 Couper');if(t.includes('mélanger')||t.includes('remuer'))icons.push('🥄 Mélanger');if(t.includes('cuire')||t.includes('four')||t.includes('feu'))icons.push('🔥 Cuire');if(t.includes('bouillir')||t.includes('ébullition'))icons.push('💧 Bouillir');if(t.includes('reposer')||t.includes('attendre'))icons.push('⏳ Repos');if(t.includes('mixer'))icons.push('🌀 Mixer');if(t.includes('frire')||t.includes('poêle'))icons.push('🍳 Frire');return icons;}
 function openCookModal(idx){
   cookRecipe=cart[idx];cookTimers={};cookIngChecked=new Set();cookStepsDone=new Set();ckIngOpen=false;
@@ -1624,7 +1655,7 @@ function renderCookContent(){
     const sk=ing.key.replace(/'/g,"\\'");
     return`<div class="ck-ing-item ${used?'used':''}" onclick="toggleCookIng('${sk}')"><div class="ck-ing-chk"></div><div class="ck-ing-name capitalize">${ing.name}</div>${qty?`<div class="ck-ing-qty">${qty}</div>`:''}</div>`;
   }).join('');
-  const steps=cookRecipe.prep.split('.').filter(s=>s.trim().length>5);
+  const steps=splitPrepSteps(cookRecipe.prep);
   document.getElementById('ck-steps-list').innerHTML=steps.map((s,i)=>{
     const text=s.trim();
     const isDone=cookStepsDone.has(i);
@@ -1638,7 +1669,7 @@ function renderCookContent(){
       ${i<steps.length-1?'<div class="ck-step-line"></div>':''}
       <div class="ck-snum">${isDone?'✓':i+1}</div>
       <div class="ck-step-body">
-        <p class="ck-step-text">${text}.</p>
+        <p class="ck-step-text">${text}</p>
         ${icons.length?`<div class="ck-step-icons">${icons.map(ic=>`<span class="ck-step-icon">${ic}</span>`).join('')}</div>`:''}
         ${timerSecs?`<button class="ck-timer-inline ${isRunning?'running':''} ${isDoneT?'done-t':''}" id="ck-timer-${i}" onclick="event.stopPropagation();toggleTimer(${i},${timerSecs})">⏱ <span id="ck-tdisp-${i}">${isDoneT?'✓ Terminé !':fmtTime(remaining??timerSecs)}</span></button>`:''}
         <p class="ck-step-tap">${isDone?'✓ Fait':'Appuie pour cocher'}</p>
@@ -1651,7 +1682,7 @@ function toggleCkIng(){ckIngOpen=!ckIngOpen;document.getElementById('ck-ing-wrap
 function toggleStepDone(i){
   if(cookStepsDone.has(i))cookStepsDone.delete(i);else cookStepsDone.add(i);
   renderCookContent();
-  const steps=cookRecipe.prep.split('.').filter(s=>s.trim().length>5);
+  const steps=splitPrepSteps(cookRecipe.prep);
   const next=steps.findIndex((_,j)=>!cookStepsDone.has(j));
   if(next!==-1)setTimeout(()=>{document.getElementById(`ck-step-${next}`)?.scrollIntoView({behavior:'smooth',block:'center'});},80);
 }
