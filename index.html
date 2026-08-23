@@ -300,6 +300,10 @@ body.dark .onboard-progress{background:#334155;}
 .onboard-textarea{width:100%;border:2px solid var(--border);border-radius:1.1rem;padding:12px 14px;font-size:13px;font-weight:700;font-family:inherit;outline:none;resize:none;min-height:70px;background:var(--card);color:var(--text);margin-bottom:12px;}
 .onboard-textarea:focus{border-color:#f97316;}
 .allergy-chip-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.add-custom-recur{display:flex;gap:8px;margin-bottom:14px;}
+.add-custom-recur input{flex:1;min-width:0;border:2px solid var(--border);border-radius:1rem;padding:10px 14px;font-size:12px;font-weight:700;font-family:inherit;outline:none;background:var(--card);color:var(--text);}
+.add-custom-recur input:focus{border-color:#f97316;}
+.add-custom-recur button{width:40px;flex-shrink:0;border-radius:1rem;border:none;background:#f97316;color:white;font-size:18px;font-weight:900;cursor:pointer;}
 .allergy-chip-btn{padding:6px 12px;border-radius:99px;font-size:10px;font-weight:800;border:1.5px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;transition:.2s;}
 .allergy-chip-btn.active{background:#fef2f2;border-color:#ef4444;color:#b91c1c;}
 body.dark .allergy-chip-btn.active{background:#3f1d1d;border-color:#b91c1c;color:#fca5a5;}
@@ -439,6 +443,10 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
       <p class="sub">Coche ce que tu rachètes régulièrement (papier toilette, lessive…) et dis-nous tous les combien — l'app te les ajoutera automatiquement à ta liste de courses au bon moment.</p>
       <input id="onboard-recurring-search" placeholder="🔍 Rechercher un article…" oninput="renderOnboardRecurring()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:12px;background:var(--card);color:var(--text)">
       <div id="onboard-recurring-cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-4 pb-1"></div>
+      <div class="add-custom-recur">
+        <input id="onboard-recurring-custom-input" placeholder="Autre article (pas dans la liste)…" maxlength="40" onkeydown="if(event.key==='Enter')addCustomOnboardRecurringItem()">
+        <button type="button" onclick="addCustomOnboardRecurringItem()">+</button>
+      </div>
       <div id="onboard-recurring-list" style="max-height:280px;overflow-y:auto"></div>
     </div>
 
@@ -470,6 +478,10 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   <p class="text-slate-400 font-bold text-[11px] mb-4">Coche ce que tu rachètes régulièrement et choisis la fréquence — l'app les ajoute automatiquement à tes courses le moment venu.</p>
   <input id="recurring-search" placeholder="🔍 Rechercher un article…" oninput="renderRecurringManager()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:12px;background:var(--card);color:var(--text)">
   <div id="recurring-cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-4 pb-1"></div>
+  <div class="add-custom-recur">
+    <input id="recurring-custom-input" placeholder="Autre article (pas dans la liste)…" maxlength="40" onkeydown="if(event.key==='Enter')addCustomRecurringItem()">
+    <button type="button" onclick="addCustomRecurringItem()">+</button>
+  </div>
   <div id="recurring-manager-list"></div>
 </div>
 
@@ -1906,6 +1918,8 @@ const REGIME_OPTIONS=['Omnivore','Végétarien','Vegan','Sans gluten','Sans lact
 const COOKTIME_OPTIONS=[{v:'express',l:'⚡ Express (<15min)'},{v:'normal',l:'🍳 Normal'},{v:'passionne',l:'👨‍🍳 Passionné'}];
 const AVATAR_CHOICES=['🙂','😎','🧑‍🍳','👩‍🍳','🥑','🍕','🍜','🐱','🐶','🌶️'];
 const COMMON_ALLERGENS=['Gluten','Lactose','Œuf','Fruits à coque','Arachide','Poisson','Crustacés','Soja','Moutarde','Sésame'];
+const RECURRING_STARTER_PICKS=['Papier toilette','Liquide vaisselle','Éponges','Lessive','Sacs poubelle','Dentifrice','Savon liquide','Papier essuie-tout','Shampoing','Nettoyant multi-surfaces'];
+function findMaisonItem(name){return maisonItems.find(i=>i.n.toLowerCase()===name.toLowerCase());}
 
 let currentUser=null;
 let authTab='login';
@@ -2057,6 +2071,7 @@ async function startOnboarding(editMode){
   document.getElementById('onboard-budget').value=onboardDraft.budget||'';
   document.getElementById('onboard-household-disp').innerText=`${onboardDraft.householdSize} PERS.`;
   document.getElementById('onboard-recurring-search').value='';
+  document.getElementById('onboard-recurring-custom-input').value='';
   document.getElementById('onboard-cancel-btn').style.display=onboardEditMode?'flex':'none';
   renderAllergyChips();
   document.getElementById('app-shell').style.display='none';
@@ -2116,12 +2131,17 @@ function renderOnboardRecurring(){
       </div>`;
     });
   }
+  let starterHtml='<p class="onboard-recur-cat">Suggestions courantes</p><div class="onboard-options" style="margin-bottom:14px">'+
+    RECURRING_STARTER_PICKS.map(name=>{
+      const active=onboardDraft.recurringItems.some(r=>r.name.toLowerCase()===name.toLowerCase());
+      return `<button type="button" class="onboard-opt ${active?'active':''}" onclick="toggleStarterOnboardRecurring('${name.replace(/'/g,"\\'")}')">${name}</button>`;
+    }).join('')+'</div>';
   const rawSearch=(document.getElementById('onboard-recurring-search')?.value||'').trim();
   const searchTerms=normalizeSearchText(rawSearch).split(/\s+/).filter(Boolean);
   let visibleItems=maisonItems;
   if(currentOnboardRecurringCat!=='Tous')visibleItems=visibleItems.filter(i=>i.cat===currentOnboardRecurringCat);
   if(searchTerms.length)visibleItems=visibleItems.filter(i=>searchTerms.every(t=>normalizeSearchText(i.n).includes(t)));
-  if(!visibleItems.length){el.innerHTML=activeHtml+'<p class="text-center py-16 opacity-20 font-black">Aucun article trouvé</p>';return;}
+  if(!visibleItems.length){el.innerHTML=activeHtml+starterHtml+'<p class="text-center py-16 opacity-20 font-black">Aucun article trouvé</p>';return;}
   const bycat={};
   visibleItems.forEach(item=>{if(!bycat[item.cat])bycat[item.cat]=[];bycat[item.cat].push(item);});
   let html='<p class="onboard-recur-cat">Ajouter un article</p>';
@@ -2138,7 +2158,7 @@ function renderOnboardRecurring(){
       </div>`;
     });
   });
-  el.innerHTML=activeHtml+html;
+  el.innerHTML=activeHtml+starterHtml+html;
 }
 function setOnboardRecurringCat(cat){currentOnboardRecurringCat=cat;renderOnboardRecurring();}
 function removeOnboardRecurring(name){
@@ -2150,6 +2170,25 @@ function toggleOnboardRecurring(name,icon,cat,defDays){
   const idx=onboardDraft.recurringItems.findIndex(r=>r.name===name);
   if(idx>-1)onboardDraft.recurringItems.splice(idx,1);
   else onboardDraft.recurringItems.push({name,icon,cat,freqDays:defDays});
+  renderOnboardRecurring();
+}
+function toggleStarterOnboardRecurring(name){
+  const items=onboardDraft.recurringItems;
+  const idx=items.findIndex(r=>r.name.toLowerCase()===name.toLowerCase());
+  if(idx>-1){items.splice(idx,1);renderOnboardRecurring();return;}
+  const m=findMaisonItem(name);
+  items.push(m?{name:m.n,icon:m.i,cat:m.cat,freqDays:freqDays(m.freq)}:{name,icon:'🧻',cat:'Entretien',freqDays:30});
+  renderOnboardRecurring();
+}
+function addCustomOnboardRecurringItem(){
+  const input=document.getElementById('onboard-recurring-custom-input');
+  const name=input.value.trim();
+  if(!name)return;
+  const items=onboardDraft.recurringItems;
+  if(items.find(r=>r.name.toLowerCase()===name.toLowerCase())){input.value='';return;}
+  const m=findMaisonItem(name);
+  items.push(m?{name:m.n,icon:m.i,cat:m.cat,freqDays:freqDays(m.freq)}:{name,icon:'📦',cat:'Autre',freqDays:30});
+  input.value='';
   renderOnboardRecurring();
 }
 function setOnboardRecurringFreq(name,days){
@@ -2311,12 +2350,17 @@ async function renderRecurringManager(){
       </div>`;
     });
   }
+  let starterHtml='<p class="onboard-recur-cat">Suggestions courantes</p><div class="onboard-options" style="margin-bottom:14px">'+
+    RECURRING_STARTER_PICKS.map(name=>{
+      const active=currentUser.profile.recurringItems.some(r=>r.name.toLowerCase()===name.toLowerCase());
+      return `<button type="button" class="onboard-opt ${active?'active':''}" onclick="toggleStarterRecurringItem('${name.replace(/'/g,"\\'")}')">${name}</button>`;
+    }).join('')+'</div>';
   const rawSearch=(document.getElementById('recurring-search')?.value||'').trim();
   const searchTerms=normalizeSearchText(rawSearch).split(/\s+/).filter(Boolean);
   let visibleItems=maisonItems;
   if(currentRecurringCat!=='Tous')visibleItems=visibleItems.filter(i=>i.cat===currentRecurringCat);
   if(searchTerms.length)visibleItems=visibleItems.filter(i=>searchTerms.every(t=>normalizeSearchText(i.n).includes(t)));
-  if(!visibleItems.length){el.innerHTML=activeHtml+'<p class="text-center py-16 opacity-20 font-black">Aucun article trouvé</p>';return;}
+  if(!visibleItems.length){el.innerHTML=activeHtml+starterHtml+'<p class="text-center py-16 opacity-20 font-black">Aucun article trouvé</p>';return;}
   const bycat={};
   visibleItems.forEach(item=>{if(!bycat[item.cat])bycat[item.cat]=[];bycat[item.cat].push(item);});
   let html='<p class="onboard-recur-cat">Ajouter un article</p>';
@@ -2333,7 +2377,7 @@ async function renderRecurringManager(){
       </div>`;
     });
   });
-  el.innerHTML=activeHtml+html;
+  el.innerHTML=activeHtml+starterHtml+html;
 }
 function toggleRecurringItem(name,icon,cat,defDays){
   const items=currentUser.profile.recurringItems;
@@ -2341,6 +2385,27 @@ function toggleRecurringItem(name,icon,cat,defDays){
   if(idx>-1)items.splice(idx,1);
   else items.push({name,icon,cat,freqDays:defDays});
   persistCurrentUser();
+  renderRecurringManager();
+}
+function toggleStarterRecurringItem(name){
+  const items=currentUser.profile.recurringItems;
+  const idx=items.findIndex(r=>r.name.toLowerCase()===name.toLowerCase());
+  if(idx>-1){items.splice(idx,1);persistCurrentUser();renderRecurringManager();return;}
+  const m=findMaisonItem(name);
+  items.push(m?{name:m.n,icon:m.i,cat:m.cat,freqDays:freqDays(m.freq)}:{name,icon:'🧻',cat:'Entretien',freqDays:30});
+  persistCurrentUser();
+  renderRecurringManager();
+}
+function addCustomRecurringItem(){
+  const input=document.getElementById('recurring-custom-input');
+  const name=input.value.trim();
+  if(!name)return;
+  const items=currentUser.profile.recurringItems;
+  if(items.find(r=>r.name.toLowerCase()===name.toLowerCase())){input.value='';return;}
+  const m=findMaisonItem(name);
+  items.push(m?{name:m.n,icon:m.i,cat:m.cat,freqDays:freqDays(m.freq)}:{name,icon:'📦',cat:'Autre',freqDays:30});
+  persistCurrentUser();
+  input.value='';
   renderRecurringManager();
 }
 function removeRecurringItem(name){
