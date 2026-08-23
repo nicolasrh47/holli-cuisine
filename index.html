@@ -1619,7 +1619,7 @@ function renderCooking(){
         <img src="${r.i}" alt="${r.n}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0" loading="lazy">
         <div class="flex-1 min-w-0">
           <h3 class="font-black uppercase text-[11px] italic text-slate-800 leading-tight">${r.n}${allergyBadgeHTML(r,'inline')}</h3>
-          <p class="text-[9px] text-slate-400 font-bold mt-1">${splitPrepSteps(r.prep).length} étapes</p>
+          <p class="text-[9px] text-slate-400 font-bold mt-1">${splitPrepSteps(r.prep).length} étapes${r.temps?` · ⏱ ${r.temps}`:''}</p>
         </div>
         <div class="flex flex-col gap-2 flex-shrink-0">
           <button onclick="openCookModal(${idx})" class="bg-slate-900 text-white px-4 py-2 rounded-full font-black text-[9px] uppercase border-none cursor-pointer">Cuisiner →</button>
@@ -1638,8 +1638,8 @@ function renderOldRecipes(){
         ${r.cookedAt?`<p class="text-[8px] text-slate-300 font-bold">${new Date(r.cookedAt).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</p>`:''}
       </div>
       <div class="flex flex-col gap-2 flex-shrink-0">
+        <button onclick="addToCart(oldRecipes[oldRecipes.length-1-${i}])" class="bg-orange-500 text-white px-3 py-1.5 rounded-full font-black text-[9px] uppercase border-none cursor-pointer">+ Panier</button>
         <button onclick="restoreRecipe(${i})" class="bg-green-50 text-green-600 px-3 py-1.5 rounded-full font-black text-[9px] uppercase border-none cursor-pointer">↩ Remettre</button>
-        <button onclick="addToCart(oldRecipes[oldRecipes.length-1-${i}])" class="bg-orange-50 text-orange-500 px-3 py-1.5 rounded-full font-black text-[9px] uppercase border-none cursor-pointer">+ Panier</button>
       </div>
     </div>`).join('');
 }
@@ -1731,9 +1731,8 @@ function toggleTimer(stepIdx,totalSecs){
   const disp=document.getElementById(`ck-tdisp-${stepIdx}`);
   if(!btn||!disp)return;
   const ex=cookTimers[stepIdx];
-  if(ex&&ex.done)return;
   if(ex&&ex.interval){clearInterval(ex.interval);ex.interval=null;btn.className='ck-timer-inline';return;}
-  let remaining=ex?ex.remaining:totalSecs;
+  let remaining=(ex&&!ex.done)?ex.remaining:totalSecs;
   btn.className='ck-timer-inline running';
   const interval=setInterval(()=>{remaining--;if(cookTimers[stepIdx])cookTimers[stepIdx].remaining=remaining;if(remaining<=0){clearInterval(interval);cookTimers[stepIdx]={remaining:0,done:true,interval:null};btn.className='ck-timer-inline done-t';disp.innerText='✓ Terminé !';if(navigator.vibrate)navigator.vibrate([300,100,300]);}else{disp.innerText=fmtTime(remaining);}},1000);
   cookTimers[stepIdx]={interval,remaining,done:false};
