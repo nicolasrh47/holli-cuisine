@@ -1192,10 +1192,18 @@ function closeCatalogueModal(){document.getElementById('catalogue-modal').classL
 
 function setupCategoryBar(){const cats=['Tous',...new Set(recipes.map(r=>r.cat))];document.getElementById('category-bar').innerHTML=cats.map(c=>`<button onclick="filterGrid('${c}')" class="cat-tab ${c===currentCat?'active':''}" id="tab-${c}">${c}</button>`).join('');}
 function filterGrid(cat){currentCat=cat;document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));document.getElementById('tab-'+cat)?.classList.add('active');renderGrid();}
+// Enlève les accents pour une recherche tolérante ("pate" doit trouver "Pâtes").
+function normalizeSearchText(str){return(str||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
 function renderGrid(){
-  const search=(document.getElementById('catalogue-search')?.value||'').toLowerCase().trim();
+  const rawSearch=(document.getElementById('catalogue-search')?.value||'').trim();
   let filtered=currentCat==='Tous'?recipes:recipes.filter(r=>r.cat===currentCat);
-  if(search)filtered=filtered.filter(r=>r.n.toLowerCase().includes(search));
+  if(rawSearch){
+    const terms=normalizeSearchText(rawSearch).split(/\s+/).filter(Boolean);
+    filtered=filtered.filter(r=>{
+      const name=normalizeSearchText(r.n);
+      return terms.every(t=>name.includes(t));
+    });
+  }
   if(hideAllergens)filtered=filtered.filter(r=>getAllergyMatches(r).length===0);
   const countEl=document.getElementById('catalogue-count');
   if(countEl)countEl.innerText=`${filtered.length} recette${filtered.length>1?'s':''}`;
