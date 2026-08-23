@@ -80,7 +80,6 @@ body.dark .pers-pill span{color:#f1f5f9;}
 .cat-tab{font-size:10px;font-weight:900;color:#64748b;padding:10px 18px;border-radius:14px;text-transform:uppercase;border:1.5px solid #e2e8f0;white-space:nowrap;background:white;transition:.3s;cursor:pointer;}
 .cat-tab.active{background:linear-gradient(135deg,#f97316,#fb923c);color:white;border-color:#f97316;}
 
-.weekly-banner{background:linear-gradient(to right,#0f172a,#1e293b);border-radius:2rem;position:relative;overflow:hidden;height:120px;display:flex;align-items:center;box-shadow:0 8px 20px -4px rgba(0,0,0,.15);cursor:pointer;margin-bottom:12px;}
 
 .week-menu-banner{
   background:linear-gradient(135deg,#f97316 0%,#ea580c 50%,#c2410c 100%);
@@ -215,6 +214,9 @@ body.dark .rayon-header{background:#1e293b;color:#64748b;border-bottom-color:#33
 
 #detail-modal{position:fixed;inset:0;background:white;z-index:400;display:none;overflow-y:auto;padding:2rem;}
 body.dark #detail-modal{background:#0f172a;}
+#catalogue-modal{position:fixed;inset:0;background:var(--bg);z-index:400;display:none;overflow-y:auto;padding:2rem 1.5rem 2rem;}
+#catalogue-modal.open{display:block;}
+#catalogue-search:focus{border-color:#f97316;}
 #add-item-modal{position:fixed;bottom:0;left:0;right:0;background:white;z-index:450;border-radius:2rem 2rem 0 0;padding:24px;display:none;box-shadow:0 -20px 60px rgba(0,0,0,.15);}
 body.dark #add-item-modal{background:#1e293b;}
 #add-item-input{width:100%;border:2px solid #e2e8f0;border-radius:1rem;padding:14px 16px;font-size:15px;font-weight:700;font-family:inherit;outline:none;}
@@ -405,6 +407,14 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   <div id="modal-content"></div>
 </div>
 
+<div id="catalogue-modal">
+  <button onclick="closeCatalogueModal()" class="mb-4 font-black text-orange-500 text-xs uppercase">← Retour</button>
+  <h2 class="text-2xl font-[900] italic uppercase tracking-tighter mb-4">Toutes les recettes</h2>
+  <input id="catalogue-search" placeholder="🔍 Rechercher une recette…" oninput="renderGrid()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:14px;background:var(--card);color:var(--text)">
+  <div id="category-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-5 pb-2"></div>
+  <div id="grid" class="grid grid-cols-2 gap-4"></div>
+</div>
+
 <div id="cook-modal">
   <div class="ck-header">
     <button onclick="closeCook()" class="font-black text-orange-500 text-xs uppercase flex-shrink-0">← Fin</button>
@@ -493,7 +503,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
     <button onclick="handleLike()" class="w-14 h-14 bg-orange-500 rounded-full shadow-lg flex items-center justify-center text-white text-2xl active:scale-90 transition-transform">✓</button>
   </div>
 
-  <div id="weekly-section"></div>
+  <div id="weekly-section" class="mb-4"></div>
 
   <div class="week-menu-banner" onclick="switchPage('week')">
     <div class="week-menu-banner-deco">🗓</div>
@@ -505,11 +515,16 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
     <div class="pr-5 text-white/30 text-4xl">›</div>
   </div>
 
-  <div class="px-1">
-    <h3 class="text-xl font-[900] uppercase italic mb-3 tracking-tighter" id="catalogueTitle">Le Catalogue</h3>
-    <div id="category-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-5 pb-2"></div>
-    <div id="grid" class="grid grid-cols-2 gap-4"></div>
-  </div>
+  <button onclick="openCatalogueModal()" class="w-full flex items-center justify-between bg-white border border-slate-100 rounded-[1.8rem] shadow-sm px-5 py-4 mt-2 active:scale-[.98] transition-transform" style="border:1.5px solid var(--border);background:var(--card)">
+    <span class="flex items-center gap-3">
+      <span class="text-2xl">🔍</span>
+      <span class="text-left">
+        <span class="block font-[900] text-sm uppercase italic" style="color:var(--text)" id="catalogueTitle">Voir tout le catalogue</span>
+        <span class="block text-[10px] font-bold" style="color:var(--text2)">Toutes les recettes, par catégorie</span>
+      </span>
+    </span>
+    <span class="text-orange-500 text-2xl">›</span>
+  </button>
 </section>
 
 <section id="page-week" class="page" role="tabpanel" aria-label="Semaine">
@@ -785,7 +800,7 @@ async function loadSiteContent() {
     console.warn('content.json non trouvé, utilisation valeurs par défaut');
     siteContent = {};
   }
-  document.getElementById('catalogueTitle').innerText = siteContent.home?.catalogueTitle || 'Le Catalogue';
+  document.getElementById('catalogueTitle').innerText = siteContent.home?.catalogueTitle || 'Voir tout le catalogue';
   document.getElementById('swipeHintText').innerText = siteContent.home?.swipeHint || 'Glisse la carte';
   document.getElementById('miamLabelText').innerText = siteContent.home?.likeText || 'MIAM';
   document.getElementById('weekTitle').innerText = siteContent.week?.title || '🗓 Crée ta semaine';
@@ -1005,7 +1020,7 @@ async function init(){
     ].map(r=>({...r,id:hashId(r.n)}));
   }
   shuffledRecipes=shuffleWithSeason(recipes);
-  setupCategoryBar();renderCard();renderGrid();renderWeekly();
+  renderCard();renderWeekly();
   if(weekMenu.length===0)generateWeekMenu();
   renderMaison();updateUI();initTouchSystem();
 }
@@ -1095,24 +1110,27 @@ function renderWeekly(){
   const wk=Math.ceil((((now-oj)/86400000)+oj.getDay()+1)/7);
   const r=recipes[wk%recipes.length];if(!r)return;
   document.getElementById('weekly-section').innerHTML=`
-    <div class="weekly-banner" onclick="showDetails(${r.id})">
-      <div class="flex-1 p-5 z-10">
-        <span class="bg-orange-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase">⭐ Top Semaine</span>
-        <h3 class="text-white text-lg font-black uppercase italic leading-tight mt-2">${r.n}</h3>
-        <p class="text-slate-400 text-[9px] font-bold mt-1 uppercase">Découvrir →</p>
-      </div>
-      <div class="w-1/3 h-full relative">
-        <img src="${r.i}" alt="${r.n}" class="absolute inset-0 w-full h-full object-cover opacity-60" loading="lazy">
-        <div class="absolute inset-0 bg-gradient-to-r from-[#0f172a] to-transparent"></div>
-      </div>
-    </div>`;
+    <button onclick="showDetails(${r.id})" class="w-full flex items-center gap-2 bg-transparent border-none cursor-pointer p-0 text-left">
+      <span class="text-orange-500 font-black text-[10px] uppercase">⭐ Recette de la semaine</span>
+      <span class="font-[900] text-[11px] uppercase italic truncate flex-1" style="color:var(--text)">${r.n}</span>
+      <span class="text-orange-500 text-sm">→</span>
+    </button>`;
 }
 
-function setupCategoryBar(){const cats=['Tous',...new Set(recipes.map(r=>r.cat))];document.getElementById('category-bar').innerHTML=cats.map(c=>`<button onclick="filterGrid('${c}')" class="cat-tab ${c==='Tous'?'active':''}" id="tab-${c}">${c}</button>`).join('');}
+function openCatalogueModal(){
+  document.getElementById('catalogue-modal').classList.add('open');
+  document.getElementById('catalogue-search').value='';
+  setupCategoryBar();renderGrid();
+}
+function closeCatalogueModal(){document.getElementById('catalogue-modal').classList.remove('open');}
+
+function setupCategoryBar(){const cats=['Tous',...new Set(recipes.map(r=>r.cat))];document.getElementById('category-bar').innerHTML=cats.map(c=>`<button onclick="filterGrid('${c}')" class="cat-tab ${c===currentCat?'active':''}" id="tab-${c}">${c}</button>`).join('');}
 function filterGrid(cat){currentCat=cat;document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));document.getElementById('tab-'+cat)?.classList.add('active');renderGrid();}
 function renderGrid(){
-  const filtered=currentCat==='Tous'?recipes:recipes.filter(r=>r.cat===currentCat);
-  document.getElementById('grid').innerHTML=filtered.map(r=>`
+  const search=(document.getElementById('catalogue-search')?.value||'').toLowerCase().trim();
+  let filtered=currentCat==='Tous'?recipes:recipes.filter(r=>r.cat===currentCat);
+  if(search)filtered=filtered.filter(r=>r.n.toLowerCase().includes(search));
+  document.getElementById('grid').innerHTML=filtered.length?filtered.map(r=>`
     <div class="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm cursor-pointer active:scale-95 transition-transform recipe-card">
       <div onclick="showDetails(${r.id})">
         <img src="${r.i}" alt="${r.n}" class="h-32 w-full object-cover" loading="lazy">
@@ -1121,7 +1139,7 @@ function renderGrid(){
       <button class="fav-btn ${favorites.has(r.id)?'active':''}" data-fav-id="${r.id}" onclick="toggleFav(${r.id},event)">${favorites.has(r.id)?'❤️':'🤍'}</button>
       <button class="add-btn" onclick="event.stopPropagation();handleAddRecipe(${r.id})">+</button>
       ${allergyBadgeHTML(r)}
-    </div>`).join('');
+    </div>`).join(''):'<div class="col-span-2 text-center py-16 opacity-25"><div class="text-5xl mb-3">🔍</div><div class="font-black text-sm uppercase">Aucune recette trouvée</div></div>';
 }
 
 function showDetails(id){
@@ -1482,7 +1500,7 @@ function toggleHome(name){
 function clearMaison(){if(!homeCart.length)return;if(confirm('Retirer tous les articles maison du panier ?')){homeCart=[];save();renderMaison();updateUI();}}
 
 document.getElementById('add-item-input')?.addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddItem();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetails();closeCook();closeAddItem();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetails();closeCook();closeAddItem();closeCatalogueModal();}});
 
 /* ================================================================
    ========== AUTHENTIFICATION / ONBOARDING / PROFIL ==============
@@ -1762,7 +1780,7 @@ function allergyBadgeHTML(recipe,style){
   return`<div class="allergy-warning-badge" title="${title}">⚠️ ${matches[0]}${matches.length>1?` +${matches.length-1}`:''}</div>`;
 }
 function refreshAllergyAwareViews(){
-  if(document.getElementById('page-home').classList.contains('active'))renderGrid();
+  if(document.getElementById('catalogue-modal').classList.contains('open'))renderGrid();
   if(document.getElementById('page-favs').classList.contains('active'))renderFavs();
   if(document.getElementById('page-week').classList.contains('active'))renderWeekMenu();
   if(document.getElementById('page-cooking').classList.contains('active'))renderCooking();
@@ -1813,7 +1831,8 @@ function applyHouseholdSnapshot(d){
 
 function renderAllAfterSync(){
   updateServings(0);
-  if(document.getElementById('page-home')?.classList.contains('active')){renderGrid();renderCard();}
+  if(document.getElementById('page-home')?.classList.contains('active'))renderCard();
+  if(document.getElementById('catalogue-modal')?.classList.contains('open'))renderGrid();
   if(document.getElementById('page-cart')?.classList.contains('active'))renderCart();
   if(document.getElementById('page-cooking')?.classList.contains('active'))renderCooking();
   if(document.getElementById('page-favs')?.classList.contains('active'))renderFavs();
