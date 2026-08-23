@@ -274,6 +274,10 @@ body.dark .auth-tabs{background:#334155;}
 .auth-google-btn:active{transform:scale(.97);}
 .auth-error{color:#ef4444;font-size:11px;font-weight:800;text-align:center;margin-top:12px;min-height:14px;}
 .auth-forgot{display:block;text-align:center;font-size:11px;font-weight:800;color:#94a3b8;margin-top:4px;background:none;border:none;cursor:pointer;text-decoration:underline;}
+.auth-pw-wrap{position:relative;}
+.auth-pw-wrap .auth-input{padding-right:44px;}
+.auth-pw-toggle{position:absolute;right:6px;top:50%;transform:translateY(calc(-50% - 5px));width:32px;height:32px;border:none;background:none;color:var(--text);font-size:15px;cursor:pointer;opacity:.55;}
+.auth-submit[disabled],.auth-google-btn[disabled]{opacity:.6;pointer-events:none;}
 
 .onboard-card{width:100%;max-width:420px;background:var(--card);border-radius:2.5rem;padding:28px 24px 24px;box-shadow:0 24px 60px -12px rgba(0,0,0,.15);border:1.5px solid var(--border);}
 .onboard-progress{height:5px;background:#f1f5f9;border-radius:99px;overflow:hidden;margin-bottom:22px;}
@@ -356,16 +360,22 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
       <button id="auth-tab-signup" class="auth-tab" onclick="setAuthTab('signup')">Inscription</button>
     </div>
     <div id="auth-form-login">
-      <input id="login-email" class="auth-input" type="email" placeholder="Adresse e-mail" autocomplete="email">
-      <input id="login-password" class="auth-input" type="password" placeholder="Mot de passe" autocomplete="current-password">
-      <button onclick="handleLogin()" class="auth-submit">Se connecter</button>
+      <input id="login-email" class="auth-input" type="email" placeholder="Adresse e-mail" autocomplete="email" onkeydown="if(event.key==='Enter')handleLogin()">
+      <div class="auth-pw-wrap">
+        <input id="login-password" class="auth-input" type="password" placeholder="Mot de passe" autocomplete="current-password" onkeydown="if(event.key==='Enter')handleLogin()">
+        <button type="button" class="auth-pw-toggle" onclick="togglePwVisibility('login-password',this)">👁️</button>
+      </div>
+      <button id="login-submit-btn" onclick="handleLogin()" class="auth-submit">Se connecter</button>
       <button onclick="handleForgotPassword()" class="auth-forgot" type="button">Mot de passe oublié ?</button>
     </div>
     <div id="auth-form-signup" style="display:none">
-      <input id="signup-pseudo" class="auth-input" type="text" placeholder="Pseudo" maxlength="30">
-      <input id="signup-email" class="auth-input" type="email" placeholder="Adresse e-mail" autocomplete="email">
-      <input id="signup-password" class="auth-input" type="password" placeholder="Mot de passe (6 car. min.)" autocomplete="new-password">
-      <button onclick="handleSignup()" class="auth-submit">Créer mon compte</button>
+      <input id="signup-pseudo" class="auth-input" type="text" placeholder="Pseudo" maxlength="30" onkeydown="if(event.key==='Enter')handleSignup()">
+      <input id="signup-email" class="auth-input" type="email" placeholder="Adresse e-mail" autocomplete="email" onkeydown="if(event.key==='Enter')handleSignup()">
+      <div class="auth-pw-wrap">
+        <input id="signup-password" class="auth-input" type="password" placeholder="Mot de passe (6 car. min.)" autocomplete="new-password" onkeydown="if(event.key==='Enter')handleSignup()">
+        <button type="button" class="auth-pw-toggle" onclick="togglePwVisibility('signup-password',this)">👁️</button>
+      </div>
+      <button id="signup-submit-btn" onclick="handleSignup()" class="auth-submit">Créer mon compte</button>
     </div>
     <div class="auth-divider"><span>ou</span></div>
     <button onclick="handleGoogleAuth()" class="auth-google-btn">🔵 Continuer avec Google</button>
@@ -1943,6 +1953,18 @@ function setAuthTab(tab){
   document.getElementById('auth-error').innerText='';
 }
 function showAuthError(msg){document.getElementById('auth-error').innerText=msg;}
+function togglePwVisibility(inputId,btn){
+  const input=document.getElementById(inputId);
+  const showing=input.type==='text';
+  input.type=showing?'password':'text';
+  btn.textContent=showing?'👁️':'🙈';
+}
+function setAuthBusy(busy){
+  ['login-submit-btn','signup-submit-btn'].forEach(id=>{
+    const b=document.getElementById(id);if(b)b.disabled=busy;
+  });
+  document.querySelectorAll('.auth-google-btn').forEach(b=>b.disabled=busy);
+}
 
 function handleSignup(){
   const pseudo=document.getElementById('signup-pseudo').value.trim();
@@ -1951,17 +1973,19 @@ function handleSignup(){
   if(!pseudo||!email||!pw)return showAuthError('Merci de remplir tous les champs.');
   if(pw.length<6)return showAuthError('Mot de passe : 6 caractères minimum.');
   showAuthError('Création du compte…');
+  setAuthBusy(true);
   fbAuth.createUserWithEmailAndPassword(email,pw).then(cred=>{
     saveLocalProfile(cred.user.uid,defaultProfileRecord(pseudo,'🙂'));
     return cred.user.updateProfile({displayName:pseudo});
-  }).catch(err=>showAuthError(authErrorMessage(err)));
+  }).catch(err=>showAuthError(authErrorMessage(err))).finally(()=>setAuthBusy(false));
 }
 function handleLogin(){
   const email=document.getElementById('login-email').value.trim();
   const pw=document.getElementById('login-password').value;
   if(!email||!pw)return showAuthError('Merci de remplir tous les champs.');
   showAuthError('Connexion…');
-  fbAuth.signInWithEmailAndPassword(email,pw).catch(err=>showAuthError(authErrorMessage(err)));
+  setAuthBusy(true);
+  fbAuth.signInWithEmailAndPassword(email,pw).catch(err=>showAuthError(authErrorMessage(err))).finally(()=>setAuthBusy(false));
 }
 function handleForgotPassword(){
   const email=(document.getElementById('login-email').value||'').trim();
@@ -1974,24 +1998,24 @@ function handleForgotPassword(){
 function handleGoogleAuth(){
   const provider=new firebase.auth.GoogleAuthProvider();
   const isStandalone=window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;
-  const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   if(isStandalone){
-    // App ajoutée à l'écran d'accueil (iOS) : signInWithRedirect perd l'état de connexion
-    // au retour de Safari (contexte isolé) → on reste bloqué sur l'écran de connexion sans erreur.
-    // Impossible à fiabiliser depuis l'app installée : on redirige vers Safari.
+    // App ajoutée à l'écran d'accueil (iOS) : le flux de connexion Google (popup ou redirection)
+    // perd son état dans ce contexte isolé → on reste bloqué sur l'écran de connexion sans erreur.
     showAuthError('Pour te connecter avec Google, ouvre le site dans Safari (pas depuis l\'icône sur ton écran d\'accueil), connecte-toi là-bas, puis reviens sur l\'app.');
     return;
   }
   showAuthError('Connexion avec Google…');
-  if(isMobile){
-    // Safari iOS ferme les popups OAuth (protection ITP) → redirection, plus fiable sur mobile
-    fbAuth.signInWithRedirect(provider).catch(err=>showAuthError(authErrorMessage(err)));
-    return;
-  }
+  setAuthBusy(true);
+  // On tente d'abord la popup partout, y compris sur mobile : le domaine d'authentification
+  // (holli-cuisine.firebaseapp.com) est différent de celui du site (github.io), et la protection
+  // anti-tracking de Safari bloque le relais de données entre ces deux domaines lors d'une
+  // redirection complète — ce qui provoque un retour silencieux à l'écran de connexion, sans
+  // erreur. La popup communique en direct avec la fenêtre d'origine et évite ce problème.
   fbAuth.signInWithPopup(provider).catch(err=>{
     if(err.code==='auth/popup-blocked'||err.code==='auth/cancelled-popup-request'){
-      fbAuth.signInWithRedirect(provider).catch(e2=>showAuthError(authErrorMessage(e2)));
-    } else showAuthError(authErrorMessage(err));
+      sessionStorage.setItem('holliGoogleRedirectAttempt','1');
+      fbAuth.signInWithRedirect(provider).catch(e2=>{showAuthError(authErrorMessage(e2));setAuthBusy(false);});
+    } else {showAuthError(authErrorMessage(err));setAuthBusy(false);}
   });
 }
 function handleLogout(){
@@ -2406,7 +2430,22 @@ function hideBootScreen(){
   if(bs)bs.remove();
 }
 
-fbAuth.getRedirectResult().catch(err=>{if(err&&err.code)showAuthError(authErrorMessage(err));});
+fbAuth.getRedirectResult().then(result=>{
+  if(!result||!result.user){
+    // La redirection est revenue sans utilisateur : soit personne n'a tenté de se connecter,
+    // soit le relais entre github.io et firebaseapp.com a été bloqué (protection anti-tracking) —
+    // dans ce cas on prévient au lieu de revenir silencieusement à l'écran de connexion.
+    if(sessionStorage.getItem('holliGoogleRedirectAttempt')){
+      sessionStorage.removeItem('holliGoogleRedirectAttempt');
+      showAuthError('La connexion Google a été bloquée par ton navigateur (protection anti-tracking). Essaie plutôt de te connecter avec e-mail + mot de passe, ou utilise "Mot de passe oublié ?" pour en créer un.');
+    }
+  } else {
+    sessionStorage.removeItem('holliGoogleRedirectAttempt');
+  }
+}).catch(err=>{
+  sessionStorage.removeItem('holliGoogleRedirectAttempt');
+  if(err&&err.code)showAuthError(authErrorMessage(err));
+});
 
 fbAuth.onAuthStateChanged(async function(fbUser){
   if(fbUser){
