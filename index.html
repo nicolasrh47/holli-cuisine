@@ -73,6 +73,7 @@ body.dark .pers-pill span{color:#f1f5f9;}
 .swipe-zone{position:relative;height:380px;width:100%;touch-action:none;}
 .swipe-card{position:absolute;inset:0;border-radius:3.5rem;overflow:hidden;box-shadow:0 28px 56px -10px rgba(0,0,0,.22);border:4px solid white;z-index:10;}
 .miam-label{position:absolute;top:38px;left:38px;border:5px solid #22c55e;color:#22c55e;padding:4px 18px;border-radius:14px;font-weight:900;font-size:36px;transform:rotate(-15deg);opacity:0;z-index:50;pointer-events:none;background:rgba(255,255,255,.9);}
+.nope-label{position:absolute;top:38px;right:38px;border:5px solid #ef4444;color:#ef4444;padding:4px 18px;border-radius:14px;font-weight:900;font-size:36px;transform:rotate(15deg);opacity:0;z-index:50;pointer-events:none;background:rgba(255,255,255,.9);}
 .swipe-fav-btn{position:absolute;top:16px;right:16px;width:40px;height:40px;background:rgba(255,255,255,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;z-index:20;cursor:pointer;border:none;box-shadow:0 2px 10px rgba(0,0,0,.15);transition:transform .15s;}
 .swipe-fav-btn:active{transform:scale(.88);}
 .swipe-fav-btn.active{background:rgba(254,242,242,.95);}
@@ -496,6 +497,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   </div>
   <div id="swipe-container" class="swipe-zone mb-5">
     <div id="miam-badge" class="miam-label">MIAM</div>
+    <div id="nope-badge" class="nope-label">NOPE</div>
     <div id="card" class="swipe-card">
       <div id="seasonal-badge" class="swipe-seasonal-badge">⭐ Recette de la semaine</div>
       <img id="card-img" src="" alt="" class="w-full h-full object-cover pointer-events-none">
@@ -1098,19 +1100,53 @@ function renderCard(){
   document.getElementById('card-img').src=r.i;
   document.getElementById('card-img').alt=r.n;
   document.getElementById('card-title').innerText=r.n;
+  document.getElementById('card').style.transition='none';
   document.getElementById('card').style.transform='';
   document.getElementById('miam-badge').style.opacity=0;
+  document.getElementById('nope-badge').style.opacity=0;
   document.getElementById('seasonal-badge').classList.toggle('show',r.id===weeklyFeaturedId);
   updateSwipeFavBtn();
 }
-function handleLike(){addToCart(shuffledRecipes[curIdx]);nextCard();}
-function handleNope(){nextCard();}
-function nextCard(){curIdx=(curIdx+1)%shuffledRecipes.length;renderCard();}
+let swipeBusy=false;
+function flingCard(direction){
+  if(swipeBusy||!shuffledRecipes.length)return;
+  swipeBusy=true;
+  const card=document.getElementById('card');
+  const badge=document.getElementById(direction>0?'miam-badge':'nope-badge');
+  card.style.transition='.35s cubic-bezier(.23,1,.32,1)';
+  card.style.transform=`translateX(${direction*520}px) rotate(${direction*28}deg)`;
+  badge.style.opacity=1;
+  if(direction>0)addToCart(shuffledRecipes[curIdx]);
+  setTimeout(()=>{
+    curIdx=(curIdx+1)%shuffledRecipes.length;
+    renderCard();
+    swipeBusy=false;
+  },320);
+}
+function handleLike(){flingCard(1);}
+function handleNope(){flingCard(-1);}
 function initTouchSystem(){
   const card=document.getElementById('card');
-  card.addEventListener('touchstart',e=>{startX=e.touches[0].clientX;card.style.transition='none';});
-  card.addEventListener('touchmove',e=>{moveX=e.touches[0].clientX-startX;card.style.transform=`translateX(${moveX}px) rotate(${moveX/15}deg)`;document.getElementById('miam-badge').style.opacity=moveX>50?Math.min(moveX/150,1):0;});
-  card.addEventListener('touchend',()=>{card.style.transition='.4s cubic-bezier(.23,1,.32,1)';if(moveX>120)handleLike();else if(moveX<-120)handleNope();else{card.style.transform='';document.getElementById('miam-badge').style.opacity=0;}moveX=0;});
+  card.addEventListener('touchstart',e=>{if(swipeBusy)return;startX=e.touches[0].clientX;card.style.transition='none';});
+  card.addEventListener('touchmove',e=>{
+    if(swipeBusy)return;
+    moveX=e.touches[0].clientX-startX;
+    card.style.transform=`translateX(${moveX}px) rotate(${moveX/15}deg)`;
+    document.getElementById('miam-badge').style.opacity=moveX>50?Math.min(moveX/150,1):0;
+    document.getElementById('nope-badge').style.opacity=moveX<-50?Math.min(-moveX/150,1):0;
+  });
+  card.addEventListener('touchend',()=>{
+    if(swipeBusy){moveX=0;return;}
+    if(moveX>120)handleLike();
+    else if(moveX<-120)handleNope();
+    else{
+      card.style.transition='.4s cubic-bezier(.23,1,.32,1)';
+      card.style.transform='';
+      document.getElementById('miam-badge').style.opacity=0;
+      document.getElementById('nope-badge').style.opacity=0;
+    }
+    moveX=0;
+  });
 }
 
 // Recette de la semaine : choisie parmi les recettes de saison en cours
