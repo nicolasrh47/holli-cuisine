@@ -728,6 +728,12 @@ let recipes=[],shuffledRecipes=[];
 let weeklyFeaturedId=null;
 let cart=[],homeCart=[],extraItems=[];
 let checkedItems=new Set(),manualQtys={};
+// Recettes du panier déjà "trouvées" (Tout trouvé) : leurs ingrédients ne
+// réapparaissent plus dans Courses tant qu'on ne les rajoute/relance pas —
+// sans ça, cocher tout ne fait que réinitialiser checkedItems, et comme les
+// recettes restent dans le panier pour Cuisiner, la liste se reconstruit
+// aussitôt entièrement décochée.
+let shoppedRecipeNames=new Set();
 let favorites=new Set();
 let weekMenu=[];
 let weekCount=7;
@@ -921,7 +927,7 @@ function fmtQty(qty,unit){
 }
 function buildMerged(subset){
   const ratio=servings/BASE_SERVINGS,map=new Map();
-  (subset||cart).forEach(recipe=>{
+  (subset||cart).filter(recipe=>!shoppedRecipeNames.has(recipe.n)).forEach(recipe=>{
     recipe.ing.split(',').forEach(line=>{
       const p=parseIng(line),key=normName(p.name);
       if(!key)return;
@@ -1026,6 +1032,7 @@ async function init(){
   homeCart=JSON.parse(localStorage.getItem('holli_home_v4'))||[];
   extraItems=JSON.parse(localStorage.getItem('holli_extras'))||[];
   checkedItems=new Set(JSON.parse(localStorage.getItem('holli_checked'))||[]);
+  shoppedRecipeNames=new Set(JSON.parse(localStorage.getItem('holli_shopped'))||[]);
   manualQtys=JSON.parse(localStorage.getItem('holli_manual_qtys'))||{};
   servings=parseInt(localStorage.getItem('holli_servings'))||2;
   itemLastBought=JSON.parse(localStorage.getItem('holli_last_bought'))||{};
@@ -1487,7 +1494,7 @@ function renderWeekMenu(){
 function addToCart(r){if(!r)return;if(!cart.find(x=>x.n===r.n)){cart.push(r);resetRecipeChecked(r);save();showToast(`✓ ${r.n} ajouté !`);}}
 function handleAddRecipe(id){const r=recipes.find(x=>x.id==id);if(!r)return;if(cart.find(x=>x.n===r.n)){if(confirm(`"${r.n}" est déjà dans le panier. Réinitialiser ?`))resetRecipeChecked(r);}else addToCart(r);}
 function removeFromCart(name){cart=cart.filter(r=>r.n!==name);save();renderCart();renderCooking();}
-function resetRecipeChecked(recipe){recipe.ing.split(',').forEach(l=>{const p=parseIng(l);checkedItems.delete(normName(p.name));});localStorage.setItem('holli_checked',JSON.stringify([...checkedItems]));pushToFirestore();if(document.getElementById('page-cart').classList.contains('active'))renderCart();}
+function resetRecipeChecked(recipe){recipe.ing.split(',').forEach(l=>{const p=parseIng(l);checkedItems.delete(normName(p.name));});shoppedRecipeNames.delete(recipe.n);localStorage.setItem('holli_checked',JSON.stringify([...checkedItems]));localStorage.setItem('holli_shopped',JSON.stringify([...shoppedRecipeNames]));pushToFirestore();if(document.getElementById('page-cart').classList.contains('active'))renderCart();}
 function openAddItem(){document.getElementById('add-item-modal').style.display='block';setTimeout(()=>document.getElementById('add-item-input').focus(),100);}
 function closeAddItem(){document.getElementById('add-item-modal').style.display='none';document.getElementById('add-item-input').value='';}
 function confirmAddItem(){const val=document.getElementById('add-item-input').value.trim();if(val){extraItems.push(val);localStorage.setItem('holli_extras',JSON.stringify(extraItems));pushToFirestore();closeAddItem();renderCart();}}
@@ -1540,6 +1547,8 @@ let autoClearTimer=null;
 function clearCartIngredients(goToCooking){
   if(goToCooking===undefined)goToCooking=true;
   if(autoClearTimer){clearTimeout(autoClearTimer);autoClearTimer=null;}
+  cart.forEach(r=>shoppedRecipeNames.add(r.n));
+  localStorage.setItem('holli_shopped',JSON.stringify([...shoppedRecipeNames]));
   homeCart=[];extraItems=[];checkedItems.clear();manualQtys={};
   localStorage.removeItem('holli_checked');localStorage.removeItem('holli_manual_qtys');localStorage.removeItem('holli_extras');
   localStorage.setItem('holli_home_v4',JSON.stringify(homeCart));
@@ -2115,6 +2124,7 @@ function pushToFirestore(){
     const data={
       cart,homeCart,extraItems,
       checkedItems:[...checkedItems],manualQtys,
+      shoppedRecipeNames:[...shoppedRecipeNames],
       favorites:[...favorites],
       weekMenu,weekCount,oldRecipes,
       itemLastBought,itemPurchaseHistory,
@@ -2133,6 +2143,7 @@ function applyHouseholdSnapshot(d){
   extraItems=d.extraItems||[];
   checkedItems=new Set(d.checkedItems||[]);
   manualQtys=d.manualQtys||{};
+  shoppedRecipeNames=new Set(d.shoppedRecipeNames||[]);
   favorites=new Set(d.favorites||[]);
   weekMenu=d.weekMenu||[];
   if(weekMenu.length&&weekMenu[0]&&'recipeId' in weekMenu[0]){
