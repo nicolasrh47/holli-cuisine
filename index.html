@@ -33,8 +33,7 @@ body.dark .fav-card{background:#1e293b;border-color:#334155;}
 body.dark .week-recipe-card{background:#1e293b;border-color:#334155;}
 body.dark .pers-pill{background:#1e293b;border-color:#334155;}
 body.dark .old-recipe-card{background:#1e293b;border-color:#334155;}
-body.dark .week-card-wrap{background:#1e293b;border-color:#334155;}
-body.dark .week-empty-card{background:#1e293b;border-color:#334155;}
+body.dark .week-slot{background:#1e293b;border-color:#334155;}
 body.dark .cook-tab-btn{background:#1e293b;border-color:#334155;color:#94a3b8;}
 body.dark .cook-tab-btn.active{background:#f97316;border-color:#f97316;color:white;}
 
@@ -109,23 +108,20 @@ body.dark .pers-pill span{color:#f1f5f9;}
 .fav-card{background:white;border-radius:2rem;overflow:hidden;border:1.5px solid #e2e8f0;box-shadow:0 2px 12px rgba(0,0,0,.05);cursor:pointer;transition:transform .15s;margin-bottom:12px;}
 .fav-card:active{transform:scale(.97);}
 
-.week-card-wrap{border-radius:1.8rem;overflow:hidden;border:1.5px solid var(--border);box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:12px;background:var(--card);}
-.week-swipe-card{position:relative;height:150px;touch-action:pan-y;cursor:grab;}
-.week-swipe-card img{width:100%;height:100%;object-fit:cover;pointer-events:none;-webkit-user-drag:none;}
-.week-swipe-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.88),rgba(0,0,0,.05) 62%,transparent);pointer-events:none;}
-.week-day-tag{position:absolute;top:12px;left:12px;background:#f97316;color:#fff;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;padding:5px 12px;border-radius:99px;pointer-events:none;z-index:2;}
-.week-swipe-hint{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.92);color:#94a3b8;font-size:8px;font-weight:800;padding:4px 9px;border-radius:99px;pointer-events:none;z-index:2;}
-.week-swipe-info{position:absolute;bottom:0;left:0;right:0;padding:14px 16px;pointer-events:none;}
-.week-swipe-name{color:#fff;font-size:15px;font-weight:900;text-transform:uppercase;font-style:italic;line-height:1.25;}
-.week-swipe-meta{color:rgba(255,255,255,.72);font-size:10px;font-weight:700;margin-top:3px;}
-.week-card-actions{display:flex;border-top:1px solid var(--border);}
-.week-card-actions button{flex:1;padding:12px 0;font-size:10px;font-weight:900;text-transform:uppercase;border:none;background:transparent;cursor:pointer;color:var(--text2);}
-.week-card-actions button:active{background:#f8fafc;}
-body.dark .week-card-actions button:active{background:#334155;}
-.week-card-actions button.danger{color:#ef4444;}
-.week-card-actions .sep{width:1px;background:var(--border);}
-.week-empty-card{border-radius:1.8rem;border:2px dashed var(--border);background:var(--card);padding:22px 16px;text-align:center;margin-bottom:12px;}
-.week-empty-day{font-size:9px;font-weight:900;color:#f97316;text-transform:uppercase;letter-spacing:1px;}
+.week-day-group{margin-bottom:20px;}
+.week-day-header{font-size:11px;font-weight:900;color:#f97316;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-left:6px;border-left:3px solid #f97316;}
+.week-slot{display:flex;align-items:center;gap:10px;background:var(--card);border:1.5px solid var(--border);border-radius:1.3rem;padding:8px;margin-bottom:6px;}
+.week-slot-img{width:52px;height:52px;border-radius:12px;object-fit:cover;flex-shrink:0;cursor:pointer;}
+.week-slot-body{flex:1;min-width:0;cursor:pointer;}
+.week-slot-tag{font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;}
+.week-slot-name{font-size:12px;font-weight:900;color:var(--text);text-transform:uppercase;font-style:italic;line-height:1.3;margin-top:1px;}
+.week-slot-actions{display:flex;gap:5px;flex-shrink:0;}
+.week-slot-actions button{width:28px;height:28px;border-radius:50%;border:none;background:#f1f5f9;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+body.dark .week-slot-actions button{background:#334155;}
+.week-slot-actions button.danger{background:#fef2f2;color:#ef4444;}
+body.dark .week-slot-actions button.danger{background:#3f1d1d;}
+.week-slot-empty{width:100%;display:flex;align-items:center;justify-content:space-between;background:transparent;border:2px dashed var(--border);border-radius:1.3rem;padding:12px 14px;margin-bottom:6px;cursor:pointer;}
+.week-slot-empty-label{font-size:10px;font-weight:900;color:#f97316;text-transform:uppercase;}
 
 .nb-selector{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
 .nb-btn{padding:10px 20px;border-radius:14px;font-size:13px;font-weight:900;border:2px solid #e2e8f0;background:white;color:#64748b;cursor:pointer;transition:all .2s;}
@@ -545,11 +541,11 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   </div>
   <div class="mb-5">
     <h2 class="text-2xl font-[900] italic uppercase tracking-tighter mb-1" id="weekTitle">🗓 Crée ta semaine</h2>
-    <p class="text-slate-400 font-bold text-sm" id="weekSubtitle">Choisis le nombre de repas, on s'occupe du reste.</p>
+    <p class="text-slate-400 font-bold text-sm" id="weekSubtitle">Entrée, plat, dessert pour chaque jour — on s'occupe du reste.</p>
   </div>
   <div id="week-progress" class="mb-4"></div>
   <div class="mb-2">
-    <p class="section-title">Combien de repas ?</p>
+    <p class="section-title">Combien de jours ?</p>
     <div class="nb-selector" id="nb-selector"></div>
   </div>
   <div class="flex items-center justify-between mb-5">
@@ -818,7 +814,7 @@ async function loadSiteContent() {
   document.getElementById('swipeHintText').innerText = siteContent.home?.swipeHint || 'Glisse la carte';
   document.getElementById('miamLabelText').innerText = siteContent.home?.likeText || 'MIAM';
   document.getElementById('weekTitle').innerText = siteContent.week?.title || '🗓 Crée ta semaine';
-  document.getElementById('weekSubtitle').innerText = siteContent.week?.subtitle || 'Choisis le nombre de repas, on s\'occupe du reste.';
+  document.getElementById('weekSubtitle').innerText = siteContent.week?.subtitle || 'Entrée, plat, dessert pour chaque jour — on s\'occupe du reste.';
   document.getElementById('cartTitle').innerText = siteContent.cart?.title || 'Courses';
   document.getElementById('privacyLinkLabel').innerHTML = siteContent.footer?.privacyLinkLabel || '🔒 Politique de confidentialité';
   const bannerSub = document.getElementById('weekBannerSub');
@@ -1007,6 +1003,10 @@ async function init(){
   itemPurchaseHistory=JSON.parse(localStorage.getItem('holli_purchase_history'))||{};
   favorites=new Set(JSON.parse(localStorage.getItem('holli_favorites'))||[]);
   weekMenu=JSON.parse(localStorage.getItem('holli_week_menu'))||[];
+  // Migration ancien format ({day,recipeId}) -> nouveau ({day,recipes:{entree,plat,dessert}})
+  if(weekMenu.length&&weekMenu[0]&&'recipeId' in weekMenu[0]){
+    weekMenu=weekMenu.map(item=>({day:item.day,recipes:{entree:null,plat:item.recipeId??null,dessert:null}}));
+  }
   weekCount=parseInt(localStorage.getItem('holli_week_count'))||7;
   oldRecipes=JSON.parse(localStorage.getItem('holli_old_recipes'))||[];
   updateServings(0);
@@ -1186,12 +1186,19 @@ function toggleHideAllergens(){hideAllergens=!hideAllergens;document.getElementB
 function openCatalogueModal(){
   document.getElementById('catalogue-modal').classList.add('open');
   document.getElementById('catalogue-search').value='';
-  document.getElementById('catalogue-modal-title').innerText=weekPickerDayIdx!==null?'Choisis une recette':'Toutes les recettes';
+  if(weekPickerCourse){
+    const meta=COURSES.find(c=>c.key===weekPickerCourse);
+    const dayLabel=weekPickerDayIdx!==null?weekMenu[weekPickerDayIdx].day:'';
+    document.getElementById('catalogue-modal-title').innerText=`Choisis ${meta.article} ${meta.label.toLowerCase()} — ${dayLabel}`;
+  } else {
+    document.getElementById('catalogue-modal-title').innerText='Toutes les recettes';
+  }
+  document.getElementById('category-bar').style.display=weekPickerCourse?'none':'flex';
   const allergenBtn=document.getElementById('hide-allergens-btn');
   allergenBtn.style.display=getAvoidList().length?'inline-block':'none';
   setupCategoryBar();renderGrid();
 }
-function closeCatalogueModal(){document.getElementById('catalogue-modal').classList.remove('open');weekPickerDayIdx=null;}
+function closeCatalogueModal(){document.getElementById('catalogue-modal').classList.remove('open');weekPickerDayIdx=null;weekPickerCourse=null;}
 
 function setupCategoryBar(){const cats=['Tous',...new Set(recipes.map(r=>r.cat))];document.getElementById('category-bar').innerHTML=cats.map(c=>`<button onclick="filterGrid('${c}')" class="cat-tab ${c===currentCat?'active':''}" id="tab-${c}">${c}</button>`).join('');}
 function filterGrid(cat){currentCat=cat;document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));document.getElementById('tab-'+cat)?.classList.add('active');renderGrid();}
@@ -1200,6 +1207,7 @@ function normalizeSearchText(str){return(str||'').toString().normalize('NFD').re
 function renderGrid(){
   const rawSearch=(document.getElementById('catalogue-search')?.value||'').trim();
   let filtered=currentCat==='Tous'?recipes:recipes.filter(r=>r.cat===currentCat);
+  if(weekPickerCourse)filtered=filtered.filter(r=>courseKeyForRecipe(r)===weekPickerCourse);
   if(rawSearch){
     const terms=normalizeSearchText(rawSearch).split(/\s+/).filter(Boolean);
     filtered=filtered.filter(r=>{
@@ -1259,15 +1267,31 @@ function closeDetails(){document.getElementById('detail-modal').style.display='n
 
 function renderNbSelector(){
   const options=[3,4,5,6,7];
-  document.getElementById('nb-selector').innerHTML=options.map(n=>`<button class="nb-btn ${weekCount===n?'active':''}" onclick="setWeekCount(${n})">${n} repas</button>`).join('');
+  document.getElementById('nb-selector').innerHTML=options.map(n=>`<button class="nb-btn ${weekCount===n?'active':''}" onclick="setWeekCount(${n})">${n} jours</button>`).join('');
 }
 function setWeekCount(n){weekCount=n;localStorage.setItem('holli_week_count',n);renderNbSelector();generateWeekMenu();}
+
+// Chaque jour propose Entrée / Plat / Dessert. On devine la catégorie d'une
+// recette à partir de son champ "cat" (tolérant aux accents/variantes) ;
+// tout ce qui n'est ni entrée ni dessert est classé "plat" par défaut.
+const COURSES=[{key:'entree',label:'Entrée',article:'une',emoji:'🥗'},{key:'plat',label:'Plat',article:'un',emoji:'🍽️'},{key:'dessert',label:'Dessert',article:'un',emoji:'🍰'}];
+function courseKeyForRecipe(r){
+  const c=normalizeSearchText(r.cat||'');
+  if(c.includes('dessert'))return'dessert';
+  if(c.includes('entree'))return'entree';
+  return'plat';
+}
+function recipesByCourse(){
+  const buckets={entree:[],plat:[],dessert:[]};
+  recipes.forEach(r=>buckets[courseKeyForRecipe(r)].push(r));
+  return buckets;
+}
 // Pioche sans remise dans une liste dédupliquée (pondérée par saison) : évite
 // que la même recette tombe deux fois dans la semaine — sauf si le nombre de
-// repas demandé dépasse le nombre de recettes disponibles.
-function uniqueSeasonalPool(exclude){
+// jours demandé dépasse le nombre de recettes disponibles dans la catégorie.
+function uniqueSeasonalPool(sourceList,exclude){
   const seen=new Set();
-  return shuffleWithSeason(recipes).filter(r=>{
+  return shuffleWithSeason(sourceList||recipes).filter(r=>{
     if(exclude&&exclude.has(r.id))return false;
     if(seen.has(r.id))return false;
     seen.add(r.id);return true;
@@ -1276,122 +1300,98 @@ function uniqueSeasonalPool(exclude){
 function generateWeekMenu(){
   if(!recipes.length)return;
   const days=DAYS.slice(0,weekCount);
-  const pool=uniqueSeasonalPool();
-  weekMenu=days.map((day,i)=>({day,recipeId:pool[i%pool.length].id}));
+  const buckets=recipesByCourse();
+  const pools={entree:uniqueSeasonalPool(buckets.entree),plat:uniqueSeasonalPool(buckets.plat),dessert:uniqueSeasonalPool(buckets.dessert)};
+  weekMenu=days.map((day,i)=>({
+    day,
+    recipes:{
+      entree:pools.entree.length?pools.entree[i%pools.entree.length].id:null,
+      plat:pools.plat.length?pools.plat[i%pools.plat.length].id:null,
+      dessert:pools.dessert.length?pools.dessert[i%pools.dessert.length].id:null
+    }
+  }));
   save();renderWeekMenu();
 }
-function swapWeekDay(dayIdx,e){
+function swapWeekDay(dayIdx,course,e){
   if(e)e.stopPropagation();
   if(!recipes.length)return;
-  const usedElsewhere=new Set(weekMenu.filter((m,i)=>i!==dayIdx&&m.recipeId!==null).map(m=>m.recipeId));
-  usedElsewhere.add(weekMenu[dayIdx].recipeId);
-  let pool=uniqueSeasonalPool(usedElsewhere);
-  if(!pool.length)pool=uniqueSeasonalPool(new Set([weekMenu[dayIdx].recipeId]));
-  if(!pool.length)pool=shuffleWithSeason(recipes);
-  weekMenu[dayIdx].recipeId=pool[0].id;
+  const buckets=recipesByCourse();
+  const currentId=weekMenu[dayIdx].recipes[course];
+  const usedElsewhere=new Set();
+  weekMenu.forEach((m,i)=>{if(i!==dayIdx&&m.recipes[course]!==null)usedElsewhere.add(m.recipes[course]);});
+  if(currentId!==null)usedElsewhere.add(currentId);
+  let pool=uniqueSeasonalPool(buckets[course],usedElsewhere);
+  if(!pool.length&&currentId!==null)pool=uniqueSeasonalPool(buckets[course],new Set([currentId]));
+  if(!pool.length)pool=shuffleWithSeason(buckets[course]);
+  if(!pool.length){showToast(`Aucune recette "${COURSES.find(c=>c.key===course).label}" trouvée`,'#ef4444');return;}
+  weekMenu[dayIdx].recipes[course]=pool[0].id;
   save();renderWeekMenu();
 }
-function removeWeekDay(dayIdx,e){
+function removeWeekSlot(dayIdx,course,e){
   if(e)e.stopPropagation();
-  weekMenu[dayIdx].recipeId=null;
+  weekMenu[dayIdx].recipes[course]=null;
   save();renderWeekMenu();
 }
 function addAllWeekToCart(){
-  weekMenu.forEach(item=>{if(item.recipeId!==null){const r=recipes.find(x=>x.id===item.recipeId);if(r)addToCart(r);}});
-  showToast(`🛒 ${weekMenu.filter(m=>m.recipeId!==null).length} recettes ajoutées au panier !`);
+  let count=0;
+  weekMenu.forEach(item=>{
+    COURSES.forEach(c=>{
+      const rid=item.recipes[c.key];
+      if(rid!==null){const r=recipes.find(x=>x.id===rid);if(r){addToCart(r);count++;}}
+    });
+  });
+  showToast(`🛒 ${count} recette${count>1?'s':''} ajoutée${count>1?'s':''} au panier !`);
 }
-// Estimation grossière du temps total en secondes, à partir des durées
-// détectées dans les étapes (même logique que le mode Cuisiner).
-function estimateRecipeSeconds(r){
-  const steps=r.prep.split('.').filter(s=>s.trim().length>5);
-  return steps.reduce((total,s)=>total+(detectTimer(s)||0),0);
-}
-let weekPickerDayIdx=null;
-function openWeekPicker(dayIdx,e){
+let weekPickerDayIdx=null,weekPickerCourse=null;
+function openWeekPicker(dayIdx,course,e){
   if(e)e.stopPropagation();
   weekPickerDayIdx=dayIdx;
+  weekPickerCourse=course;
   openCatalogueModal();
 }
 function assignWeekDay(recipeId){
-  if(weekPickerDayIdx===null)return;
-  weekMenu[weekPickerDayIdx].recipeId=recipeId;
+  if(weekPickerDayIdx===null||!weekPickerCourse)return;
+  weekMenu[weekPickerDayIdx].recipes[weekPickerCourse]=recipeId;
   save();renderWeekMenu();
   closeCatalogueModal();
-  showToast('✓ Recette choisie pour ce jour !','#3b82f6');
+  showToast('✓ Recette choisie !','#3b82f6');
+}
+function courseSlotHTML(item,dayIdx,course){
+  const meta=COURSES.find(c=>c.key===course);
+  const rid=item.recipes[course];
+  if(rid===null){
+    return`<button onclick="openWeekPicker(${dayIdx},'${course}',event)" class="week-slot-empty">
+      <span class="week-slot-tag">${meta.emoji} ${meta.label}</span>
+      <span class="week-slot-empty-label">+ Ajouter</span>
+    </button>`;
+  }
+  const r=recipes.find(x=>x.id===rid);if(!r)return'';
+  return`<div class="week-slot">
+    <img src="${r.i}" alt="${r.n}" class="week-slot-img" loading="lazy" onclick="showDetails(${r.id})">
+    <div class="week-slot-body" onclick="showDetails(${r.id})">
+      <span class="week-slot-tag">${meta.emoji} ${meta.label}</span>
+      <div class="week-slot-name">${r.n}${allergyBadgeHTML(r,'inline')}</div>
+    </div>
+    <div class="week-slot-actions">
+      <button onclick="swapWeekDay(${dayIdx},'${course}',event)" title="Aléatoire">🔄</button>
+      <button onclick="removeWeekSlot(${dayIdx},'${course}',event)" title="Retirer" class="danger">✕</button>
+    </div>
+  </div>`;
 }
 function renderWeekMenu(){
   if(!recipes.length){document.getElementById('week-menu-list').innerHTML='<p class="text-center py-10 opacity-30 font-black">Chargement…</p>';return;}
   if(weekMenu.length===0){generateWeekMenu();return;}
-  const planned=weekMenu.filter(m=>m.recipeId!==null).length;
-  const total=weekMenu.length;
-  const pct=total?Math.round((planned/total)*100):0;
-  document.getElementById('week-progress').innerHTML=`<div class="flex items-center justify-between mb-1"><span class="text-[9px] font-black text-slate-400 uppercase">${planned}/${total} jours planifiés</span><span class="text-[9px] font-black text-orange-500">${pct}%</span></div><div class="cart-progress"><div class="cart-progress-bar" style="width:${pct}%"></div></div>`;
-  document.getElementById('week-menu-list').innerHTML=weekMenu.map((item,i)=>{
-    if(item.recipeId===null){
-      return`<div class="week-empty-card" style="animation:slideUp .3s ease-out ${i*.05}s both">
-        <div class="week-empty-day mb-1">${item.day}</div>
-        <div class="text-3xl mb-2">🍽️</div>
-        <div class="font-black text-xs uppercase mb-3" style="color:var(--text2)">Aucune recette</div>
-        <div class="flex gap-2 justify-center">
-          <button onclick="openWeekPicker(${i},event)" class="bg-orange-500 text-white font-black text-[10px] uppercase px-4 py-2 rounded-full border-none cursor-pointer">🔍 Choisir</button>
-          <button onclick="swapWeekDay(${i},event)" class="bg-slate-100 font-black text-[10px] uppercase px-4 py-2 rounded-full border-none cursor-pointer" style="color:var(--text2)">🔄 Aléatoire</button>
-        </div>
-      </div>`;
-    }
-    const r=recipes.find(x=>x.id===item.recipeId);if(!r)return'';
-    const secs=estimateRecipeSeconds(r);
-    const timeLabel=secs>0?` · ⏱ ~${Math.max(1,Math.round(secs/60))} min`:'';
-    return`<div class="week-card-wrap" style="animation:slideUp .3s ease-out ${i*.05}s both">
-      <div class="week-swipe-card" id="week-card-${i}">
-        <img src="${r.i}" alt="${r.n}" loading="lazy">
-        <div class="week-swipe-overlay"></div>
-        <div class="week-day-tag">${item.day}</div>
-        <div class="week-swipe-hint">↔ Glisse</div>
-        <div class="week-swipe-info">
-          <div class="week-swipe-name">${r.n}${allergyBadgeHTML(r,'inline')}</div>
-          <div class="week-swipe-meta">${r.cat}${timeLabel}</div>
-        </div>
-      </div>
-      <div class="week-card-actions">
-        <button onclick="openWeekPicker(${i},event)">🔍 Choisir</button>
-        <div class="sep"></div>
-        <button onclick="removeWeekDay(${i},event)" class="danger">✕ Retirer</button>
-      </div>
-    </div>`;
-  }).join('');
-  weekMenu.forEach((item,i)=>{if(item.recipeId!==null)attachWeekCardSwipe(i);});
-}
-function attachWeekCardSwipe(dayIdx){
-  const el=document.getElementById('week-card-'+dayIdx);
-  if(!el)return;
-  let dragging=false,startX=0,curX=0;
-  el.addEventListener('pointerdown',e=>{
-    dragging=true;startX=e.clientX;curX=0;
-    el.style.transition='none';
-    try{el.setPointerCapture(e.pointerId);}catch(err){}
-  });
-  el.addEventListener('pointermove',e=>{
-    if(!dragging)return;
-    curX=e.clientX-startX;
-    el.style.transform=`translateX(${curX}px) rotate(${curX/20}deg)`;
-  });
-  el.addEventListener('pointerup',()=>{
-    if(!dragging)return;
-    dragging=false;
-    el.style.transition='.3s cubic-bezier(.23,1,.32,1)';
-    if(Math.abs(curX)>90){
-      el.style.transform=`translateX(${curX>0?520:-520}px) rotate(${curX>0?24:-24}deg)`;
-      el.style.opacity='0';
-      setTimeout(()=>swapWeekDay(dayIdx),200);
-    } else if(Math.abs(curX)<8){
-      el.style.transform='';
-      showDetails(weekMenu[dayIdx].recipeId);
-    } else {
-      el.style.transform='';
-    }
-    curX=0;
-  });
-  el.addEventListener('pointercancel',()=>{dragging=false;curX=0;el.style.transition='.3s';el.style.transform='';});
+  const totalSlots=weekMenu.length*COURSES.length;
+  const filledSlots=weekMenu.reduce((sum,item)=>sum+COURSES.filter(c=>item.recipes[c.key]!==null).length,0);
+  const pct=totalSlots?Math.round((filledSlots/totalSlots)*100):0;
+  document.getElementById('week-progress').innerHTML=`<div class="flex items-center justify-between mb-1"><span class="text-[9px] font-black text-slate-400 uppercase">${filledSlots}/${totalSlots} repas planifiés</span><span class="text-[9px] font-black text-orange-500">${pct}%</span></div><div class="cart-progress"><div class="cart-progress-bar" style="width:${pct}%"></div></div>`;
+  document.getElementById('week-menu-list').innerHTML=weekMenu.map((item,i)=>`
+    <div class="week-day-group" style="animation:slideUp .3s ease-out ${i*.05}s both">
+      <div class="week-day-header">${item.day}</div>
+      ${courseSlotHTML(item,i,'entree')}
+      ${courseSlotHTML(item,i,'plat')}
+      ${courseSlotHTML(item,i,'dessert')}
+    </div>`).join('');
 }
 
 function addToCart(r){if(!r)return;if(!cart.find(x=>x.n===r.n)){cart.push(r);resetRecipeChecked(r);save();showToast(`✓ ${r.n} ajouté !`);}}
@@ -1978,6 +1978,9 @@ function applyHouseholdSnapshot(d){
   manualQtys=d.manualQtys||{};
   favorites=new Set(d.favorites||[]);
   weekMenu=d.weekMenu||[];
+  if(weekMenu.length&&weekMenu[0]&&'recipeId' in weekMenu[0]){
+    weekMenu=weekMenu.map(item=>({day:item.day,recipes:{entree:null,plat:item.recipeId??null,dessert:null}}));
+  }
   weekCount=d.weekCount||7;
   oldRecipes=d.oldRecipes||[];
   itemLastBought=d.itemLastBought||{};
