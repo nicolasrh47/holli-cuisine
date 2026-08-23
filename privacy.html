@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Politique de confidentialité — HOLLI.</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#f8fafc;--card:#fff;--text:#1e293b;--text2:#64748b;--border:#e2e8f0;--orange:#f97316;}
+  *{box-sizing:border-box;}
+  body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);margin:0;padding:24px 18px 60px;line-height:1.6;}
+  .wrap{max-width:640px;margin:0 auto;}
+  .logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;}
+  .logo-icon{width:40px;height:40px;background:linear-gradient(135deg,#f97316,#fb923c);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 12px rgba(249,115,22,.35);flex-shrink:0;}
+  .logo-text{font-size:26px;font-weight:900;font-style:italic;color:var(--orange);letter-spacing:-1px;line-height:1;}
+  .logo-sub{font-size:9px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:2px;margin-top:2px;}
+  h1{font-size:22px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-.5px;margin:0 0 4px;}
+  .updated{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:28px;}
+  h2{font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;color:var(--orange);margin:28px 0 10px;padding-left:10px;border-left:3px solid var(--orange);}
+  p,li{font-size:14px;color:var(--text);}
+  ul{margin:8px 0;padding-left:20px;}
+  li{margin-bottom:6px;}
+  .card{background:var(--card);border:1.5px solid var(--border);border-radius:1.5rem;padding:18px 20px;margin-bottom:8px;}
+  .back{display:inline-block;margin-bottom:20px;color:var(--orange);font-weight:900;font-size:12px;text-transform:uppercase;text-decoration:none;}
+  a{color:var(--orange);}
+  .contact{background:#fff7ed;border:2px dashed #fdba74;border-radius:1.2rem;padding:16px 18px;margin-top:24px;font-weight:700;font-size:13px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← Retour à l'app</a>
+  <div class="logo">
+    <div class="logo-icon">🍳</div>
+    <div>
+      <div class="logo-text">HOLLI.</div>
+      <div class="logo-sub">Cuisine &amp; Maison</div>
+    </div>
+  </div>
+  <h1>Politique de confidentialité</h1>
+  <p class="updated">Dernière mise à jour : 23 août 2026</p>
+
+  <div class="card">
+    <p>HOLLI. est une application personnelle de gestion de recettes, de menus de la semaine et de liste de courses. Cette page explique quelles données sont collectées, pourquoi, et comment elles sont utilisées.</p>
+  </div>
+
+  <h2>Données collectées</h2>
+  <ul>
+    <li><strong>Compte :</strong> adresse e-mail, pseudo, et mot de passe (géré par Firebase Authentication — nous n'avons jamais accès à votre mot de passe en clair). Si vous utilisez « Continuer avec Google », nous recevons votre nom et votre adresse e-mail Google.</li>
+    <li><strong>Préférences :</strong> régime alimentaire, taille du foyer, allergies, ingrédients évités, budget, temps de cuisine préféré — renseignés lors de l'inscription pour adapter les suggestions.</li>
+    <li><strong>Contenu d'usage :</strong> recettes favorites, panier de courses, menu de la semaine, historique des achats « Maison », enregistrés pour fonctionner d'un appareil à l'autre.</li>
+    <li><strong>Foyer partagé :</strong> si vous partagez votre code foyer avec une autre personne, votre panier et vos listes deviennent visibles et modifiables par toute personne ayant ce code.</li>
+  </ul>
+
+  <h2>Comment ces données sont stockées</h2>
+  <ul>
+    <li>L'authentification et les données de compte sont gérées par <strong>Google Firebase</strong> (Authentication et Firestore), hébergé par Google.</li>
+    <li>Le contenu des recettes (nom, ingrédients, étapes, image) provient d'une feuille Google Sheets en lecture seule et n'est pas lié à votre compte.</li>
+    <li>Certaines préférences (thème sombre, panier local) sont également stockées dans la mémoire locale de votre navigateur (localStorage), sur votre appareil uniquement.</li>
+  </ul>
+
+  <h2>Ce que nous ne faisons pas</h2>
+  <ul>
+    <li>Nous ne vendons ni ne louons vos données à des tiers.</li>
+    <li>Nous n'utilisons pas de publicité ni de traceurs publicitaires.</li>
+    <li>Nous ne partageons vos données qu'avec les personnes à qui <em>vous</em> transmettez votre code foyer.</li>
+  </ul>
+
+  <h2>Vos droits</h2>
+  <p>Vous pouvez à tout moment demander la consultation, la correction ou la suppression de vos données (compte, profil, panier, favoris) en nous contactant à l'adresse ci-dessous. Vous pouvez également vous déconnecter et régénérer votre code foyer à tout moment depuis la page Profil.</p>
+
+  <h2>Contact</h2>
+  <div class="contact">
+    📧 Pour toute question concernant vos données : <a href="mailto:nicolasrh47@gmail.com">nicolasrh47@gmail.com</a>
+  </div>
+</div>
+</body>
+</html>

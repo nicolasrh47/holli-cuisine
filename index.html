@@ -2,20 +2,22 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>HOLLI. V13</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#f97316">
+<meta name="description" content="Recettes, menus de la semaine et liste de courses partagée.">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800;900&display=swap" rel="stylesheet">
 <style>
 /* ========== STYLE COMPLET (identique à l'original) ========== */
 :root{--bg:#f8fafc;--card:#fff;--text:#1e293b;--text2:#64748b;--border:#e2e8f0;--orange:#f97316;--green:#22c55e;--red:#ef4444;}
 *{-webkit-tap-highlight-color:transparent;box-sizing:border-box;}
-body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);padding-bottom:110px;overflow-x:hidden;transition:background .3s;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);padding-bottom:calc(110px + env(safe-area-inset-bottom));padding-top:env(safe-area-inset-top);overflow-x:hidden;transition:background .3s;}
 button,.nav-item,.cat-tab,.chk,.wpa-btn{-webkit-user-select:none;user-select:none;}
 body.dark{--bg:#0f172a;--card:#1e293b;--text:#f1f5f9;--text2:#94a3b8;--border:#334155;}
 body.dark .glass{background:rgba(15,23,42,.97);}
@@ -48,7 +50,7 @@ body.dark .cook-tab-btn.active{background:#f97316;border-color:#f97316;color:whi
 @keyframes checkPop{0%{transform:scale(1)}40%{transform:scale(1.35)}70%{transform:scale(.9)}100%{transform:scale(1)}}
 @keyframes toastFade{from{opacity:1}to{opacity:0;transform:translateY(10px)}}
 
-.nav-bar{position:fixed;bottom:0;left:0;right:0;height:84px;display:flex;justify-content:space-around;align-items:center;z-index:100;border-top:1px solid #f1f5f9;padding-bottom:14px;}
+.nav-bar{position:fixed;bottom:0;left:0;right:0;height:84px;display:flex;justify-content:space-around;align-items:center;z-index:100;border-top:1px solid #f1f5f9;padding-bottom:calc(14px + env(safe-area-inset-bottom));}
 .nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;color:#94a3b8;flex:1;font-weight:800;font-size:10px;text-transform:uppercase;transition:all .2s;cursor:pointer;position:relative;}
 .nav-item.active{color:#f97316;transform:translateY(-4px);}
 
