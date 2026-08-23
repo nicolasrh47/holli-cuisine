@@ -1504,7 +1504,8 @@ function removeMaisonFromCart(name){homeCart=homeCart.filter(n=>n!==name);save()
 function renderCart(){
   const cartListEl=document.getElementById('cart-list');
   const rayonProgEl=document.getElementById('rayon-progress');
-  if(cart.length===0&&extraItems.length===0&&homeCart.length===0){
+  const hasShoppingRecipes=cart.some(r=>!shoppedRecipeNames.has(r.n));
+  if(!hasShoppingRecipes&&extraItems.length===0&&homeCart.length===0){
     rayonProgEl.innerHTML='';
     cartListEl.innerHTML=`<div class="text-center py-24 opacity-25"><div class="text-6xl mb-4">🛒</div><div class="font-black text-lg uppercase">${siteContent.cart?.emptyMessage || 'Panier vide'}</div><div class="text-sm font-bold mt-1">Ajoute des recettes depuis le menu</div></div>`;
     updateCartBadge(); // met à jour la pastille
@@ -1520,9 +1521,10 @@ function renderCart(){
   const allFound=total>0&&checkedCount===total;
   rayonProgEl.innerHTML=`<div class="flex items-center justify-between mb-1"><span class="text-[9px] font-black text-slate-400 uppercase">${checkedCount}/${total} trouvés</span><span class="text-[9px] font-black text-orange-500">${pct}%</span></div><div class="cart-progress"><div class="cart-progress-bar" style="width:${pct}%"></div></div>`;
   let html='';
-  if(cart.length>0){
-    html+=`<div class="section-title">Recettes (${cart.length})</div><div class="flex flex-wrap gap-2 mb-4">`;
-    html+=cart.map(r=>`<div class="flex items-center gap-2 bg-white border border-slate-100 rounded-2xl px-3 py-2 shadow-sm"><span class="text-[10px] font-black text-slate-700 uppercase">${r.n}</span><button onclick="removeFromCart('${r.n.replace(/'/g,"\\'")}');event.stopPropagation();" class="text-red-400 font-black text-xs border-none bg-transparent cursor-pointer">✕</button></div>`).join('');
+  const shoppingRecipes=cart.filter(r=>!shoppedRecipeNames.has(r.n));
+  if(shoppingRecipes.length>0){
+    html+=`<div class="section-title">Recettes (${shoppingRecipes.length})</div><div class="flex flex-wrap gap-2 mb-4">`;
+    html+=shoppingRecipes.map(r=>`<div class="flex items-center gap-2 bg-white border border-slate-100 rounded-2xl px-3 py-2 shadow-sm"><span class="text-[10px] font-black text-slate-700 uppercase">${r.n}</span><button onclick="removeFromCart('${r.n.replace(/'/g,"\\'")}');event.stopPropagation();" class="text-red-400 font-black text-xs border-none bg-transparent cursor-pointer">✕</button></div>`).join('');
     html+='</div>';
   }
   html+=`<div class="section-title">À trouver — ${unchecked.length} restant(s)</div>`;
