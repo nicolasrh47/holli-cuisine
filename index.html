@@ -870,15 +870,38 @@ function parseCSV(text){
 //   n / nom / name / article     -> ex: "Papier Toilette"
 //   i / icone / icône / emoji    -> ex: "🧻"
 //   freq / frequence / fréquence -> "hebdo" / "mensuel" / "trim" (facultatif)
+// Stratégie à trois niveaux, pensée pour tenir même si des milliers d'utilisateurs ouvrent
+// l'app en même temps : 1) cache local (aucun réseau) 2) instantané maison.json embarqué dans
+// le site, servi par le CDN de l'hébergeur (rapide et increvable, quel que soit le trafic)
+// 3) Google Sheets en direct, uniquement si on n'a vraiment rien d'autre. Le Sheet en direct
+// n'est ensuite plus jamais sur le chemin critique : il tourne en fond pour rafraîchir le
+// cache pour la prochaine ouverture, sans jamais bloquer l'affichage de celle-ci.
 async function loadMaisonItems() {
   const cacheKey='holli_maison_sheet_cache';
   const cached=readSheetCache(cacheKey);
-  if(cached&&(Date.now()-cached.at)<SHEET_CACHE_TTL){
+  if(cached){
     maisonItems=cached.data;
+    if((Date.now()-cached.at)>=SHEET_CACHE_TTL)fetchMaisonItemsFromSheet(cacheKey,false).catch(()=>{});
     return;
   }
+  try{
+    const res=await fetch('./maison.json');
+    const data=await res.json();
+    if(data.articles&&data.articles.length){
+      maisonItems=data.articles;
+      writeSheetCache(cacheKey,data.articles);
+      fetchMaisonItemsFromSheet(cacheKey,false).catch(()=>{});
+      return;
+    }
+  }catch(e){}
+  await fetchMaisonItemsFromSheet(cacheKey,true);
+}
+async function fetchMaisonItemsFromSheet(cacheKey,updateLive){
   try {
-    const res = await fetch(MAISON_SHEET_CSV_URL);
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),8000);
+    const res = await fetch(MAISON_SHEET_CSV_URL,{signal:ctrl.signal});
+    clearTimeout(timer);
     if(!res.ok) throw new Error('CSV fetch failed: '+res.status);
     const text = await res.text();
     const rows = parseCSV(text);
@@ -895,17 +918,11 @@ async function loadMaisonItems() {
       freq: idxFreq>-1 ? (r[idxFreq]||'').trim().toLowerCase() : ''
     })).filter(it=>it.n);
     if(!items.length) throw new Error('Aucun article trouvé dans le CSV');
-    maisonItems = items;
     writeSheetCache(cacheKey,items);
+    if(updateLive)maisonItems=items;
   } catch(e) {
-    console.warn('Impossible de charger le Google Sheet Maison, tentative cache périmé/maison.json', e);
-    if(cached){maisonItems=cached.data;return;}
-    try {
-      const res2 = await fetch('./maison.json');
-      const data = await res2.json();
-      maisonItems = data.articles || [];
-    } catch(e2) {
-      console.warn('Impossible de charger maison.json, fallback minimal');
+    console.warn('Chargement Maison depuis Google Sheets échoué',e);
+    if(updateLive){
       maisonItems = [
         {cat:"🚿 Hygiène",n:"Papier Toilette",i:"🧻",freq:"hebdo"},
         {cat:"🧹 Ménage",n:"Lessive",i:"🧼",freq:"mensuel"}
@@ -1152,35 +1169,7 @@ async function init(){
   await loadSiteContent();
   await loadMaisonItems();
 
-  const recipesCacheKey='holli_recipes_sheet_cache';
-  const recipesCached=readSheetCache(recipesCacheKey);
-  if(recipesCached&&(Date.now()-recipesCached.at)<SHEET_CACHE_TTL){
-    recipes=recipesCached.data;
-  } else try{
-    const r=await fetch(DATA_URL);
-    const t=await r.text();
-    const j=JSON.parse(t.substring(47).slice(0,-2));
-    recipes=j.table.rows.map((row)=>({
-      n:row.c[1]?.v||'Sans nom',cat:row.c[2]?.v||'Plat',
-      ing:row.c[3]?.v||'',prep:row.c[4]?.v||'',
-      temps:row.c[5]?.v||'',prix:row.c[6]?.v||'',
-      i:formatImg(row.c[7]?.v||'')
-    })).filter(r=>r.n!=='Nom de la Recette'&&r.i!=='').map(r=>({...r,id:hashId(r.n)}));
-    if(recipes.length===0)throw new Error('Aucune recette');
-    writeSheetCache(recipesCacheKey,recipes);
-  }catch(e){
-    if(recipesCached){recipes=recipesCached.data;}
-    else{
-    console.warn('Fallback recettes locales');
-    recipes = [
-      {n:'Omelette',cat:'Plat',ing:'2 oeufs, sel, poivre',prep:'1. Casser les oeufs. 2. Battre. 3. Cuire à la poêle.',temps:'Prép : 5 min | Cuisson : 5 min',prix:'Faible',i:'https://picsum.photos/id/127/400/300'},
-      {n:'Pâtes carbonara',cat:'Plat',ing:'200g pâtes, 50g lardons, 20cl crème, 1 oeuf',prep:'1. Cuire les pâtes. 2. Revenir les lardons. 3. Mélanger crème et oeuf.',temps:'Prép : 10 min | Cuisson : 15 min',prix:'Faible',i:'https://picsum.photos/id/127/400/300'},
-      {n:'Salade de tomates',cat:'Entrée',ing:'3 tomates, huile d\'olive, vinaigre, basilic',prep:'1. Laver et couper les tomates. 2. Assaisonner.',temps:'Prép : 10 min',prix:'Faible',i:'https://picsum.photos/id/127/400/300'},
-      {n:'Poulet curry',cat:'Plat',ing:'2 blancs de poulet, 10cl crème, curry, sel',prep:'1. Cuire le poulet. 2. Ajouter crème et curry.',temps:'Prép : 10 min | Cuisson : 20 min',prix:'Moyen',i:'https://picsum.photos/id/127/400/300'},
-      {n:'Crêpes',cat:'Dessert',ing:'250g farine, 3 oeufs, 500ml lait, 50g beurre',prep:'1. Mélanger. 2. Laisser reposer 30 min. 3. Cuire.',temps:'Prép : 10 min | Repos : 30 min | Cuisson : 15 min',prix:'Faible',i:'https://picsum.photos/id/127/400/300'}
-    ].map(r=>({...r,id:hashId(r.n)}));
-    }
-  }
+  await loadRecipes();
   shuffledRecipes=shuffleWithSeason(safeRecipes());
   putWeeklyFeaturedFirst();
   renderCard();renderCataloguePreview();
@@ -1188,6 +1177,61 @@ async function init(){
   renderMaison();updateUI();initTouchSystem();checkRecurringItems();
 }
 function formatImg(url){const id=url.match(/\/d\/(.+?)\//)  ||url.match(/id=(.+?)(&|$)/);return id?`https://wsrv.nl/?url=https://docs.google.com/uc?id=${id[1].trim()}&w=800&h=1000&fit=cover`:'';}
+
+// Même stratégie à trois niveaux que loadMaisonItems() : cache local → recipes.json embarqué
+// (rapide, CDN, toujours dispo) → Google Sheets en direct seulement en dernier recours, puis
+// en fond pour rafraîchir sans jamais bloquer l'affichage.
+async function loadRecipes(){
+  const cacheKey='holli_recipes_sheet_cache';
+  const cached=readSheetCache(cacheKey);
+  if(cached){
+    recipes=cached.data;
+    if((Date.now()-cached.at)>=SHEET_CACHE_TTL)fetchRecipesFromSheet(cacheKey,false).catch(()=>{});
+    return;
+  }
+  try{
+    const res=await fetch('./recipes.json');
+    const data=await res.json();
+    if(data&&data.length){
+      recipes=data;
+      writeSheetCache(cacheKey,data);
+      fetchRecipesFromSheet(cacheKey,false).catch(()=>{});
+      return;
+    }
+  }catch(e){}
+  await fetchRecipesFromSheet(cacheKey,true);
+}
+async function fetchRecipesFromSheet(cacheKey,updateLive){
+  try{
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),8000);
+    const r=await fetch(DATA_URL,{signal:ctrl.signal});
+    clearTimeout(timer);
+    const t=await r.text();
+    const j=JSON.parse(t.substring(47).slice(0,-2));
+    const parsed=j.table.rows.map((row)=>({
+      n:row.c[1]?.v||'Sans nom',cat:row.c[2]?.v||'Plat',
+      ing:row.c[3]?.v||'',prep:row.c[4]?.v||'',
+      temps:row.c[5]?.v||'',prix:row.c[6]?.v||'',
+      i:formatImg(row.c[7]?.v||'')
+    })).filter(r=>r.n!=='Nom de la Recette'&&r.i!=='').map(r=>({...r,id:hashId(r.n)}));
+    if(parsed.length===0)throw new Error('Aucune recette');
+    writeSheetCache(cacheKey,parsed);
+    if(updateLive)recipes=parsed;
+  }catch(e){
+    console.warn('Chargement recettes depuis Google Sheets échoué',e);
+    if(updateLive){
+      console.warn('Fallback recettes locales');
+      recipes = [
+        {n:'Omelette',cat:'Plat',ing:'2 oeufs, sel, poivre',prep:'1. Casser les oeufs. 2. Battre. 3. Cuire à la poêle.',temps:'Prép : 5 min | Cuisson : 5 min',prix:'Faible',i:'https://picsum.photos/id/127/400/300'},
+        {n:'Pâtes carbonara',cat:'Plat',ing:'200g pâtes, 50g lardons, 20cl crème, 1 oeuf',prep:'1. Cuire les pâtes. 2. Revenir les lardons. 3. Mélanger crème et oeuf.',temps:'Prép : 10 min | Cuisson : 15 min',prix:'Faible',i:'https://picsum.photos/id/127/400/300'},
+        {n:'Salade de tomates',cat:'Entrée',ing:'3 tomates, huile d\'olive, vinaigre, basilic',prep:'1. Laver et couper les tomates. 2. Assaisonner.',temps:'Prép : 10 min',prix:'Faible',i:'https://picsum.photos/id/127/400/300'},
+        {n:'Poulet curry',cat:'Plat',ing:'2 blancs de poulet, 10cl crème, curry, sel',prep:'1. Cuire le poulet. 2. Ajouter crème et curry.',temps:'Prép : 10 min | Cuisson : 20 min',prix:'Moyen',i:'https://picsum.photos/id/127/400/300'},
+        {n:'Crêpes',cat:'Dessert',ing:'250g farine, 3 oeufs, 500ml lait, 50g beurre',prep:'1. Mélanger. 2. Laisser reposer 30 min. 3. Cuire.',temps:'Prép : 10 min | Repos : 30 min | Cuisson : 15 min',prix:'Faible',i:'https://picsum.photos/id/127/400/300'}
+      ].map(r=>({...r,id:hashId(r.n)}));
+    }
+  }
+}
 
 function getSeason(){const m=new Date().getMonth();if(m>=2&&m<=4)return'printemps';if(m>=5&&m<=7)return'ete';if(m>=8&&m<=10)return'automne';return'hiver';}
 function seasonWeight(r){const s=getSeason(),n=r.n.toLowerCase(),c=r.cat.toLowerCase();if(s==='printemps'&&(n.includes('asperge')||n.includes('fraise')||c.includes('légume')))return 2;if(s==='ete'&&(n.includes('tomate')||n.includes('salade')))return 2;if(s==='automne'&&(n.includes('potiron')||n.includes('champignon')))return 2;if(s==='hiver'&&(n.includes('soupe')||n.includes('tartiflette')||n.includes('fondue')))return 2;return 1;}
