@@ -719,7 +719,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
       <button onclick="regenShareCode()" class="flex-1 border-2 border-slate-200 text-slate-500 font-black text-[10px] uppercase py-3 rounded-full">🔄 Nouveau code</button>
     </div>
     <div class="flex gap-2 mt-3">
-      <input id="join-code-input" class="auth-input" style="margin-bottom:0" type="text" maxlength="6" placeholder="Rejoindre avec un code…">
+      <input id="join-code-input" class="auth-input" style="margin-bottom:0" type="text" maxlength="8" placeholder="Rejoindre avec un code…">
       <button onclick="joinShareCode()" class="bg-slate-900 text-white font-black text-[10px] uppercase px-4 rounded-full flex-shrink-0">OK</button>
     </div>
   </div>
@@ -793,6 +793,20 @@ const DATA_URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=o
 // Lien du Google Sheet "Maison" publié en CSV — ajoute une ligne dans la feuille et elle apparaît automatiquement dans l'app
 const MAISON_SHEET_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSTmwoDgK0VtLMgcLFKLE23iwvw5yHY1ixCv_jTORfJMj0XnbVYm6l-ahWklsdybeUWIlSf45nJiuBc/pub?output=csv';
 const BASE_SERVINGS=2;
+// Le Google Sheet public n'est pas taillé pour être interrogé à chaque ouverture d'app par
+// des milliers d'appareils (limites de débit Google, lenteur). On met en cache localement
+// et on ne re-télécharge qu'après expiration — avec le cache périmé comme filet de sécurité
+// si Google Sheets est temporairement injoignable ou en limite de débit.
+const SHEET_CACHE_TTL=4*60*60*1000;
+function readSheetCache(key){
+  try{
+    const c=JSON.parse(localStorage.getItem(key));
+    return c&&c.data?c:null;
+  }catch(e){return null;}
+}
+function writeSheetCache(key,data){
+  try{localStorage.setItem(key,JSON.stringify({at:Date.now(),data}));}catch(e){}
+}
 const DAYS=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
 
 let recipes=[],shuffledRecipes=[];
@@ -857,6 +871,12 @@ function parseCSV(text){
 //   i / icone / icône / emoji    -> ex: "🧻"
 //   freq / frequence / fréquence -> "hebdo" / "mensuel" / "trim" (facultatif)
 async function loadMaisonItems() {
+  const cacheKey='holli_maison_sheet_cache';
+  const cached=readSheetCache(cacheKey);
+  if(cached&&(Date.now()-cached.at)<SHEET_CACHE_TTL){
+    maisonItems=cached.data;
+    return;
+  }
   try {
     const res = await fetch(MAISON_SHEET_CSV_URL);
     if(!res.ok) throw new Error('CSV fetch failed: '+res.status);
@@ -876,8 +896,10 @@ async function loadMaisonItems() {
     })).filter(it=>it.n);
     if(!items.length) throw new Error('Aucun article trouvé dans le CSV');
     maisonItems = items;
+    writeSheetCache(cacheKey,items);
   } catch(e) {
-    console.warn('Impossible de charger le Google Sheet Maison, tentative maison.json', e);
+    console.warn('Impossible de charger le Google Sheet Maison, tentative cache périmé/maison.json', e);
+    if(cached){maisonItems=cached.data;return;}
     try {
       const res2 = await fetch('./maison.json');
       const data = await res2.json();
@@ -1130,7 +1152,11 @@ async function init(){
   await loadSiteContent();
   await loadMaisonItems();
 
-  try{
+  const recipesCacheKey='holli_recipes_sheet_cache';
+  const recipesCached=readSheetCache(recipesCacheKey);
+  if(recipesCached&&(Date.now()-recipesCached.at)<SHEET_CACHE_TTL){
+    recipes=recipesCached.data;
+  } else try{
     const r=await fetch(DATA_URL);
     const t=await r.text();
     const j=JSON.parse(t.substring(47).slice(0,-2));
@@ -1141,7 +1167,10 @@ async function init(){
       i:formatImg(row.c[7]?.v||'')
     })).filter(r=>r.n!=='Nom de la Recette'&&r.i!=='').map(r=>({...r,id:hashId(r.n)}));
     if(recipes.length===0)throw new Error('Aucune recette');
+    writeSheetCache(recipesCacheKey,recipes);
   }catch(e){
+    if(recipesCached){recipes=recipesCached.data;}
+    else{
     console.warn('Fallback recettes locales');
     recipes = [
       {n:'Omelette',cat:'Plat',ing:'2 oeufs, sel, poivre',prep:'1. Casser les oeufs. 2. Battre. 3. Cuire à la poêle.',temps:'Prép : 5 min | Cuisson : 5 min',prix:'Faible',i:'https://picsum.photos/id/127/400/300'},
@@ -1150,6 +1179,7 @@ async function init(){
       {n:'Poulet curry',cat:'Plat',ing:'2 blancs de poulet, 10cl crème, curry, sel',prep:'1. Cuire le poulet. 2. Ajouter crème et curry.',temps:'Prép : 10 min | Cuisson : 20 min',prix:'Moyen',i:'https://picsum.photos/id/127/400/300'},
       {n:'Crêpes',cat:'Dessert',ing:'250g farine, 3 oeufs, 500ml lait, 50g beurre',prep:'1. Mélanger. 2. Laisser reposer 30 min. 3. Cuire.',temps:'Prép : 10 min | Repos : 30 min | Cuisson : 15 min',prix:'Faible',i:'https://picsum.photos/id/127/400/300'}
     ].map(r=>({...r,id:hashId(r.n)}));
+    }
   }
   shuffledRecipes=shuffleWithSeason(safeRecipes());
   putWeeklyFeaturedFirst();
@@ -1945,7 +1975,13 @@ function normalizeRegime(profile){
   if(!Array.isArray(profile.regime))profile.regime=profile.regime?[profile.regime]:['Omnivore'];
 }
 
-function genShareCode(){return Math.random().toString(36).substring(2,8).toUpperCase();}
+// 8 caractères plutôt que 6 : avec beaucoup d'utilisateurs, un code plus court devient
+// réaliste à deviner par essais successifs (36^6 ≈ 2 milliards vs 36^8 ≈ 2 800 milliards).
+function genShareCode(){
+  let s='';
+  while(s.length<8)s+=Math.random().toString(36).slice(2);
+  return s.substring(0,8).toUpperCase();
+}
 function getLocalProfiles(){return JSON.parse(localStorage.getItem('holli_profiles_v1'))||{};}
 function saveLocalProfiles(obj){localStorage.setItem('holli_profiles_v1',JSON.stringify(obj));}
 function getLocalProfile(uid){return getLocalProfiles()[uid]||null;}
