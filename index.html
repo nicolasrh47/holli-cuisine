@@ -879,21 +879,26 @@ function parseCSV(text){
 async function loadMaisonItems() {
   const cacheKey='holli_maison_sheet_cache';
   const cached=readSheetCache(cacheKey);
-  if(cached){
+  if(cached&&(Date.now()-cached.at)<SHEET_CACHE_TTL){
     maisonItems=cached.data;
-    if((Date.now()-cached.at)>=SHEET_CACHE_TTL)fetchMaisonItemsFromSheet(cacheKey,false).catch(()=>{});
     return;
   }
+  // Cache absent ou périmé (>4h) : on relit l'instantané embarqué (rapide, CDN, jamais
+  // Google Sheets en direct) — c'est lui qui absorbe tout le trafic utilisateurs, jamais
+  // Google Sheets. C'est comme ça que les appareils voient les mises à jour du Sheet, sans
+  // que Google Sheets ait jamais à répondre à des appareils utilisateurs directement.
   try{
     const res=await fetch('./maison.json');
     const data=await res.json();
     if(data.articles&&data.articles.length){
       maisonItems=data.articles;
       writeSheetCache(cacheKey,data.articles);
-      fetchMaisonItemsFromSheet(cacheKey,false).catch(()=>{});
       return;
     }
   }catch(e){}
+  if(cached){maisonItems=cached.data;return;}
+  // Dernier recours absolu (ni cache, ni instantané embarqué — ex: tout premier déploiement) :
+  // aucun appareil ne devrait normalement jamais atteindre cette ligne en usage normal.
   await fetchMaisonItemsFromSheet(cacheKey,true);
 }
 async function fetchMaisonItemsFromSheet(cacheKey,updateLive){
@@ -1184,21 +1189,26 @@ function formatImg(url){const id=url.match(/\/d\/(.+?)\//)  ||url.match(/id=(.+?
 async function loadRecipes(){
   const cacheKey='holli_recipes_sheet_cache';
   const cached=readSheetCache(cacheKey);
-  if(cached){
+  if(cached&&(Date.now()-cached.at)<SHEET_CACHE_TTL){
     recipes=cached.data;
-    if((Date.now()-cached.at)>=SHEET_CACHE_TTL)fetchRecipesFromSheet(cacheKey,false).catch(()=>{});
     return;
   }
+  // Cache absent ou périmé (>4h) : on relit l'instantané embarqué (rapide, CDN, jamais
+  // Google Sheets en direct) — c'est lui qui absorbe tout le trafic utilisateurs, jamais
+  // Google Sheets. C'est comme ça que les appareils voient les mises à jour du Sheet, sans
+  // que Google Sheets ait jamais à répondre à des appareils utilisateurs directement.
   try{
     const res=await fetch('./recipes.json');
     const data=await res.json();
     if(data&&data.length){
       recipes=data;
       writeSheetCache(cacheKey,data);
-      fetchRecipesFromSheet(cacheKey,false).catch(()=>{});
       return;
     }
   }catch(e){}
+  if(cached){recipes=cached.data;return;}
+  // Dernier recours absolu (ni cache, ni instantané embarqué — ex: tout premier déploiement) :
+  // aucun appareil ne devrait normalement jamais atteindre cette ligne en usage normal.
   await fetchRecipesFromSheet(cacheKey,true);
 }
 async function fetchRecipesFromSheet(cacheKey,updateLive){
