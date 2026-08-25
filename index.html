@@ -1490,8 +1490,8 @@ function filterByCourse(course){
 }
 function setupCategoryBar(){
   const pool=currentCourseFilter==='tous'?recipes:recipes.filter(r=>courseKeyForRecipe(r)===currentCourseFilter);
-  const cats=['Tous',...new Set(pool.map(r=>r.cat))];
-  document.getElementById('category-bar').innerHTML=cats.map(c=>`<button onclick="filterGrid('${c}')" class="cat-tab ${c===currentCat?'active':''}" id="tab-${c}">${c}</button>`).join('');
+  const cats=['Tous',...new Set(pool.map(r=>displayCategory(r)))].sort((a,b)=>a==='Tous'?-1:b==='Tous'?1:a.localeCompare(b,'fr'));
+  document.getElementById('category-bar').innerHTML=cats.map(c=>`<button onclick="filterGrid('${c.replace(/'/g,"\\'")}')" class="cat-tab ${c===currentCat?'active':''}" id="tab-${c}">${c}</button>`).join('');
 }
 function filterGrid(cat){currentCat=cat;document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));document.getElementById('tab-'+cat)?.classList.add('active');renderGrid();}
 // Enlève les accents pour une recherche tolérante ("pate" doit trouver "Pâtes").
@@ -1499,7 +1499,7 @@ function normalizeSearchText(str){return(str||'').toString().normalize('NFD').re
 function renderGrid(){
   const rawSearch=(document.getElementById('catalogue-search')?.value||'').trim();
   let filtered=currentCourseFilter==='tous'?recipes:recipes.filter(r=>courseKeyForRecipe(r)===currentCourseFilter);
-  if(currentCat!=='Tous')filtered=filtered.filter(r=>r.cat===currentCat);
+  if(currentCat!=='Tous')filtered=filtered.filter(r=>displayCategory(r)===currentCat);
   if(weekPickerCourse)filtered=filtered.filter(r=>courseKeyForRecipe(r)===weekPickerCourse);
   if(rawSearch){
     const terms=normalizeSearchText(rawSearch).split(/\s+/).filter(Boolean);
@@ -1619,6 +1619,41 @@ function courseKeyForRecipe(r){
   if(c.includes('dessert'))return'dessert';
   if(c.includes('entree'))return'entree';
   return'plat';
+}
+// Regroupe les dizaines de catégories brutes du Sheet (dont pas mal de doublons/fragments,
+// ex: "🇮🇹" et "🇮🇹 Italien" comptés séparément) en 16 sous-catégories propres, affichées dans
+// le catalogue à la place des catégories brutes. Toute catégorie non reconnue (nouvelle recette
+// avec un intitulé jamais vu) tombe automatiquement dans un "Autres" du bon type de plat plutôt
+// que de casser l'affichage — pas besoin de retoucher ce code à chaque nouvel ajout de recette.
+const CAT_DISPLAY_MAP={
+  '🥗 entrees & salades':'Salades & Crudités','🥗':'Salades & Crudités',
+  '🍲 soupes & veloutes':'Soupes & Veloutés','🍲':'Soupes & Veloutés',
+  '🥧 tartes & quiches salees':'Tartes & Quiches Salées',
+  '🍤 tapas & apero':'Tapas & Apéritifs','🍤':'Tapas & Apéritifs',
+  '🇫🇷 terroir francais':'Cuisine Française','🥚':'Cuisine Française','🍄':'Cuisine Française',
+  '🇮🇹 italien':'Cuisine du Monde','🇮🇹':'Cuisine du Monde',
+  '🇪🇸 espagnol / mediterranee':'Cuisine du Monde','🇪🇸':'Cuisine du Monde',
+  '🏮 asiatique':'Cuisine du Monde','🇯🇵':'Cuisine du Monde','🥢':'Cuisine du Monde',
+  '🇱🇧':'Cuisine du Monde','🇮🇳':'Cuisine du Monde','🇲🇦':'Cuisine du Monde','🐪 oriental / maghreb':'Cuisine du Monde',
+  '🇺🇸 americain / street food':'Cuisine du Monde','🇺🇸':'Cuisine du Monde','🌯':'Cuisine du Monde','🌴':'Cuisine du Monde',
+  '🇲🇽':'Cuisine du Monde','🇬🇷':'Cuisine du Monde','🇹🇭':'Cuisine du Monde','🇵🇪':'Cuisine du Monde','🇹🇷':'Cuisine du Monde','🇧🇷':'Cuisine du Monde',
+  '🐟 poissons & crustaces':'Poissons & Fruits de Mer','🐟':'Poissons & Fruits de Mer',
+  '🥩 viandes & volailles':'Viandes & Volailles','🥩':'Viandes & Volailles','🍗':'Viandes & Volailles','🍢':'Viandes & Volailles',
+  '🥔 accompagnements & gratins':'Pâtes, Riz & Céréales','🌾':'Pâtes, Riz & Céréales','🍞':'Pâtes, Riz & Céréales',
+  '🥐 patisseries de fete':'Gâteaux & Pâtisseries','🍰':'Gâteaux & Pâtisseries',
+  '🍮 cremes & entremets':'Crèmes & Entremets','🍮':'Crèmes & Entremets',
+  '🍫 tout chocolat':'Tout Chocolat','🍫':'Tout Chocolat',
+  '🍏 tartes & crumbles':'Tartes & Crumbles','🍏':'Tartes & Crumbles','🥧':'Tartes & Crumbles',
+  '🍦 glaces & fruits frais':'Glaces & Fruits Frais','🍓':'Glaces & Fruits Frais','🍋':'Glaces & Fruits Frais',
+  '🍊':'Glaces & Fruits Frais','🍧':'Glaces & Fruits Frais','🍌':'Glaces & Fruits Frais','🥥':'Glaces & Fruits Frais',
+  '🍇':'Glaces & Fruits Frais','🍐':'Glaces & Fruits Frais','pineapple':'Glaces & Fruits Frais',
+  '🍪':'Petits Gâteaux & Biscuits','🧁':'Petits Gâteaux & Biscuits',
+  '🥞 gouters & crepes':'Desserts Express','🥞':'Desserts Express','☕':'Desserts Express','🍯':'Desserts Express'
+};
+const CAT_FALLBACK_BY_COURSE={entree:'Autres Entrées',plat:'Autres Plats',dessert:'Autres Desserts'};
+function displayCategory(r){
+  const key=normalizeSearchText(r.cat||'');
+  return CAT_DISPLAY_MAP[key]||CAT_FALLBACK_BY_COURSE[courseKeyForRecipe(r)];
 }
 function recipesByCourse(){
   const buckets={entree:[],plat:[],dessert:[]};
