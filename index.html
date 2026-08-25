@@ -2871,6 +2871,25 @@ fbAuth.onAuthStateChanged(async function(fbUser){
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(() => console.log('SW OK')).catch(e => console.error('SW error', e));
 }
+
+// Rafraîchit les recettes/articles Maison quand l'app revient au premier plan (retour depuis
+// l'arrière-plan, ou simple changement d'onglet), sans que l'utilisateur ait besoin de fermer
+// et rouvrir l'app complètement pour voir du contenu tout juste ajouté sur le Google Sheet.
+let lastDataRefresh=Date.now();
+document.addEventListener('visibilitychange',async()=>{
+  if(document.visibilityState!=='visible')return;
+  if(!currentUser)return;
+  if(Date.now()-lastDataRefresh<60000)return; // évite de revérifier en boucle si on jongle vite entre apps
+  lastDataRefresh=Date.now();
+  const prevRecipeCount=recipes.length,prevMaisonCount=maisonItems.length;
+  await loadRecipes();
+  await loadMaisonItems();
+  if(recipes.length!==prevRecipeCount||maisonItems.length!==prevMaisonCount){
+    shuffledRecipes=shuffleWithSeason(safeRecipes());
+    putWeeklyFeaturedFirst();
+  }
+  renderAllAfterSync();
+});
 </script>
 </body>
 </html>
