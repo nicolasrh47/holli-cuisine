@@ -73,7 +73,7 @@ body.dark .pers-pill button{background:#334155;color:#e2e8f0;}
 body.dark .pers-pill span{color:#f1f5f9;}
 
 .swipe-zone{position:relative;height:300px;width:100%;touch-action:none;}
-.swipe-card{position:absolute;inset:0;border-radius:3.5rem;overflow:hidden;box-shadow:0 28px 56px -10px rgba(0,0,0,.22);border:4px solid white;z-index:10;}
+.swipe-card{position:absolute;inset:0;border-radius:3.5rem;overflow:hidden;box-shadow:0 28px 56px -10px rgba(0,0,0,.22);border:4px solid white;z-index:10;will-change:transform;}
 #card-img{transition:opacity .2s ease-out;}
 .miam-label{position:absolute;top:38px;left:38px;border:5px solid #22c55e;color:#22c55e;padding:4px 18px;border-radius:14px;font-weight:900;font-size:36px;transform:rotate(-15deg);opacity:0;z-index:50;pointer-events:none;background:rgba(255,255,255,.9);}
 .nope-label{position:absolute;top:38px;right:38px;border:5px solid #ef4444;color:#ef4444;padding:4px 18px;border-radius:14px;font-weight:900;font-size:36px;transform:rotate(15deg);opacity:0;z-index:50;pointer-events:none;background:rgba(255,255,255,.9);}
@@ -857,6 +857,7 @@ let weekCount=7;
 let weekCourses=new Set(['entree','plat','dessert']);
 let oldRecipes=[];
 let servings=2,curIdx=0,currentCat='Tous',currentCourseFilter='tous';
+let cardImgCache={}; // set d'URLs d'images déjà téléchargées, pour ne jamais refaire de fetch réseau au moment du swipe
 let isDark=localStorage.getItem('holli_dark')==='true';
 // Hauteur réelle de l'en-tête, mesurée au chargement — utilisée par la barre collante de la
 // page Maison pour se positionner juste en dessous, sans dépendre d'une valeur en dur fragile.
@@ -1359,14 +1360,21 @@ function setFavCourse(key){currentFavCourse=key;renderFavs();}
 // Le nom de la recette s'affichait instantanément, mais la photo (chargement async) restait
 // celle de la carte précédente pendant la durée du téléchargement — d'où l'impression de
 // "mauvais nom sur la mauvaise photo" ou de décalage. On précharge la nouvelle image avant de
-// jamais l'afficher avec son titre, jamais séparément.
+// jamais l'afficher avec son titre, jamais séparément. On précharge aussi TOUJOURS la carte
+// suivante en arrière-plan pendant que l'utilisateur regarde la carte actuelle, pour que le
+// swipe suivant n'attende jamais un téléchargement réseau (source du "met du temps à charger").
+function preloadCardImg(src){
+  if(!src||cardImgCache[src])return;
+  const img=new Image();
+  img.onload=()=>{cardImgCache[src]=true;};
+  img.src=src;
+}
 function renderCard(){
   if(!shuffledRecipes.length)return;
   const r=shuffledRecipes[curIdx];if(!r)return;
   const imgEl=document.getElementById('card-img');
   const titleEl=document.getElementById('card-title');
   const cardImgSrc=imgSize(r.i,600,750); // carte swipe affichée ~300px : pas besoin du 800×1000 "détail recette"
-  const preload=new Image();
   const applyCard=()=>{
     if(shuffledRecipes[curIdx]!==r)return; // déjà passé à une autre carte entre-temps
     imgEl.src=cardImgSrc;
@@ -1374,10 +1382,19 @@ function renderCard(){
     titleEl.innerText=r.n;
     imgEl.style.opacity=1;
   };
-  preload.onload=applyCard;
-  preload.onerror=applyCard; // n'affiche pas une image cassée mais ne bloque pas non plus
-  imgEl.style.opacity=0;
-  preload.src=cardImgSrc;
+  if(cardImgCache[cardImgSrc]){
+    applyCard(); // déjà en cache (préchargée pendant la carte précédente) : affichage instantané, pas de fondu
+  } else {
+    const preload=new Image();
+    preload.onload=()=>{cardImgCache[cardImgSrc]=true;applyCard();};
+    preload.onerror=applyCard; // n'affiche pas une image cassée mais ne bloque pas non plus
+    imgEl.style.opacity=0;
+    preload.src=cardImgSrc;
+  }
+  if(shuffledRecipes.length>1){
+    const next=shuffledRecipes[(curIdx+1)%shuffledRecipes.length];
+    if(next)preloadCardImg(imgSize(next.i,600,750));
+  }
   document.getElementById('card').style.transition='none';
   document.getElementById('card').style.transform='';
   document.getElementById('miam-badge').style.opacity=0;
@@ -1405,15 +1422,25 @@ function handleLike(){flingCard(1);}
 function handleNope(){flingCard(-1);}
 function initTouchSystem(){
   const card=document.getElementById('card');
+  // Le suivi du doigt sur touchmove appliquait le transform directement dans le handler,
+  // ce qui peut créer plusieurs mises à jour de style par frame et donner un mouvement
+  // saccadé/décalé sur certains mobiles. On regroupe désormais chaque mise à jour visuelle
+  // dans une seule requestAnimationFrame par frame écran, pour un drag fluide et sans décalage.
+  let raf=null;
+  const applyMove=()=>{
+    raf=null;
+    card.style.transform=`translateX(${moveX}px) rotate(${moveX/15}deg)`;
+    document.getElementById('miam-badge').style.opacity=moveX>50?Math.min(moveX/150,1):0;
+    document.getElementById('nope-badge').style.opacity=moveX<-50?Math.min(-moveX/150,1):0;
+  };
   card.addEventListener('touchstart',e=>{if(swipeBusy)return;startX=e.touches[0].clientX;card.style.transition='none';});
   card.addEventListener('touchmove',e=>{
     if(swipeBusy)return;
     moveX=e.touches[0].clientX-startX;
-    card.style.transform=`translateX(${moveX}px) rotate(${moveX/15}deg)`;
-    document.getElementById('miam-badge').style.opacity=moveX>50?Math.min(moveX/150,1):0;
-    document.getElementById('nope-badge').style.opacity=moveX<-50?Math.min(-moveX/150,1):0;
-  });
+    if(raf===null)raf=requestAnimationFrame(applyMove);
+  },{passive:true});
   card.addEventListener('touchend',()=>{
+    if(raf!==null){cancelAnimationFrame(raf);raf=null;}
     if(swipeBusy){moveX=0;return;}
     if(moveX>120)handleLike();
     else if(moveX<-120)handleNope();
