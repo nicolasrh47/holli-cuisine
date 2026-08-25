@@ -89,6 +89,10 @@ body.dark .pers-pill span{color:#f1f5f9;}
 
 .cat-tab{font-size:10px;font-weight:900;color:#64748b;padding:10px 18px;border-radius:14px;text-transform:uppercase;border:1.5px solid #e2e8f0;white-space:nowrap;background:white;transition:.3s;cursor:pointer;}
 .cat-tab.active{background:linear-gradient(135deg,#f97316,#fb923c);color:white;border-color:#f97316;}
+.course-filter-btn{flex:1;font-size:11px;font-weight:900;color:#64748b;padding:11px 6px;border-radius:14px;text-transform:uppercase;border:1.5px solid #e2e8f0;background:white;cursor:pointer;text-align:center;}
+.course-filter-btn.active{background:#0f172a;color:white;border-color:#0f172a;}
+body.dark .course-filter-btn{background:#1e293b;border-color:#334155;color:#94a3b8;}
+body.dark .course-filter-btn.active{background:#f97316;border-color:#f97316;color:white;}
 
 
 .week-menu-banner{
@@ -488,6 +492,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   <h2 class="text-2xl font-[900] italic uppercase tracking-tighter mb-1" id="catalogue-modal-title">Toutes les recettes</h2>
   <p class="text-slate-400 font-bold text-[11px] mb-4" id="catalogue-count"></p>
   <input id="catalogue-search" placeholder="🔍 Rechercher une recette…" oninput="renderGrid()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:12px;background:var(--card);color:var(--text)">
+  <div id="course-filter-bar" class="flex gap-2 mb-3"></div>
   <button id="hide-allergens-btn" onclick="toggleHideAllergens()" class="mais-cat-tab mb-4" style="display:none">🙈 Masquer mes allergènes</button>
   <div id="category-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-5 pb-2"></div>
   <div id="grid" class="grid grid-cols-2 gap-4"></div>
@@ -851,7 +856,7 @@ let weekMenu=[];
 let weekCount=7;
 let weekCourses=new Set(['entree','plat','dessert']);
 let oldRecipes=[];
-let servings=2,curIdx=0,currentCat='Tous';
+let servings=2,curIdx=0,currentCat='Tous',currentCourseFilter='tous';
 let isDark=localStorage.getItem('holli_dark')==='true';
 // Hauteur réelle de l'en-tête, mesurée au chargement — utilisée par la barre collante de la
 // page Maison pour se positionner juste en dessous, sans dépendre d'une valeur en dur fragile.
@@ -1454,6 +1459,7 @@ function toggleHideAllergens(){hideAllergens=!hideAllergens;document.getElementB
 function openCatalogueModal(){
   document.getElementById('catalogue-modal').classList.add('open');
   document.getElementById('catalogue-search').value='';
+  currentCourseFilter='tous';currentCat='Tous';
   if(weekPickerCourse){
     const meta=COURSES.find(c=>c.key===weekPickerCourse);
     const dayLabel=weekPickerDayIdx!==null?weekMenu[weekPickerDayIdx].day:'';
@@ -1461,20 +1467,39 @@ function openCatalogueModal(){
   } else {
     document.getElementById('catalogue-modal-title').innerText='Toutes les recettes';
   }
+  document.getElementById('course-filter-bar').style.display=weekPickerCourse?'none':'flex';
   document.getElementById('category-bar').style.display=weekPickerCourse?'none':'flex';
   const allergenBtn=document.getElementById('hide-allergens-btn');
   allergenBtn.style.display=getAvoidList().length?'inline-block':'none';
-  setupCategoryBar();renderGrid();
+  setupCourseFilterBar();setupCategoryBar();renderGrid();
 }
 function closeCatalogueModal(){document.getElementById('catalogue-modal').classList.remove('open');weekPickerDayIdx=null;weekPickerCourse=null;}
 
-function setupCategoryBar(){const cats=['Tous',...new Set(recipes.map(r=>r.cat))];document.getElementById('category-bar').innerHTML=cats.map(c=>`<button onclick="filterGrid('${c}')" class="cat-tab ${c===currentCat?'active':''}" id="tab-${c}">${c}</button>`).join('');}
+// Filtre principal : Entrée/Plat/Dessert d'abord, pour ne pas noyer l'utilisateur dans les 150+
+// recettes d'un coup. La barre de catégories cuisine (juste en dessous) ne propose ensuite que
+// les catégories réellement présentes dans le type de plat choisi.
+function setupCourseFilterBar(){
+  const bar=document.getElementById('course-filter-bar');if(!bar)return;
+  const opts=[{key:'tous',label:'Tous',emoji:'🍽️'},...COURSES];
+  bar.innerHTML=opts.map(c=>`<button onclick="filterByCourse('${c.key}')" class="course-filter-btn ${c.key===currentCourseFilter?'active':''}">${c.emoji} ${c.label}</button>`).join('');
+}
+function filterByCourse(course){
+  currentCourseFilter=course;
+  currentCat='Tous';
+  setupCourseFilterBar();setupCategoryBar();renderGrid();
+}
+function setupCategoryBar(){
+  const pool=currentCourseFilter==='tous'?recipes:recipes.filter(r=>courseKeyForRecipe(r)===currentCourseFilter);
+  const cats=['Tous',...new Set(pool.map(r=>r.cat))];
+  document.getElementById('category-bar').innerHTML=cats.map(c=>`<button onclick="filterGrid('${c}')" class="cat-tab ${c===currentCat?'active':''}" id="tab-${c}">${c}</button>`).join('');
+}
 function filterGrid(cat){currentCat=cat;document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));document.getElementById('tab-'+cat)?.classList.add('active');renderGrid();}
 // Enlève les accents pour une recherche tolérante ("pate" doit trouver "Pâtes").
 function normalizeSearchText(str){return(str||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
 function renderGrid(){
   const rawSearch=(document.getElementById('catalogue-search')?.value||'').trim();
-  let filtered=currentCat==='Tous'?recipes:recipes.filter(r=>r.cat===currentCat);
+  let filtered=currentCourseFilter==='tous'?recipes:recipes.filter(r=>courseKeyForRecipe(r)===currentCourseFilter);
+  if(currentCat!=='Tous')filtered=filtered.filter(r=>r.cat===currentCat);
   if(weekPickerCourse)filtered=filtered.filter(r=>courseKeyForRecipe(r)===weekPickerCourse);
   if(rawSearch){
     const terms=normalizeSearchText(rawSearch).split(/\s+/).filter(Boolean);
