@@ -853,6 +853,17 @@ let isDark=localStorage.getItem('holli_dark')==='true';
 (function(){const h=document.getElementById('app-header');if(h)document.documentElement.style.setProperty('--app-header-h',h.offsetHeight+'px');})();
 let wakeLock=null;
 let currentMaisonCat='Tous';
+// Ordre logique des catégories Maison dans la barre de filtres : le plus utile en premier
+// (frais/alimentaire du quotidien), le plus occasionnel en dernier — plutôt que l'ordre brut
+// (premier vu = premier affiché) hérité du Google Sheet. Toute catégorie non listée ici (ex:
+// nouvelle catégorie ajoutée sur le Sheet) atterrit simplement à la fin, triée alphabétiquement.
+const MAISON_CAT_ORDER=['Boulangerie 🥖','Frais 🧊','Légumes 🍅🥬','Fruits 🍎🥝','Féculents 🌾','Épicerie 🛒','Boisson 🥤','Conserve 📦','Hygiène 🛁','Entretien 🧹','Divers 🔋','Rangement 📦','Animaux 🐾'];
+function sortMaisonCats(cats){
+  const ordered=[];
+  MAISON_CAT_ORDER.forEach(c=>{if(cats.includes(c))ordered.push(c);});
+  const rest=cats.filter(c=>!ordered.includes(c)).sort((a,b)=>a.localeCompare(b,'fr'));
+  return ordered.concat(rest);
+}
 let currentRecurringCat='Tous';
 let itemLastBought={},itemPurchaseHistory={};
 let currentFavCat='Tous';
@@ -1972,7 +1983,7 @@ function getFrequentItems(){
 function renderMaison(){
   const rawSearch=(document.getElementById('maison-search')?.value||'').trim();
   const searchTerms=normalizeSearchText(rawSearch).split(/\s+/).filter(Boolean);
-  const allCats=['Tous',...new Set(maisonItems.map(i=>i.cat))];
+  const allCats=['Tous',...sortMaisonCats([...new Set(maisonItems.map(i=>i.cat))])];
   document.getElementById('maison-cat-bar').innerHTML=allCats.map(c=>`<button onclick="setMaisonCat('${c.replace(/'/g,"\\'")}')" class="mais-cat-tab ${c===currentMaisonCat?'active':''}">${c}</button>`).join('');
 
   // "À racheter bientôt" fusionne l'ancienne alerte (stock déjà bas) et les anciennes
@@ -2322,7 +2333,7 @@ function renderOnboardRecurring(){
   if(!maisonItems.length){el.innerHTML='<p class="text-center py-8 opacity-40 font-bold text-xs">Chargement…</p>';return;}
   const catBarEl=document.getElementById('onboard-recurring-cat-bar');
   if(catBarEl){
-    const allCats=['Tous',...new Set(maisonItems.map(i=>i.cat))];
+    const allCats=['Tous',...sortMaisonCats([...new Set(maisonItems.map(i=>i.cat))])];
     catBarEl.innerHTML=allCats.map(c=>`<button onclick="setOnboardRecurringCat('${c.replace(/'/g,"\\'")}')" class="mais-cat-tab ${c===currentOnboardRecurringCat?'active':''}">${c}</button>`).join('');
   }
   let activeHtml='';
@@ -2541,7 +2552,7 @@ async function renderRecurringManager(){
   if(!currentUser.profile.recurringItems)currentUser.profile.recurringItems=[];
   const catBarEl=document.getElementById('recurring-cat-bar');
   if(catBarEl){
-    const allCats=['Tous',...new Set(maisonItems.map(i=>i.cat))];
+    const allCats=['Tous',...sortMaisonCats([...new Set(maisonItems.map(i=>i.cat))])];
     catBarEl.innerHTML=allCats.map(c=>`<button onclick="setRecurringCat('${c.replace(/'/g,"\\'")}')" class="mais-cat-tab ${c===currentRecurringCat?'active':''}">${c}</button>`).join('');
   }
   let activeHtml='';
