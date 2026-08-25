@@ -675,6 +675,10 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
     </div>
     <div id="maison-alerts" class="mb-4"></div>
     <div id="maison-suggestions" class="mb-4"></div>
+    <div class="add-custom-recur mb-4">
+      <input id="maison-custom-input" placeholder="➕ Ajouter un article (même pas dans la liste)…" maxlength="60" onkeydown="if(event.key==='Enter')addMaisonCustomInput()">
+      <button type="button" onclick="addMaisonCustomInput()">+</button>
+    </div>
     <div id="maison-content" class="space-y-3"></div>
   </div>
 </section>
@@ -2034,6 +2038,21 @@ function addCustomMaisonItem(){
   const name=(input?.value||'').trim();
   if(!name)return;
   toggleHome(name);
+  showToast(`✓ "${name}" ajouté à tes courses`,'#22c55e');
+}
+// Ajout d'article personnel toujours visible (pas besoin de chercher d'abord et de tomber sur
+// "rien trouvé") — à côté des Achats fréquents, pour ce qui n'est pas dans le catalogue du tout.
+function addMaisonCustomInput(){
+  const input=document.getElementById('maison-custom-input');
+  const name=(input?.value||'').trim();
+  if(!name)return;
+  if(homeCart.some(n=>normalizeSearchText(n)===normalizeSearchText(name))){
+    showToast(`"${name}" est déjà dans tes courses`,'#64748b');
+    input.value='';
+    return;
+  }
+  toggleHome(name);
+  input.value='';
   showToast(`✓ "${name}" ajouté à tes courses`,'#22c55e');
 }
 function renderMaisonGrid(filtered){
