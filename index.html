@@ -1125,6 +1125,18 @@ function fmtQty(qty,unit){
   if(unit==='ml'&&r>=1000)return`${rnd(r/1000)} L`;
   return unit?`${r} ${unit}`:`× ${r}`;
 }
+// Contrairement à la liste d'ingrédients (structurée, une quantité par ligne), les instructions
+// sont de la prose libre écrite dans le Sheet ("Ajoutez 200g de farine, laissez cuire 20 min...")
+// et n'étaient jamais adaptées au nombre de personnes. On ne réécrit QUE les nombres directement
+// suivis d'une unité de mesure connue (les mêmes que parseIng : g/kg/ml/cl/dl/l/cs/cc/tsp/tbsp) —
+// jamais un nombre seul. Ça évite d'aller aussi multiplier un temps de cuisson ("20 min"), une
+// température ("180°C") ou un comptage ("coupez en 4"), qui n'ont aucun rapport avec le nombre
+// de personnes et donneraient une instruction fausse si on les modifiait.
+const PREP_SCALE_RE=/\b(\d+(?:[.,]\d+)?)(\s?)(g|kg|ml|cl|dl|l|cs|cc|tsp|tbsp)\b/gi;
+function scaleQuantitiesInText(text,ratio){
+  if(!text||ratio===1)return text;
+  return text.replace(PREP_SCALE_RE,(match,num,sep,unit)=>`${rnd(parseFloat(num.replace(',','.'))*ratio)}${sep}${unit}`);
+}
 function buildMerged(subset){
   const ratio=servings/BASE_SERVINGS,map=new Map();
   (subset||cart).filter(recipe=>!shoppedRecipeNames.has(recipe.n)).forEach(recipe=>{
@@ -1405,12 +1417,16 @@ function preloadCardImg(src){
   img.onload=()=>{cardImgCache[src]=true;};
   img.src=src;
 }
+// Qualité réduite (q=75 au lieu du défaut ~80, imperceptible sur une carte de 300px de haut) en
+// plus de la taille réduite : plus l'image est légère, plus vite elle arrive, plus la marge de
+// préchargement (ci-dessous) a de chances d'être prête même si l'utilisateur enchaîne les swipes.
+function swipeImgSrc(r){return imgSize(r.i,600,750)+'&q=75';}
 function renderCard(){
   if(!shuffledRecipes.length)return;
   const r=shuffledRecipes[curIdx];if(!r)return;
   const imgEl=document.getElementById('card-img');
   const titleEl=document.getElementById('card-title');
-  const cardImgSrc=imgSize(r.i,600,750); // carte swipe affichée ~300px : pas besoin du 800×1000 "détail recette"
+  const cardImgSrc=swipeImgSrc(r); // carte swipe affichée ~300px : pas besoin du 800×1000 "détail recette"
   const applyCard=()=>{
     if(shuffledRecipes[curIdx]!==r)return; // déjà passé à une autre carte entre-temps
     imgEl.src=cardImgSrc;
@@ -1426,11 +1442,12 @@ function renderCard(){
     preload.src=cardImgSrc;
     // pas de opacity=0 ici : l'ancienne photo/nom restent visibles ensemble jusqu'au swap
   }
-  if(shuffledRecipes.length>1){
-    const next=shuffledRecipes[(curIdx+1)%shuffledRecipes.length];
-    if(next)preloadCardImg(imgSize(next.i,600,750));
-    const after=shuffledRecipes[(curIdx+2)%shuffledRecipes.length];
-    if(after)preloadCardImg(imgSize(after.i,600,750)); // marge de sécurité si l'utilisateur swipe vite
+  // Précharge les 4 prochaines cartes (pas juste 1-2) : un swipe rapide en rafale peut
+  // enchaîner plus vite que le temps de téléchargement d'une image, cette marge plus large
+  // couvre ce cas sans rien bloquer (le téléchargement se fait en arrière-plan, sans attendre).
+  for(let k=1;k<=4&&k<shuffledRecipes.length;k++){
+    const upcoming=shuffledRecipes[(curIdx+k)%shuffledRecipes.length];
+    if(upcoming)preloadCardImg(swipeImgSrc(upcoming));
   }
   document.getElementById('card').style.transition='none';
   document.getElementById('card').style.transform='';
@@ -1614,7 +1631,7 @@ function showDetails(id){
     <p class="text-[9px] font-black text-orange-500 uppercase mb-1" id="detail-ing-label">Ingrédients · ${servings} pers.</p>
     <div class="bg-orange-50 p-5 rounded-[2rem] mb-5 font-bold text-slate-700 text-sm" id="detail-ing-list">${ings}</div>
     <p class="text-[9px] font-black text-orange-500 uppercase mb-2">Préparation</p>
-    <div class="space-y-3 mb-5">${splitPrepSteps(r.prep).map((s,i)=>`<div class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 rounded-full bg-slate-900 text-white text-[11px] font-black flex items-center justify-center">${i+1}</span><p class="text-sm font-semibold text-slate-700 leading-snug pt-0.5">${s}</p></div>`).join('')}</div>
+    <div class="space-y-3 mb-5" id="detail-steps-list">${splitPrepSteps(r.prep).map((s,i)=>`<div class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 rounded-full bg-slate-900 text-white text-[11px] font-black flex items-center justify-center">${i+1}</span><p class="text-sm font-semibold text-slate-700 leading-snug pt-0.5">${scaleQuantitiesInText(s,ratio)}</p></div>`).join('')}</div>
     <button onclick="addToCart(recipes.find(x=>x.id==${id}));closeDetails();" class="w-full bg-orange-500 text-white p-5 rounded-full font-black uppercase shadow-lg border-none cursor-pointer">Ajouter au panier</button>`;
   document.getElementById('detail-modal').style.display='block';
 }
@@ -1629,6 +1646,8 @@ function refreshDetailModal(id){
   const ratio=servings/BASE_SERVINGS;
   const ings=r.ing.split(',').map(l=>{const p=parseIng(l);const aq=p.qty!==null?rnd(p.qty*ratio):null;return`<p class="mb-2 flex justify-between gap-2"><span>○ ${p.name||l.trim()}</span><span class="text-orange-500 font-black text-xs">${aq!==null?fmtQtyDetailed(aq,p.unit):''}</span></p>`;}).join('');
   const il=document.getElementById('detail-ing-list');if(il)il.innerHTML=ings;
+  const steps=splitPrepSteps(r.prep).map((s,i)=>`<div class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 rounded-full bg-slate-900 text-white text-[11px] font-black flex items-center justify-center">${i+1}</span><p class="text-sm font-semibold text-slate-700 leading-snug pt-0.5">${scaleQuantitiesInText(s,ratio)}</p></div>`).join('');
+  const sl=document.getElementById('detail-steps-list');if(sl)sl.innerHTML=steps;
 }
 function closeDetails(){document.getElementById('detail-modal').style.display='none';}
 
@@ -2040,7 +2059,7 @@ function renderCookContent(){
   }).join('');
   const steps=splitPrepSteps(cookRecipe.prep);
   document.getElementById('ck-steps-list').innerHTML=steps.map((s,i)=>{
-    const text=s.trim();
+    const text=scaleQuantitiesInText(s.trim(),ratio);
     const isDone=cookStepsDone.has(i);
     const isFirst=!isDone&&[...Array(i).keys()].every(j=>cookStepsDone.has(j));
     const timerSecs=detectTimer(text);
