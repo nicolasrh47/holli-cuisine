@@ -1926,20 +1926,44 @@ function closeCook(userInitiated){
 }
 
 function freqDays(f){return{hebdo:7,mensuel:30,trim:90}[f]||30;}
-function getStockLevel(n,f){if(!f||!itemLastBought[n])return'good';const d=(new Date()-new Date(itemLastBought[n]))/864e5,m=freqDays(f);if(d>m*.95)return'danger';if(d>m*.7)return'warning';return'good';}
-function getStockPct(n,f){if(!f||!itemLastBought[n])return 100;return Math.max(0,Math.round(100-((new Date()-new Date(itemLastBought[n]))/864e5/freqDays(f))*100));}
-function shouldAlert(n,f){if(!f||!itemLastBought[n])return false;return(new Date()-new Date(itemLastBought[n]))/864e5>freqDays(f)*.8;}
-function predictNextBuy(n,f){if(!f||!itemLastBought[n])return null;const d=new Date(itemLastBought[n]);d.setDate(d.getDate()+freqDays(f));return d;}
-function getSuggestions(){const now=new Date();return maisonItems.filter(item=>{if(homeCart.includes(item.n))return false;const next=predictNextBuy(item.n,item.freq);if(!next)return false;const diff=(next-now)/864e5;return diff<=3&&diff>-7;}).slice(0,5);}
+// Note : on ne bloque plus sur "!f" ici — un article sans fréquence renseignée dans le Sheet
+// retombe sur le défaut de 30 jours (via freqDays), plutôt que de ne jamais être suivi du tout.
+function getStockLevel(n,f){if(!itemLastBought[n])return'good';const d=(new Date()-new Date(itemLastBought[n]))/864e5,m=freqDays(f);if(d>m*.95)return'danger';if(d>m*.7)return'warning';return'good';}
+function getStockPct(n,f){if(!itemLastBought[n])return 100;return Math.max(0,Math.round(100-((new Date()-new Date(itemLastBought[n]))/864e5/freqDays(f))*100));}
+function shouldAlert(n,f){if(!itemLastBought[n])return false;return(new Date()-new Date(itemLastBought[n]))/864e5>freqDays(f)*.8;}
+function predictNextBuy(n,f){if(!itemLastBought[n])return null;const d=new Date(itemLastBought[n]);d.setDate(d.getDate()+freqDays(f));return d;}
+// Achats fréquents : basé sur l'historique réel d'achats (nombre de fois recoché), pas sur la
+// fréquence déclarée dans le Sheet — fonctionne dès qu'on a un peu d'usage, sans dépendre de
+// données qui ne sont pas toujours renseignées.
+function getFrequentItems(){
+  return Object.entries(itemPurchaseHistory)
+    .map(([name,hist])=>({name,count:(hist||[]).length}))
+    .filter(x=>x.count>=2)
+    .sort((a,b)=>b.count-a.count)
+    .slice(0,8)
+    .map(c=>maisonItems.find(i=>i.n===c.name))
+    .filter(Boolean);
+}
 function renderMaison(){
   const rawSearch=(document.getElementById('maison-search')?.value||'').trim();
   const searchTerms=normalizeSearchText(rawSearch).split(/\s+/).filter(Boolean);
   const allCats=['Tous',...new Set(maisonItems.map(i=>i.cat))];
   document.getElementById('maison-cat-bar').innerHTML=allCats.map(c=>`<button onclick="setMaisonCat('${c.replace(/'/g,"\\'")}')" class="mais-cat-tab ${c===currentMaisonCat?'active':''}">${c}</button>`).join('');
-  const alertItems=maisonItems.filter(item=>shouldAlert(item.n,item.freq)&&!homeCart.includes(item.n));
-  document.getElementById('maison-alerts').innerHTML=alertItems.length?`<div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-2"><p class="text-amber-800 font-black text-xs uppercase mb-2">⚠️ À racheter bientôt</p><div class="flex flex-wrap gap-2">${alertItems.slice(0,6).map(item=>`<button onclick="toggleHome('${item.n.replace(/'/g,"\\'")}')" class="bg-white text-amber-700 font-bold text-[10px] px-3 py-1.5 rounded-full border border-amber-200">${item.i} ${item.n}</button>`).join('')}</div>${alertItems.length>6?`<p class="text-amber-500 text-[9px] font-bold mt-2">+${alertItems.length-6} autres</p>`:''}</div>`:'';
-  const sugs=getSuggestions();
-  document.getElementById('maison-suggestions').innerHTML=sugs.length?`<p class="text-[9px] font-black text-purple-500 uppercase mb-2">💡 Suggestions</p><div class="flex flex-wrap gap-2 mb-3">${sugs.map(item=>`<span class="suggestion-chip" onclick="toggleHome('${item.n.replace(/'/g,"\\'")}')">${item.i} ${item.n}</span>`).join('')}</div>`:'';
+  // "À racheter bientôt" fusionne l'ancienne alerte (stock déjà bas) et les anciennes
+  // suggestions (stock bientôt bas) — les deux se recoupaient presque toujours, on évite
+  // maintenant les doublons visuels entre les deux sections.
+  const now=new Date();
+  const dueItems=maisonItems.filter(item=>{
+    if(homeCart.includes(item.n))return false;
+    if(shouldAlert(item.n,item.freq))return true;
+    const next=predictNextBuy(item.n,item.freq);
+    if(!next)return false;
+    const diff=(next-now)/864e5;
+    return diff<=3&&diff>-7;
+  });
+  document.getElementById('maison-alerts').innerHTML=dueItems.length?`<div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-2"><p class="text-amber-800 font-black text-xs uppercase mb-2">⚠️ À racheter bientôt</p><div class="flex flex-wrap gap-2">${dueItems.slice(0,8).map(item=>`<button onclick="toggleHome('${item.n.replace(/'/g,"\\'")}')" class="bg-white text-amber-700 font-bold text-[10px] px-3 py-1.5 rounded-full border border-amber-200">${item.i} ${item.n}</button>`).join('')}</div>${dueItems.length>8?`<p class="text-amber-500 text-[9px] font-bold mt-2">+${dueItems.length-8} autres</p>`:''}</div>`:'';
+  const freqItems=getFrequentItems().filter(item=>!homeCart.includes(item.n));
+  document.getElementById('maison-suggestions').innerHTML=freqItems.length?`<p class="text-[9px] font-black text-purple-500 uppercase mb-2">⭐ Achats fréquents</p><div class="flex flex-wrap gap-2 mb-3">${freqItems.map(item=>`<span class="suggestion-chip" onclick="toggleHome('${item.n.replace(/'/g,"\\'")}')">${item.i} ${item.n}</span>`).join('')}</div>`:'';
   let filtered=maisonItems;
   if(currentMaisonCat!=='Tous')filtered=filtered.filter(i=>i.cat===currentMaisonCat);
   if(searchTerms.length)filtered=filtered.filter(i=>searchTerms.every(t=>normalizeSearchText(i.n).includes(t)));
