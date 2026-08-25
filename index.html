@@ -234,16 +234,30 @@ body.dark #add-item-modal{background:#1e293b;}
 #maison-search:focus{border-color:#f97316;}
 .mais-cat-tab{font-size:9px;font-weight:900;color:#64748b;padding:8px 14px;border-radius:12px;text-transform:uppercase;border:1.5px solid #e2e8f0;white-space:nowrap;background:white;transition:.2s;cursor:pointer;}
 .mais-cat-tab.active{background:#0f172a;color:white;border-color:#0f172a;}
+body.dark .mais-cat-tab{background:#1e293b;border-color:#334155;color:#94a3b8;}
+body.dark .mais-cat-tab.active{background:#f97316;color:white;border-color:#f97316;}
 .btn-maison{background:white;padding:13px 11px;border-radius:1.2rem;border:1.5px solid #f1f5f9;font-weight:800;font-size:9px;text-transform:uppercase;transition:.2s;display:flex;align-items:center;gap:8px;cursor:pointer;width:100%;text-align:left;}
 .btn-maison.active{background:#eff6ff;border-color:#3b82f6;color:#1d4ed8;}
 .btn-maison.needed{border-color:#f59e0b;background:#fffbeb;}
 .btn-maison.urgent{border-color:#ef4444;background:#fef2f2;}
+body.dark .btn-maison.active{background:#1e3a5f;border-color:#3b82f6;color:#93c5fd;}
+body.dark .btn-maison.needed{border-color:#f59e0b;background:#3a2e0f;color:#e2e8f0;}
+body.dark .btn-maison.urgent{border-color:#ef4444;background:#3f1d1d;color:#e2e8f0;}
 .freq-badge{font-size:8px;font-weight:900;padding:3px 8px;border-radius:6px;text-transform:uppercase;display:inline-block;}
 .freq-hebdo{background:#fef3c7;color:#92400e;}
 .freq-mensuel{background:#dbeafe;color:#1e40af;}
 .freq-trim{background:#f3e8ff;color:#6b21a8;}
-.suggestion-chip{background:#fef3c7;color:#92400e;border-radius:99px;padding:6px 14px;font-size:10px;font-weight:800;cursor:pointer;border:1px solid #fcd34d;display:inline-flex;align-items:center;gap:4px;}
+.suggestion-chip{background:#f3e8ff;color:#7e22ce;border-radius:99px;padding:6px 14px;font-size:10px;font-weight:800;cursor:pointer;border:1px solid #e9d5ff;display:inline-flex;align-items:center;gap:4px;}
 .suggestion-chip:active{transform:scale(.94);}
+body.dark .suggestion-chip{background:#3b1d54;color:#d8b4fe;border-color:#581c87;}
+.maison-alert-box{background:#fffbeb;border:2px solid #fde68a;border-radius:1.5rem;padding:16px;margin-bottom:8px;}
+body.dark .maison-alert-box{background:#3a2e0f;border-color:#78350f;}
+.maison-alert-title{color:#92400e;font-weight:900;font-size:12px;text-transform:uppercase;margin-bottom:8px;}
+body.dark .maison-alert-title{color:#fbbf24;}
+.maison-alert-chip{background:white;color:#b45309;font-weight:700;font-size:10px;padding:6px 12px;border-radius:99px;border:1px solid #fde68a;cursor:pointer;}
+body.dark .maison-alert-chip{background:#1e293b;color:#fbbf24;border-color:#78350f;}
+.maison-alert-more{color:#d97706;font-size:9px;font-weight:700;margin-top:8px;}
+body.dark .maison-alert-more{color:#fbbf24;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
 .cal-day{aspect-ratio:1;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:800;cursor:pointer;background:white;border:1px solid #e2e8f0;position:relative;}
 .cal-day.today{border-color:#f97316;background:#fff7ed;}
@@ -1961,7 +1975,7 @@ function renderMaison(){
     const diff=(next-now)/864e5;
     return diff<=3&&diff>-7;
   });
-  document.getElementById('maison-alerts').innerHTML=dueItems.length?`<div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-2"><p class="text-amber-800 font-black text-xs uppercase mb-2">⚠️ À racheter bientôt</p><div class="flex flex-wrap gap-2">${dueItems.slice(0,8).map(item=>`<button onclick="toggleHome('${item.n.replace(/'/g,"\\'")}')" class="bg-white text-amber-700 font-bold text-[10px] px-3 py-1.5 rounded-full border border-amber-200">${item.i} ${item.n}</button>`).join('')}</div>${dueItems.length>8?`<p class="text-amber-500 text-[9px] font-bold mt-2">+${dueItems.length-8} autres</p>`:''}</div>`:'';
+  document.getElementById('maison-alerts').innerHTML=dueItems.length?`<div class="maison-alert-box"><p class="maison-alert-title">⚠️ À racheter bientôt</p><div class="flex flex-wrap gap-2">${dueItems.slice(0,8).map(item=>`<button onclick="toggleHome('${item.n.replace(/'/g,"\\'")}')" class="maison-alert-chip">${item.i} ${item.n}</button>`).join('')}</div>${dueItems.length>8?`<p class="maison-alert-more">+${dueItems.length-8} autres</p>`:''}</div>`:'';
   const freqItems=getFrequentItems().filter(item=>!homeCart.includes(item.n));
   document.getElementById('maison-suggestions').innerHTML=freqItems.length?`<p class="text-[9px] font-black text-purple-500 uppercase mb-2">⭐ Achats fréquents</p><div class="flex flex-wrap gap-2 mb-3">${freqItems.map(item=>`<span class="suggestion-chip" onclick="toggleHome('${item.n.replace(/'/g,"\\'")}')">${item.i} ${item.n}</span>`).join('')}</div>`:'';
   let filtered=maisonItems;
