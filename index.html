@@ -230,8 +230,16 @@ body.dark #add-item-modal{background:#1e293b;}
 #add-item-input{width:100%;border:2px solid #e2e8f0;border-radius:1rem;padding:14px 16px;font-size:15px;font-weight:700;font-family:inherit;outline:none;}
 #add-item-input:focus{border-color:#f97316;}
 
-#maison-search{width:100%;border:2px solid #e2e8f0;border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:14px;background:white;}
+#maison-search{width:100%;border:2px solid #e2e8f0;border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:10px;background:white;}
 #maison-search:focus{border-color:#f97316;}
+/* Barre recherche + catégories + "ma sélection" fixée sous l'en-tête pendant le défilement de
+   la longue liste d'articles — évite d'avoir à remonter tout en haut pour changer de filtre. */
+#maison-sticky-bar{position:sticky;top:var(--app-header-h,64px);z-index:20;background:rgba(255,255,255,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);margin:0 -16px;padding:10px 16px 8px;}
+body.dark #maison-sticky-bar{background:rgba(15,23,42,.97);}
+.maison-selection-btn{flex-shrink:0;background:#0f172a;color:white;font-weight:900;font-size:11px;padding:8px 14px;border-radius:12px;border:none;cursor:pointer;white-space:nowrap;}
+.maison-selection-btn.active{background:#f97316;}
+body.dark .maison-selection-btn{background:#334155;}
+body.dark .maison-selection-btn.active{background:#f97316;}
 .mais-cat-tab{font-size:9px;font-weight:900;color:#64748b;padding:8px 14px;border-radius:12px;text-transform:uppercase;border:1.5px solid #e2e8f0;white-space:nowrap;background:white;transition:.2s;cursor:pointer;}
 .mais-cat-tab.active{background:#0f172a;color:white;border-color:#0f172a;}
 body.dark .mais-cat-tab{background:#1e293b;border-color:#334155;color:#94a3b8;}
@@ -544,7 +552,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
 </div>
 
 <div id="app-shell" style="display:none">
-<header class="sticky top-0 z-50 glass px-5 py-3 flex justify-between items-center border-b border-slate-100">
+<header id="app-header" class="sticky top-0 z-50 glass px-5 py-3 flex justify-between items-center border-b border-slate-100">
   <div class="holli-logo">
     <div class="holli-logo-icon">🍳</div>
     <div>
@@ -663,8 +671,13 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
     </div>
   </div>
   <div id="maison-normal">
-    <input id="maison-search" placeholder="🔍 Rechercher un article…" oninput="renderMaison()">
-    <div id="maison-cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-4 pb-1"></div>
+    <div id="maison-sticky-bar">
+      <input id="maison-search" placeholder="🔍 Rechercher un article…" oninput="renderMaison()">
+      <div class="flex gap-2 items-center">
+        <div id="maison-cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar pb-1 flex-1"></div>
+        <button id="maison-selection-toggle" onclick="toggleMaisonSelectionFilter()" class="maison-selection-btn">🛒 <span id="maison-selection-count">0</span></button>
+      </div>
+    </div>
     <div id="maison-alerts" class="mb-4"></div>
     <div id="maison-suggestions" class="mb-4"></div>
     <div id="maison-content" class="space-y-3"></div>
@@ -840,8 +853,12 @@ let weekCourses=new Set(['entree','plat','dessert']);
 let oldRecipes=[];
 let servings=2,curIdx=0,currentCat='Tous';
 let isDark=localStorage.getItem('holli_dark')==='true';
+// Hauteur réelle de l'en-tête, mesurée au chargement — utilisée par la barre collante de la
+// page Maison pour se positionner juste en dessous, sans dépendre d'une valeur en dur fragile.
+(function(){const h=document.getElementById('app-header');if(h)document.documentElement.style.setProperty('--app-header-h',h.offsetHeight+'px');})();
 let wakeLock=null;
 let currentMaisonCat='Tous';
+let maisonShowSelectionOnly=false;
 let currentRecurringCat='Tous';
 let itemLastBought={},itemPurchaseHistory={};
 let currentFavCat='Tous';
@@ -1963,6 +1980,22 @@ function renderMaison(){
   const searchTerms=normalizeSearchText(rawSearch).split(/\s+/).filter(Boolean);
   const allCats=['Tous',...new Set(maisonItems.map(i=>i.cat))];
   document.getElementById('maison-cat-bar').innerHTML=allCats.map(c=>`<button onclick="setMaisonCat('${c.replace(/'/g,"\\'")}')" class="mais-cat-tab ${c===currentMaisonCat?'active':''}">${c}</button>`).join('');
+  document.getElementById('maison-selection-count').innerText=homeCart.length;
+  document.getElementById('maison-selection-toggle').classList.toggle('active',maisonShowSelectionOnly);
+
+  // "Ma sélection" : revoir uniquement ce qui est déjà coché, sans avoir à re-scroller tout le
+  // catalogue pour le retrouver. Ignore le filtre catégorie (une sélection peut couvrir
+  // plusieurs catégories), garde la recherche active.
+  if(maisonShowSelectionOnly){
+    document.getElementById('maison-alerts').innerHTML='';
+    document.getElementById('maison-suggestions').innerHTML='';
+    let selItems=maisonItems.filter(item=>homeCart.includes(item.n));
+    if(searchTerms.length)selItems=selItems.filter(i=>searchTerms.every(t=>normalizeSearchText(i.n).includes(t)));
+    if(!selItems.length){document.getElementById('maison-content').innerHTML='<p class="text-center py-16 opacity-30 font-bold text-sm">Aucun article sélectionné pour l\'instant.<br>Coche des articles pour les retrouver ici.</p>';return;}
+    renderMaisonGrid(selItems);
+    return;
+  }
+
   // "À racheter bientôt" fusionne l'ancienne alerte (stock déjà bas) et les anciennes
   // suggestions (stock bientôt bas) — les deux se recoupaient presque toujours, on évite
   // maintenant les doublons visuels entre les deux sections.
@@ -1982,6 +2015,9 @@ function renderMaison(){
   if(currentMaisonCat!=='Tous')filtered=filtered.filter(i=>i.cat===currentMaisonCat);
   if(searchTerms.length)filtered=filtered.filter(i=>searchTerms.every(t=>normalizeSearchText(i.n).includes(t)));
   if(!filtered.length){document.getElementById('maison-content').innerHTML='<p class="text-center py-16 opacity-20 font-black">Aucun article trouvé</p>';return;}
+  renderMaisonGrid(filtered);
+}
+function renderMaisonGrid(filtered){
   const bycat={};filtered.forEach(item=>{if(!bycat[item.cat])bycat[item.cat]=[];bycat[item.cat].push(item);});
   let html='';
   Object.entries(bycat).forEach(([cat,items])=>{
@@ -1997,7 +2033,8 @@ function renderMaison(){
   });
   document.getElementById('maison-content').innerHTML=html;
 }
-function setMaisonCat(cat){currentMaisonCat=cat;renderMaison();}
+function setMaisonCat(cat){currentMaisonCat=cat;maisonShowSelectionOnly=false;renderMaison();}
+function toggleMaisonSelectionFilter(){maisonShowSelectionOnly=!maisonShowSelectionOnly;renderMaison();}
 function toggleHome(name){
   const idx=homeCart.indexOf(name);
   if(idx>-1){homeCart.splice(idx,1);}
