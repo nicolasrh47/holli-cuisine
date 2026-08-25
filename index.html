@@ -2013,8 +2013,28 @@ function renderMaison(){
   let filtered=maisonItems;
   if(currentMaisonCat!=='Tous')filtered=filtered.filter(i=>i.cat===currentMaisonCat);
   if(searchTerms.length)filtered=filtered.filter(i=>searchTerms.every(t=>normalizeSearchText(i.n).includes(t)));
-  if(!filtered.length){document.getElementById('maison-content').innerHTML='<p class="text-center py-16 opacity-20 font-black">Aucun article trouvé</p>';return;}
+  if(!filtered.length){
+    if(rawSearch){
+      const alreadyAdded=homeCart.some(n=>normalizeSearchText(n)===normalizeSearchText(rawSearch));
+      document.getElementById('maison-content').innerHTML=alreadyAdded
+        ?`<div class="text-center py-16"><p class="opacity-40 font-bold text-sm">"${escapeHtml(rawSearch)}" est déjà dans tes courses ✓</p></div>`
+        :`<div class="text-center py-16"><p class="opacity-40 font-bold text-sm mb-4">Aucun article "${escapeHtml(rawSearch)}" dans le catalogue.</p><button onclick="addCustomMaisonItem()" class="bg-orange-500 text-white font-black text-xs uppercase px-5 py-3 rounded-full">➕ Ajouter "${escapeHtml(rawSearch)}" à mes courses</button></div>`;
+    } else {
+      document.getElementById('maison-content').innerHTML='<p class="text-center py-16 opacity-20 font-black">Aucun article trouvé</p>';
+    }
+    return;
+  }
   renderMaisonGrid(filtered);
+}
+// Si l'article cherché n'existe pas dans le catalogue Maison (issu du Google Sheet), on
+// l'ajoute quand même directement aux courses — comme "Ajouter un article" sur la page
+// Courses, mais accessible directement depuis la recherche pour ne pas avoir à changer de page.
+function addCustomMaisonItem(){
+  const input=document.getElementById('maison-search');
+  const name=(input?.value||'').trim();
+  if(!name)return;
+  toggleHome(name);
+  showToast(`✓ "${name}" ajouté à tes courses`,'#22c55e');
 }
 function renderMaisonGrid(filtered){
   const bycat={};filtered.forEach(item=>{if(!bycat[item.cat])bycat[item.cat]=[];bycat[item.cat].push(item);});
