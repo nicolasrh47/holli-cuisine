@@ -819,11 +819,11 @@ const DATA_URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=o
 // Lien du Google Sheet "Maison" publié en CSV — ajoute une ligne dans la feuille et elle apparaît automatiquement dans l'app
 const MAISON_SHEET_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSTmwoDgK0VtLMgcLFKLE23iwvw5yHY1ixCv_jTORfJMj0XnbVYm6l-ahWklsdybeUWIlSf45nJiuBc/pub?output=csv';
 const BASE_SERVINGS=2;
-// Le Google Sheet public n'est pas taillé pour être interrogé à chaque ouverture d'app par
-// des milliers d'appareils (limites de débit Google, lenteur). On met en cache localement
-// et on ne re-télécharge qu'après expiration — avec le cache périmé comme filet de sécurité
-// si Google Sheets est temporairement injoignable ou en limite de débit.
-const SHEET_CACHE_TTL=4*60*60*1000;
+// Filet de sécurité hors-ligne pour les recettes/articles Maison : si l'instantané embarqué
+// (recipes.json/maison.json, servi par le CDN) est injoignable — pas de réseau, coupure — on
+// retombe sur la dernière copie connue plutôt que de planter. Jamais utilisé comme un cache
+// "on saute le réseau si récent" : l'instantané est toujours revérifié en premier à chaque
+// ouverture, pour que les mises à jour (nouvelles recettes, etc.) apparaissent immédiatement.
 function readSheetCache(key){
   try{
     const c=JSON.parse(localStorage.getItem(key));
@@ -918,17 +918,14 @@ function parseCSV(text){
 // cache pour la prochaine ouverture, sans jamais bloquer l'affichage de celle-ci.
 async function loadMaisonItems() {
   const cacheKey='holli_maison_sheet_cache';
-  const cached=readSheetCache(cacheKey);
-  if(cached&&(Date.now()-cached.at)<SHEET_CACHE_TTL){
-    maisonItems=cached.data;
-    return;
-  }
-  // Cache absent ou périmé (>4h) : on relit l'instantané embarqué (rapide, CDN, jamais
-  // Google Sheets en direct) — c'est lui qui absorbe tout le trafic utilisateurs, jamais
-  // Google Sheets. C'est comme ça que les appareils voient les mises à jour du Sheet, sans
-  // que Google Sheets ait jamais à répondre à des appareils utilisateurs directement.
+  // On tente TOUJOURS l'instantané embarqué en premier, à chaque ouverture — c'est un fichier
+  // statique servi par le CDN de l'hébergeur (rapide, gratuit à interroger même à très grande
+  // échelle, contrairement à Google Sheets), donc rien n'empêche de vérifier à chaque fois qu'il
+  // n'a pas été mis à jour entre-temps. {cache:'no-store'} pour ne jamais servir une version
+  // mise en cache par le navigateur/GitHub Pages. Le cache local (localStorage) ne sert plus
+  // qu'en secours si l'appareil est hors-ligne ou que le fichier est injoignable.
   try{
-    const res=await fetch('./maison.json');
+    const res=await fetch('./maison.json',{cache:'no-store'});
     const data=await res.json();
     if(data.articles&&data.articles.length){
       maisonItems=data.articles;
@@ -936,9 +933,10 @@ async function loadMaisonItems() {
       return;
     }
   }catch(e){}
+  const cached=readSheetCache(cacheKey);
   if(cached){maisonItems=cached.data;return;}
-  // Dernier recours absolu (ni cache, ni instantané embarqué — ex: tout premier déploiement) :
-  // aucun appareil ne devrait normalement jamais atteindre cette ligne en usage normal.
+  // Dernier recours absolu (ni instantané embarqué joignable, ni cache — ex: tout premier
+  // déploiement ou vraiment hors-ligne sans avoir jamais chargé l'app) : Google Sheets en direct.
   await fetchMaisonItemsFromSheet(cacheKey,true);
 }
 async function fetchMaisonItemsFromSheet(cacheKey,updateLive){
@@ -1232,22 +1230,13 @@ function formatImg(url){const id=url.match(/\/d\/(.+?)\//)  ||url.match(/id=(.+?
 // l'image originale côté client.
 function imgSize(url,w,h){return url?url.replace(/&w=\d+&h=\d+/,`&w=${w}&h=${h}`):url;}
 
-// Même stratégie à trois niveaux que loadMaisonItems() : cache local → recipes.json embarqué
-// (rapide, CDN, toujours dispo) → Google Sheets en direct seulement en dernier recours, puis
-// en fond pour rafraîchir sans jamais bloquer l'affichage.
+// Même principe que loadMaisonItems() : instantané embarqué toujours revérifié en premier
+// (fichier statique CDN, jamais Google Sheets en direct), cache local seulement en secours
+// hors-ligne. Voir le commentaire détaillé sur loadMaisonItems().
 async function loadRecipes(){
   const cacheKey='holli_recipes_sheet_cache';
-  const cached=readSheetCache(cacheKey);
-  if(cached&&(Date.now()-cached.at)<SHEET_CACHE_TTL){
-    recipes=cached.data;
-    return;
-  }
-  // Cache absent ou périmé (>4h) : on relit l'instantané embarqué (rapide, CDN, jamais
-  // Google Sheets en direct) — c'est lui qui absorbe tout le trafic utilisateurs, jamais
-  // Google Sheets. C'est comme ça que les appareils voient les mises à jour du Sheet, sans
-  // que Google Sheets ait jamais à répondre à des appareils utilisateurs directement.
   try{
-    const res=await fetch('./recipes.json');
+    const res=await fetch('./recipes.json',{cache:'no-store'});
     const data=await res.json();
     if(data&&data.length){
       recipes=data;
@@ -1255,9 +1244,10 @@ async function loadRecipes(){
       return;
     }
   }catch(e){}
+  const cached=readSheetCache(cacheKey);
   if(cached){recipes=cached.data;return;}
-  // Dernier recours absolu (ni cache, ni instantané embarqué — ex: tout premier déploiement) :
-  // aucun appareil ne devrait normalement jamais atteindre cette ligne en usage normal.
+  // Dernier recours absolu (ni instantané embarqué joignable, ni cache — ex: tout premier
+  // déploiement ou vraiment hors-ligne sans avoir jamais chargé l'app) : Google Sheets en direct.
   await fetchRecipesFromSheet(cacheKey,true);
 }
 async function fetchRecipesFromSheet(cacheKey,updateLive){
