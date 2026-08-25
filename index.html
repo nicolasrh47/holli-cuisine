@@ -1065,7 +1065,7 @@ function parseIng(raw){
   if(m)return{qty:parseFloat(m[2].replace(',','.')),unit:(m[3]||'').toLowerCase(),name:m[1].trim().toLowerCase()};
   return{qty:null,unit:'',name:raw.toLowerCase()};
 }
-function normName(n){return n.toLowerCase().replace(/\s+/g,' ').trim().replace(/s\b/g,'');}
+function normName(n){return n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().replace(/s\b/g,'');}
 function fmtQtyDetailed(qty,unit){
   if(qty===null)return'';
   const q=rnd(qty);
@@ -1141,7 +1141,10 @@ function updateCartBadge() {
     }
   });
   homeCart.forEach(name => {
-    merged.push({key:normName(name), displayName:name, qty:null, unit:'', adjustedQty:null, recipes:[], isMaison:true});
+    const key = normName(name);
+    if(!merged.find(m => m.key === key)) {
+      merged.push({key, displayName:name, qty:null, unit:'', adjustedQty:null, recipes:[], isMaison:true});
+    }
   });
   const uncheckedCount = merged.filter(i => !checkedItems.has(i.key)).length;
   
@@ -1218,6 +1221,12 @@ async function init(){
   renderMaison();updateUI();initTouchSystem();checkRecurringItems();
 }
 function formatImg(url){const id=url.match(/\/d\/(.+?)\//)  ||url.match(/id=(.+?)(&|$)/);return id?`https://wsrv.nl/?url=https://docs.google.com/uc?id=${id[1].trim()}&w=800&h=1000&fit=cover`:'';}
+// r.i est toujours généré en 800×1000 (taille "hero", carte swipe / détail recette). Les
+// vignettes (grilles, listes) n'ont besoin de bien moins — leur faire télécharger la même
+// image pleine taille gaspille beaucoup de données, surtout perceptible en 4G/5G. On redemande
+// juste une taille plus petite au même service de redimensionnement (wsrv.nl), sans re-décoder
+// l'image originale côté client.
+function imgSize(url,w,h){return url?url.replace(/&w=\d+&h=\d+/,`&w=${w}&h=${h}`):url;}
 
 // Même stratégie à trois niveaux que loadMaisonItems() : cache local → recipes.json embarqué
 // (rapide, CDN, toujours dispo) → Google Sheets en direct seulement en dernier recours, puis
@@ -1333,7 +1342,7 @@ function renderFavs(){
   document.getElementById('fav-grid').innerHTML=filtered.map(r=>`
     <div class="fav-card" onclick="showDetails(${r.id})">
       <div class="relative">
-        <img src="${r.i}" alt="${r.n}" class="w-full h-40 object-cover" loading="lazy">
+        <img src="${imgSize(r.i,360,450)}" alt="${r.n}" class="w-full h-40 object-cover" loading="lazy">
         <button onclick="toggleFav(${r.id},event)" class="fav-btn active" data-fav-id="${r.id}">❤️</button>
         ${allergyBadgeHTML(r)}
         <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-4">
@@ -1426,7 +1435,7 @@ function putWeeklyFeaturedFirst(){
 function renderCataloguePreview(){
   const el=document.getElementById('catalogue-preview');if(!el||!recipes.length)return;
   const sample=shuffleWithSeason(safeRecipes()).slice(0,4);
-  el.innerHTML=sample.map(r=>`<img src="${r.i}" alt="" loading="lazy">`).join('');
+  el.innerHTML=sample.map(r=>`<img src="${imgSize(r.i,160,200)}" alt="" loading="lazy">`).join('');
 }
 
 let hideAllergens=false;
@@ -1470,7 +1479,7 @@ function renderGrid(){
   document.getElementById('grid').innerHTML=filtered.length?filtered.map((r,idx)=>`
     <div class="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm cursor-pointer active:scale-95 transition-transform recipe-card" style="animation:slideUp .3s ease-out ${Math.min(idx,10)*.03}s both">
       <div onclick="${clickAction}(${r.id})">
-        <img src="${r.i}" alt="${r.n}" class="h-32 w-full object-cover" loading="lazy">
+        <img src="${imgSize(r.i,320,400)}" alt="${r.n}" class="h-32 w-full object-cover" loading="lazy">
         <div class="p-3"><p class="text-[10px] font-black uppercase truncate text-slate-800">${r.n}</p></div>
       </div>
       <button class="fav-btn ${favorites.has(r.id)?'active':''}" data-fav-id="${r.id}" onclick="toggleFav(${r.id},event)">${favorites.has(r.id)?'❤️':'🤍'}</button>
@@ -1663,7 +1672,7 @@ function courseSlotHTML(item,dayIdx,course){
   }
   const r=recipes.find(x=>x.id===rid);if(!r)return'';
   return`<div class="week-slot">
-    <img src="${r.i}" alt="${r.n}" class="week-slot-img" loading="lazy" onclick="showDetails(${r.id})">
+    <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="week-slot-img" loading="lazy" onclick="showDetails(${r.id})">
     <div class="week-slot-body" onclick="showDetails(${r.id})">
       <span class="week-slot-tag">${meta.emoji} ${meta.label}</span>
       <div class="week-slot-name">${r.n}${allergyBadgeHTML(r,'inline')}</div>
@@ -1711,7 +1720,7 @@ function renderCart(){
   }
   const merged=buildMerged();
   extraItems.forEach(name=>{const key=normName(name);if(!merged.find(m=>m.key===key))merged.push({key,displayName:name,qty:null,unit:'',adjustedQty:null,recipes:[],isExtra:true});});
-  homeCart.forEach(name=>{merged.push({key:normName(name),displayName:name,qty:null,unit:'',adjustedQty:null,recipes:[],isMaison:true});});
+  homeCart.forEach(name=>{const key=normName(name);if(!merged.find(m=>m.key===key))merged.push({key,displayName:name,qty:null,unit:'',adjustedQty:null,recipes:[],isMaison:true});});
   const total=merged.length;
   const checkedCount=merged.filter(i=>checkedItems.has(i.key)).length;
   const unchecked=merged.filter(i=>!checkedItems.has(i.key));
@@ -1789,7 +1798,7 @@ function saveManualQty(key,value){manualQtys[`qty_${key}`]=value;localStorage.se
 function shareCart(){
   const merged=buildMerged();
   extraItems.forEach(n=>{const k=normName(n);if(!merged.find(m=>m.key===k))merged.push({key:k,displayName:n,qty:null,unit:'',adjustedQty:null,recipes:[]});});
-  homeCart.forEach(n=>{merged.push({key:normName(n),displayName:n,qty:null,unit:'',adjustedQty:null,recipes:[],isMaison:true});});
+  homeCart.forEach(n=>{const k=normName(n);if(!merged.find(m=>m.key===k))merged.push({key:k,displayName:n,qty:null,unit:'',adjustedQty:null,recipes:[],isMaison:true});});
   const unchecked=merged.filter(i=>!checkedItems.has(i.key));
   if(!unchecked.length){alert('Rien à partager !');return;}
   const byRayon={};
@@ -1815,7 +1824,7 @@ function renderCooking(){
     <button onclick="cookAll()" class="cook-all-btn mb-4"><span class="em">🔥</span><span>Cuisiner tous les plats</span><span class="em">🍽️</span></button>
     ${cart.map((r,idx)=>`
       <div class="bg-white rounded-[2.2rem] border p-4 flex gap-4 items-center mb-2" style="animation:slideUp .4s ease-out ${idx*.08}s both">
-        <img src="${r.i}" alt="${r.n}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0" loading="lazy">
+        <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0" loading="lazy">
         <div class="flex-1 min-w-0">
           <h3 class="font-black uppercase text-[11px] italic text-slate-800 leading-tight">${r.n}${allergyBadgeHTML(r,'inline')}</h3>
           <p class="text-[9px] text-slate-400 font-bold mt-1">${splitPrepSteps(r.prep).length} étapes${r.temps?` · ⏱ ${r.temps}`:''}</p>
@@ -1830,7 +1839,7 @@ function renderOldRecipes(){
   if(!oldRecipes.length){document.getElementById('old-recipes-grid').innerHTML=`<div class="text-center py-16 opacity-25"><div class="text-5xl mb-4">📚</div><div class="font-black text-base uppercase">Aucune ancienne recette</div><div class="text-sm font-bold mt-1">Les recettes terminées apparaissent ici</div></div>`;return;}
   document.getElementById('old-recipes-grid').innerHTML=oldRecipes.slice().reverse().map((r,i)=>`
     <div class="old-recipe-card" style="animation:slideUp .3s ease-out ${i*.05}s both">
-      <img src="${r.i}" alt="${r.n}" class="w-14 h-14 rounded-2xl object-cover flex-shrink-0" loading="lazy">
+      <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="w-14 h-14 rounded-2xl object-cover flex-shrink-0" loading="lazy">
       <div class="flex-1 min-w-0">
         <p class="font-black text-[11px] uppercase italic text-slate-800 leading-tight truncate">${r.n}</p>
         <p class="text-[9px] text-slate-400 font-bold mt-1">${r.cat}</p>
