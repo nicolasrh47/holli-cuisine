@@ -48,6 +48,8 @@ body.dark .cook-tab-btn.active{background:#f97316;border-color:#f97316;color:whi
 @keyframes bigFadeIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
 @keyframes bigFadeOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(1.1)}}
 @keyframes checkPop{0%{transform:scale(1)}40%{transform:scale(1.35)}70%{transform:scale(.9)}100%{transform:scale(1)}}
+@keyframes badgeBump{0%{transform:scale(1)}40%{transform:scale(2.4) translateY(-3px)}100%{transform:scale(1)}}
+#cart-badge.bump{animation:badgeBump .5s cubic-bezier(.34,1.56,.64,1);}
 @keyframes toastFade{from{opacity:1}to{opacity:0;transform:translateY(10px)}}
 
 .nav-bar{position:fixed;bottom:0;left:0;right:0;height:84px;display:flex;justify-content:space-around;align-items:center;z-index:100;border-top:1px solid #f1f5f9;padding-bottom:calc(14px + env(safe-area-inset-bottom));}
@@ -232,14 +234,10 @@ body.dark #add-item-modal{background:#1e293b;}
 
 #maison-search{width:100%;border:2px solid #e2e8f0;border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:10px;background:white;}
 #maison-search:focus{border-color:#f97316;}
-/* Barre recherche + catégories + "ma sélection" fixée sous l'en-tête pendant le défilement de
-   la longue liste d'articles — évite d'avoir à remonter tout en haut pour changer de filtre. */
+/* Barre recherche + catégories fixée sous l'en-tête pendant le défilement de la longue liste
+   d'articles — évite d'avoir à remonter tout en haut pour changer de filtre. */
 #maison-sticky-bar{position:sticky;top:var(--app-header-h,64px);z-index:20;background:rgba(255,255,255,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);margin:0 -16px;padding:10px 16px 8px;}
 body.dark #maison-sticky-bar{background:rgba(15,23,42,.97);}
-.maison-selection-btn{flex-shrink:0;background:#0f172a;color:white;font-weight:900;font-size:11px;padding:8px 14px;border-radius:12px;border:none;cursor:pointer;white-space:nowrap;}
-.maison-selection-btn.active{background:#f97316;}
-body.dark .maison-selection-btn{background:#334155;}
-body.dark .maison-selection-btn.active{background:#f97316;}
 .mais-cat-tab{font-size:9px;font-weight:900;color:#64748b;padding:8px 14px;border-radius:12px;text-transform:uppercase;border:1.5px solid #e2e8f0;white-space:nowrap;background:white;transition:.2s;cursor:pointer;}
 .mais-cat-tab.active{background:#0f172a;color:white;border-color:#0f172a;}
 body.dark .mais-cat-tab{background:#1e293b;border-color:#334155;color:#94a3b8;}
@@ -673,10 +671,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   <div id="maison-normal">
     <div id="maison-sticky-bar">
       <input id="maison-search" placeholder="🔍 Rechercher un article…" oninput="renderMaison()">
-      <div class="flex gap-2 items-center">
-        <div id="maison-cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar pb-1 flex-1"></div>
-        <button id="maison-selection-toggle" onclick="toggleMaisonSelectionFilter()" class="maison-selection-btn">🛒 <span id="maison-selection-count">0</span></button>
-      </div>
+      <div id="maison-cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar pb-1"></div>
     </div>
     <div id="maison-alerts" class="mb-4"></div>
     <div id="maison-suggestions" class="mb-4"></div>
@@ -858,7 +853,6 @@ let isDark=localStorage.getItem('holli_dark')==='true';
 (function(){const h=document.getElementById('app-header');if(h)document.documentElement.style.setProperty('--app-header-h',h.offsetHeight+'px');})();
 let wakeLock=null;
 let currentMaisonCat='Tous';
-let maisonShowSelectionOnly=false;
 let currentRecurringCat='Tous';
 let itemLastBought={},itemPurchaseHistory={};
 let currentFavCat='Tous';
@@ -1980,21 +1974,6 @@ function renderMaison(){
   const searchTerms=normalizeSearchText(rawSearch).split(/\s+/).filter(Boolean);
   const allCats=['Tous',...new Set(maisonItems.map(i=>i.cat))];
   document.getElementById('maison-cat-bar').innerHTML=allCats.map(c=>`<button onclick="setMaisonCat('${c.replace(/'/g,"\\'")}')" class="mais-cat-tab ${c===currentMaisonCat?'active':''}">${c}</button>`).join('');
-  document.getElementById('maison-selection-count').innerText=homeCart.length;
-  document.getElementById('maison-selection-toggle').classList.toggle('active',maisonShowSelectionOnly);
-
-  // "Ma sélection" : revoir uniquement ce qui est déjà coché, sans avoir à re-scroller tout le
-  // catalogue pour le retrouver. Ignore le filtre catégorie (une sélection peut couvrir
-  // plusieurs catégories), garde la recherche active.
-  if(maisonShowSelectionOnly){
-    document.getElementById('maison-alerts').innerHTML='';
-    document.getElementById('maison-suggestions').innerHTML='';
-    let selItems=maisonItems.filter(item=>homeCart.includes(item.n));
-    if(searchTerms.length)selItems=selItems.filter(i=>searchTerms.every(t=>normalizeSearchText(i.n).includes(t)));
-    if(!selItems.length){document.getElementById('maison-content').innerHTML='<p class="text-center py-16 opacity-30 font-bold text-sm">Aucun article sélectionné pour l\'instant.<br>Coche des articles pour les retrouver ici.</p>';return;}
-    renderMaisonGrid(selItems);
-    return;
-  }
 
   // "À racheter bientôt" fusionne l'ancienne alerte (stock déjà bas) et les anciennes
   // suggestions (stock bientôt bas) — les deux se recoupaient presque toujours, on évite
@@ -2033,13 +2012,23 @@ function renderMaisonGrid(filtered){
   });
   document.getElementById('maison-content').innerHTML=html;
 }
-function setMaisonCat(cat){currentMaisonCat=cat;maisonShowSelectionOnly=false;renderMaison();}
-function toggleMaisonSelectionFilter(){maisonShowSelectionOnly=!maisonShowSelectionOnly;renderMaison();}
+function setMaisonCat(cat){currentMaisonCat=cat;renderMaison();}
 function toggleHome(name){
   const idx=homeCart.indexOf(name);
+  let added=false;
   if(idx>-1){homeCart.splice(idx,1);}
-  else{homeCart.push(name);itemLastBought[name]=new Date().toISOString();if(!itemPurchaseHistory[name])itemPurchaseHistory[name]=[];itemPurchaseHistory[name].push(new Date().toISOString());localStorage.setItem('holli_last_bought',JSON.stringify(itemLastBought));localStorage.setItem('holli_purchase_history',JSON.stringify(itemPurchaseHistory));}
+  else{homeCart.push(name);itemLastBought[name]=new Date().toISOString();if(!itemPurchaseHistory[name])itemPurchaseHistory[name]=[];itemPurchaseHistory[name].push(new Date().toISOString());localStorage.setItem('holli_last_bought',JSON.stringify(itemLastBought));localStorage.setItem('holli_purchase_history',JSON.stringify(itemPurchaseHistory));added=true;}
   save();renderMaison();updateUI();
+  if(added)bumpCartBadge();
+}
+// Petit "pop" sur la pastille du panier (nav du bas) quand on ajoute un article depuis Maison —
+// signe visuel qu'il y a désormais quelque chose dedans, sans ajouter un élément d'interface en plus.
+function bumpCartBadge(){
+  const el=document.getElementById('cart-badge');
+  if(!el)return;
+  el.classList.remove('bump');
+  void el.offsetWidth;
+  el.classList.add('bump');
 }
 function clearMaison(){if(!homeCart.length)return;if(confirm('Retirer tous les articles maison du panier ?')){homeCart=[];save();renderMaison();updateUI();}}
 
