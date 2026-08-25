@@ -466,7 +466,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
     <div class="onboard-step" id="onboard-step-5">
       <h2>🔁 Articles récurrents</h2>
       <p class="sub">Coche ce que tu rachètes régulièrement (papier toilette, lessive…) et dis-nous tous les combien — l'app te les ajoutera automatiquement à ta liste de courses au bon moment.</p>
-      <input id="onboard-recurring-search" placeholder="🔍 Rechercher un article…" oninput="renderOnboardRecurring()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:12px;background:var(--card);color:var(--text)">
+      <input id="onboard-recurring-search" placeholder="🔍 Rechercher un article…" oninput="renderOnboardRecurringDebounced()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:12px;background:var(--card);color:var(--text)">
       <div id="onboard-recurring-cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-4 pb-1"></div>
       <div class="add-custom-recur">
         <input id="onboard-recurring-custom-input" placeholder="Autre article (pas dans la liste)…" maxlength="40" onkeydown="if(event.key==='Enter')addCustomOnboardRecurringItem()">
@@ -491,7 +491,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   <button onclick="closeCatalogueModal()" class="mb-4 font-black text-orange-500 text-xs uppercase">← Retour</button>
   <h2 class="text-2xl font-[900] italic uppercase tracking-tighter mb-1" id="catalogue-modal-title">Toutes les recettes</h2>
   <p class="text-slate-400 font-bold text-[11px] mb-4" id="catalogue-count"></p>
-  <input id="catalogue-search" placeholder="🔍 Rechercher une recette…" oninput="renderGrid()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:12px;background:var(--card);color:var(--text)">
+  <input id="catalogue-search" placeholder="🔍 Rechercher une recette…" oninput="renderGridDebounced()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:12px;background:var(--card);color:var(--text)">
   <div id="course-filter-bar" class="flex gap-2 mb-3"></div>
   <button id="hide-allergens-btn" onclick="toggleHideAllergens()" class="mais-cat-tab mb-4" style="display:none">🙈 Masquer mes allergènes</button>
   <div id="category-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-5 pb-2"></div>
@@ -502,7 +502,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   <button onclick="closeRecurringManager()" class="mb-4 font-black text-orange-500 text-xs uppercase">← Retour</button>
   <h2 class="text-2xl font-[900] italic uppercase tracking-tighter mb-1">Articles récurrents</h2>
   <p class="text-slate-400 font-bold text-[11px] mb-4">Coche ce que tu rachètes régulièrement et choisis la fréquence — l'app les ajoute automatiquement à tes courses le moment venu.</p>
-  <input id="recurring-search" placeholder="🔍 Rechercher un article…" oninput="renderRecurringManager()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:12px;background:var(--card);color:var(--text)">
+  <input id="recurring-search" placeholder="🔍 Rechercher un article…" oninput="renderRecurringManagerDebounced()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:12px;background:var(--card);color:var(--text)">
   <div id="recurring-cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-4 pb-1"></div>
   <div class="add-custom-recur">
     <input id="recurring-custom-input" placeholder="Autre article (pas dans la liste)…" maxlength="40" onkeydown="if(event.key==='Enter')addCustomRecurringItem()">
@@ -659,7 +659,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
     <h2 class="text-3xl font-black italic uppercase">❤️ Favoris</h2>
     <span id="fav-count-label" class="text-slate-400 font-black text-xs uppercase"></span>
   </div>
-  <input id="fav-search" placeholder="🔍 Rechercher dans mes favoris…" oninput="renderFavs()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:12px;background:var(--card);color:var(--text)">
+  <input id="fav-search" placeholder="🔍 Rechercher dans mes favoris…" oninput="renderFavsDebounced()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:12px;background:var(--card);color:var(--text)">
   <p class="text-[9px] font-black uppercase tracking-wide mb-2" style="color:var(--text2)">Cuisine</p>
   <div id="fav-cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-3 pb-1"></div>
   <p class="text-[9px] font-black uppercase tracking-wide mb-2" style="color:var(--text2)">Type de plat</p>
@@ -676,7 +676,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   </div>
   <div id="maison-normal">
     <div id="maison-sticky-bar">
-      <input id="maison-search" placeholder="🔍 Rechercher un article…" oninput="renderMaison()">
+      <input id="maison-search" placeholder="🔍 Rechercher un article…" oninput="renderMaisonDebounced()">
       <div id="maison-cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar pb-1"></div>
     </div>
     <div id="maison-alerts" class="mb-4"></div>
@@ -1031,6 +1031,23 @@ function escapeHtml(str){
   div.textContent=str==null?'':String(str);
   return div.innerHTML;
 }
+
+// Les recherches (catalogue 150+ recettes, maison 380+ articles…) reconstruisaient toute la
+// liste en HTML à CHAQUE frappe clavier — sur un vieux téléphone ça donne l'impression que
+// l'appli "beugue"/n'est pas fluide en tapant. On ne relance le rendu qu'une fois la frappe
+// interrompue (150ms), le champ de saisie lui reste toujours instantané.
+function debounce(fn,ms){
+  let t;
+  return function(...args){clearTimeout(t);t=setTimeout(()=>fn.apply(this,args),ms);};
+}
+// Versions débouncées utilisées uniquement sur les champs de recherche (oninput) — tous les
+// autres appels (changement d'onglet/catégorie, etc.) continuent d'appeler la fonction directe
+// pour un rendu instantané, comme avant.
+const renderGridDebounced=debounce(()=>renderGrid(),150);
+const renderMaisonDebounced=debounce(()=>renderMaison(),150);
+const renderFavsDebounced=debounce(()=>renderFavs(),150);
+const renderRecurringManagerDebounced=debounce(()=>renderRecurringManager(),150);
+const renderOnboardRecurringDebounced=debounce(()=>renderOnboardRecurring(),150);
 
 function updateServings(v){
   servings=Math.max(1,servings+v);
