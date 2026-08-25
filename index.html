@@ -1363,6 +1363,9 @@ function setFavCourse(key){currentFavCourse=key;renderFavs();}
 // jamais l'afficher avec son titre, jamais séparément. On précharge aussi TOUJOURS la carte
 // suivante en arrière-plan pendant que l'utilisateur regarde la carte actuelle, pour que le
 // swipe suivant n'attende jamais un téléchargement réseau (source du "met du temps à charger").
+// Si la nouvelle image n'est malgré tout pas encore prête (préchargement pas terminé), on
+// GARDE l'ancienne photo+nom affichés (au lieu de les cacher avec opacity:0) : jamais de carte
+// blanche, juste un instant de plus sur l'ancienne carte avant le remplacement.
 function preloadCardImg(src){
   if(!src||cardImgCache[src])return;
   const img=new Image();
@@ -1380,20 +1383,21 @@ function renderCard(){
     imgEl.src=cardImgSrc;
     imgEl.alt=r.n;
     titleEl.innerText=r.n;
-    imgEl.style.opacity=1;
   };
   if(cardImgCache[cardImgSrc]){
-    applyCard(); // déjà en cache (préchargée pendant la carte précédente) : affichage instantané, pas de fondu
+    applyCard(); // déjà en cache (préchargée pendant la carte précédente) : affichage instantané
   } else {
     const preload=new Image();
     preload.onload=()=>{cardImgCache[cardImgSrc]=true;applyCard();};
     preload.onerror=applyCard; // n'affiche pas une image cassée mais ne bloque pas non plus
-    imgEl.style.opacity=0;
     preload.src=cardImgSrc;
+    // pas de opacity=0 ici : l'ancienne photo/nom restent visibles ensemble jusqu'au swap
   }
   if(shuffledRecipes.length>1){
     const next=shuffledRecipes[(curIdx+1)%shuffledRecipes.length];
     if(next)preloadCardImg(imgSize(next.i,600,750));
+    const after=shuffledRecipes[(curIdx+2)%shuffledRecipes.length];
+    if(after)preloadCardImg(imgSize(after.i,600,750)); // marge de sécurité si l'utilisateur swipe vite
   }
   document.getElementById('card').style.transition='none';
   document.getElementById('card').style.transform='';
