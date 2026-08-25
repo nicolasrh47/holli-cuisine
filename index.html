@@ -1032,6 +1032,22 @@ function escapeHtml(str){
   return div.innerHTML;
 }
 
+// Si une seule valeur du localStorage est corrompue (JSON invalide — écriture coupée,
+// ancien format, bug navigateur…), un JSON.parse direct fait planter toute la fonction qui
+// l'appelle. Comme init() lit une dizaine de clés à la suite sans try/catch, UNE seule valeur
+// abîmée bloquait tout le démarrage de l'app (écran figé après connexion, sans erreur visible).
+// On repasse toujours par ce parsing sécurisé : en cas d'échec, valeur par défaut, jamais de plantage.
+function safeJSON(key,fallback){
+  try{
+    const raw=localStorage.getItem(key);
+    if(raw===null||raw===undefined)return fallback;
+    return JSON.parse(raw);
+  }catch(e){
+    console.warn(`Donnée locale corrompue pour "${key}", valeur par défaut utilisée.`,e);
+    return fallback;
+  }
+}
+
 // Les recherches (catalogue 150+ recettes, maison 380+ articles…) reconstruisaient toute la
 // liste en HTML à CHAQUE frappe clavier — sur un vieux téléphone ça donne l'impression que
 // l'appli "beugue"/n'est pas fluide en tapant. On ne relance le rendu qu'une fois la frappe
@@ -1215,25 +1231,25 @@ function hashId(str){let h=5381;for(let i=0;i<str.length;i++){h=((h<<5)+h)+str.c
 async function init(){
   if(isDark)document.body.classList.add('dark');
   document.getElementById('dark-btn').innerText=isDark?'☀️':'🌓';
-  cart=JSON.parse(localStorage.getItem('holli_v4_cart'))||[];
-  homeCart=JSON.parse(localStorage.getItem('holli_home_v4'))||[];
-  extraItems=JSON.parse(localStorage.getItem('holli_extras'))||[];
-  checkedItems=new Set(JSON.parse(localStorage.getItem('holli_checked'))||[]);
-  shoppedRecipeNames=new Set(JSON.parse(localStorage.getItem('holli_shopped'))||[]);
-  manualQtys=JSON.parse(localStorage.getItem('holli_manual_qtys'))||{};
+  cart=safeJSON('holli_v4_cart',[]);
+  homeCart=safeJSON('holli_home_v4',[]);
+  extraItems=safeJSON('holli_extras',[]);
+  checkedItems=new Set(safeJSON('holli_checked',[]));
+  shoppedRecipeNames=new Set(safeJSON('holli_shopped',[]));
+  manualQtys=safeJSON('holli_manual_qtys',{});
   servings=parseInt(localStorage.getItem('holli_servings'))||2;
-  itemLastBought=JSON.parse(localStorage.getItem('holli_last_bought'))||{};
-  itemPurchaseHistory=JSON.parse(localStorage.getItem('holli_purchase_history'))||{};
-  favorites=new Set(JSON.parse(localStorage.getItem('holli_favorites'))||[]);
-  weekMenu=JSON.parse(localStorage.getItem('holli_week_menu'))||[];
+  itemLastBought=safeJSON('holli_last_bought',{});
+  itemPurchaseHistory=safeJSON('holli_purchase_history',{});
+  favorites=new Set(safeJSON('holli_favorites',[]));
+  weekMenu=safeJSON('holli_week_menu',[]);
   // Migration ancien format ({day,recipeId}) -> nouveau ({day,recipes:{entree,plat,dessert}})
   if(weekMenu.length&&weekMenu[0]&&'recipeId' in weekMenu[0]){
     weekMenu=weekMenu.map(item=>({day:item.day,recipes:{entree:null,plat:item.recipeId??null,dessert:null}}));
   }
   weekCount=parseInt(localStorage.getItem('holli_week_count'))||7;
-  const savedCourses=JSON.parse(localStorage.getItem('holli_week_courses'));
+  const savedCourses=safeJSON('holli_week_courses',null);
   weekCourses=new Set(savedCourses&&savedCourses.length?savedCourses:['entree','plat','dessert']);
-  oldRecipes=JSON.parse(localStorage.getItem('holli_old_recipes'))||[];
+  oldRecipes=safeJSON('holli_old_recipes',[]);
   updateServings(0);
 
   await loadSiteContent();
@@ -2274,7 +2290,7 @@ function genShareCode(){
   while(s.length<8)s+=Math.random().toString(36).slice(2);
   return s.substring(0,8).toUpperCase();
 }
-function getLocalProfiles(){return JSON.parse(localStorage.getItem('holli_profiles_v1'))||{};}
+function getLocalProfiles(){return safeJSON('holli_profiles_v1',{});}
 function saveLocalProfiles(obj){localStorage.setItem('holli_profiles_v1',JSON.stringify(obj));}
 function getLocalProfile(uid){return getLocalProfiles()[uid]||null;}
 function saveLocalProfile(uid,record){const all=getLocalProfiles();all[uid]=record;saveLocalProfiles(all);}
@@ -2614,7 +2630,7 @@ function enterApp(){
   document.getElementById('auth-screen').classList.remove('show');
   document.getElementById('onboard-screen').classList.remove('show');
   document.getElementById('app-shell').style.display='block';
-  init();
+  init().catch(e=>console.error('Erreur au démarrage de l\'app',e)); // filet de sécurité : ne laisse jamais une erreur inattendue passer silencieusement
 }
 function setServingsAbsolute(n){
   servings=Math.max(1,parseInt(n)||2);
@@ -2877,7 +2893,6 @@ function refreshAllergyAwareViews(){
    utilisent le même code (voir Profil > Partage foyer). Écriture débouncée
    pour éviter une écriture Firestore à chaque frappe/coche. */
 let householdUnsub=null;
-let suppressNextSnapshot=false;
 let pushTimer=null;
 
 function pushToFirestore(){
@@ -2894,7 +2909,6 @@ function pushToFirestore(){
       servings,
       updatedAt:firebase.firestore.FieldValue.serverTimestamp()
     };
-    suppressNextSnapshot=true;
     db.collection('households').doc(currentUser.shareCode).set(data,{merge:true})
       .catch(e=>console.warn('Synchro Firestore échouée (courses/favoris/maison)',e));
   },400);
@@ -2937,7 +2951,11 @@ function subscribeHousehold(){
   if(!currentUser||!currentUser.shareCode)return;
   const ref=db.collection('households').doc(currentUser.shareCode);
   householdUnsub=ref.onSnapshot(doc=>{
-    if(suppressNextSnapshot){suppressNextSnapshot=false;return;}
+    // hasPendingWrites=true = c'est notre propre écriture optimiste (pas encore confirmée par
+    // le serveur) : notre state local est déjà à jour, inutile de le réappliquer. Contrairement
+    // à un simple flag "ignore le prochain snapshot", on ne risque jamais d'ignorer par erreur
+    // un changement d'un autre membre du foyer arrivé au même moment que notre propre écriture.
+    if(doc.metadata.hasPendingWrites)return;
     if(!doc.exists){
       // Première synchro pour ce code : on pousse l'état local actuel comme base commune
       pushToFirestore();
