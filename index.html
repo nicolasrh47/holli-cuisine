@@ -1576,7 +1576,12 @@ function setupCategoryBar(){
 }
 function filterGrid(cat){currentCat=cat;document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));document.getElementById('tab-'+cat)?.classList.add('active');renderGrid();}
 // Enlève les accents pour une recherche tolérante ("pate" doit trouver "Pâtes").
-function normalizeSearchText(str){return(str||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+// normalize('NFD') ne décompose pas les ligatures françaises (œ, æ), seulement les lettres
+// accentuées. Le Sheet mélange les deux orthographes selon la recette (ligature "œuf" vs "oeuf"
+// écrit en deux lettres, idem pour "bœuf"/"boeuf"), et personne ne tape la ligature au clavier.
+// Sans ce remplacement, une allergie tapée "oeuf" ratait la majorité des recettes qui en
+// contiennent réellement : risque réel pour quelqu'un qui compte sur le filtre allergies.
+function normalizeSearchText(str){return(str||'').toString().replace(/\u0153/gi,'oe').replace(/\u00e6/gi,'ae').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
 function renderGrid(){
   const rawSearch=(document.getElementById('catalogue-search')?.value||'').trim();
   let filtered=currentCourseFilter==='tous'?recipes:recipes.filter(r=>courseKeyForRecipe(r)===currentCourseFilter);
@@ -2851,7 +2856,7 @@ function getAvoidList(){
 // concrets ; tout ce qui n'est pas dans cette liste reste comparé tel quel
 // (ex: un ingrédient précis comme "coriandre" continue de matcher direct).
 const ALLERGEN_KEYWORDS={
-  'gluten':['farine','ble','pain','pates','chapelure','semoule','orge','seigle','avoine','couscous','biscuit','brioche','pate feuilletee','pate brisee','tortilla','nouilles','vermicelle','crepe'],
+  'gluten':['farine','ble','pain','pate','pates','chapelure','semoule','orge','seigle','avoine','couscous','biscuit','brioche','tortilla','nouilles','vermicelle','crepe'],
   'lactose':['lait','creme','beurre','fromage','yaourt','mascarpone','parmesan','gruyere','mozzarella','ricotta','camembert','emmental','feta','chevre','beaufort'],
   'produits laitiers':['lait','creme','beurre','fromage','yaourt','mascarpone','parmesan','gruyere','mozzarella','ricotta','camembert','emmental','feta','chevre','beaufort'],
   'oeuf':['oeuf'],'oeufs':['oeuf'],
@@ -2867,6 +2872,17 @@ const ALLERGEN_KEYWORDS={
   'moutarde':['moutarde'],
   'sesame':['sesame','tahini']
 };
+// Une comparaison en simple sous-chaine (ing.includes(mot)) matche aussi bien a l'interieur
+// d'un autre mot : "oeuf" est une sous-chaine de "boeuf", donc une allergie a l'oeuf excluait
+// a tort les recettes au boeuf ; "ble" (ble) est une sous-chaine de "erable", donc une recette
+// au sirop d'erable etait parfois signalee gluten sans raison. On exige maintenant un vrai mot
+// entier (borde par un debut/fin de mot), avec un "s" final optionnel autorise pour les
+// pluriels ("oeuf" doit aussi matcher "oeufs").
+function containsFoodWord(haystack,word){
+  if(!word)return false;
+  const esc=word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  return new RegExp(`(^|[^a-z0-9])${esc}s?([^a-z0-9]|$)`).test(haystack);
+}
 function getAllergyMatches(recipe){
   const avoid=getAvoidList();
   if(!avoid.length||!recipe)return[];
@@ -2874,7 +2890,7 @@ function getAllergyMatches(recipe){
   return avoid.filter(a=>{
     const na=normalizeSearchText(a);
     const keywords=ALLERGEN_KEYWORDS[na]||[na];
-    return keywords.some(k=>ing.includes(normalizeSearchText(k)));
+    return keywords.some(k=>containsFoodWord(ing,normalizeSearchText(k)));
   });
 }
 // Recettes utilisées par les parcours "automatiques" (swipe, semaine, aperçu
