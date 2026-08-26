@@ -1782,27 +1782,35 @@ function displayCategory(r){
 // Une tarte, une quiche ou un gateau ne se calcule pas "par personne" en continu : on decide
 // d'en faire 1, 2, 3 recettes entieres, pas 1.5. Ces categories utilisent donc un multiplicateur
 // entier dedie a la recette (batchMultipliers), au lieu du ratio "nombre de personnes du foyer"
-// utilise partout ailleurs. Valeur de depart raisonnable : le nombre de recettes entieres qu'il
-// faut pour couvrir le foyer, arrondi au superieur (mieux vaut trop que pas assez) - ajustable
-// ensuite librement avec les boutons +/- sur la fiche recette / en mode cuisine.
+// utilise partout ailleurs. Contrairement aux plats normaux, "1 pate/quiche/tarte" represente
+// deja un plat COMPLET a partager (pas une portion individuelle) : le multiplicateur par defaut
+// est donc 1 (une seule recette), jamais derive automatiquement du nombre de personnes du foyer -
+// ajustable ensuite librement avec les boutons +/- sur la fiche recette / en mode cuisine.
 const WHOLE_BATCH_CATS=['Tartes & Quiches Salées','Tartes & Crumbles','Gâteaux & Pâtisseries'];
 // La catégorie ne suffit pas toujours : une "Quiche Lorraine" peut être classée en "Cuisine
 // Française" (catégorie régionale) plutôt qu'en "Tartes & Quiches Salées". On complète donc par
 // le nom de la recette pour les plats clairement "à la pièce" par nature (quiche, tourte,
-// clafoutis, flan) — en excluant les formats individuels ("Mug Cake"), qui eux se calculent bien
-// par personne comme un dessert normal.
+// clafoutis, flan).
 const WHOLE_BATCH_NAME_WORDS=['quiche','tourte','clafoutis','flan'];
+// Les formats individuels ("Mug Cake", "Mini Tarte Tatin", desserts "Express") se calculent
+// bien par personne comme un dessert normal, même s'ils tombent dans une catégorie ou un mot-clé
+// "à la pièce" ci-dessus — l'exclusion est donc vérifiée en priorité, quelle que soit la raison
+// du classement.
+const WHOLE_BATCH_EXCLUDE_WORDS=['mug','mini','express','individuel','individuelle','verrine','tartelette'];
+// Cas particuliers qui ne collent à aucun mot-clé (ex: petites confiseries assemblées, pas
+// cuites au four comme "1 plat") : liste d'exceptions manuelle plutôt qu'une règle trop large.
+const WHOLE_BATCH_EXCLUDE_IDS=new Set([55651563]); // Mendiants au Chocolat
 function isWholeBatchRecipe(r){
   if(!r)return false;
-  if(WHOLE_BATCH_CATS.includes(displayCategory(r)))return true;
+  if(WHOLE_BATCH_EXCLUDE_IDS.has(r.id))return false;
   const n=normalizeSearchText(r.n||'');
-  if(containsFoodWord(n,'mug'))return false;
+  if(WHOLE_BATCH_EXCLUDE_WORDS.some(w=>containsFoodWord(n,w)))return false;
+  if(WHOLE_BATCH_CATS.includes(displayCategory(r)))return true;
   return WHOLE_BATCH_NAME_WORDS.some(w=>containsFoodWord(n,w));
 }
 let batchMultipliers={};
 function getBatchMultiplier(r){
-  if(batchMultipliers[r.id]!=null)return batchMultipliers[r.id];
-  return Math.max(1,Math.ceil(servings/BASE_SERVINGS));
+  return batchMultipliers[r.id]!=null?batchMultipliers[r.id]:1;
 }
 function adjustBatch(id,delta){
   const r=recipes.find(x=>x.id==id);if(!r)return;
