@@ -1480,7 +1480,9 @@ function preloadCardImg(src){
 // Qualité réduite (q=75 au lieu du défaut ~80, imperceptible sur une carte de 300px de haut) en
 // plus de la taille réduite : plus l'image est légère, plus vite elle arrive, plus la marge de
 // préchargement (ci-dessous) a de chances d'être prête même si l'utilisateur enchaîne les swipes.
-function swipeImgSrc(r){return imgSize(r.i,600,750)+'&q=75';}
+// &q=75 n'a de sens que pour une URL de proxy (wsrv.nl, avec ?url=...) : une image locale
+// (./images/recipes/xxx.webp) n'a pas de "?", lui coller "&q=75" au bout casserait le chemin.
+function swipeImgSrc(r){const u=imgSize(r.i,600,750);return u.includes('?')?u+'&q=75':u;}
 function renderCard(){
   if(!shuffledRecipes.length)return;
   const r=shuffledRecipes[curIdx];if(!r)return;
