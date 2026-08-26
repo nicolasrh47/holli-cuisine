@@ -1321,6 +1321,26 @@ function formatImg(url){const id=url.match(/\/d\/(.+?)\//)  ||url.match(/id=(.+?
 // juste une taille plus petite au même service de redimensionnement (wsrv.nl), sans re-décoder
 // l'image originale côté client.
 function imgSize(url,w,h){return url?url.replace(/&w=\d+&h=\d+/,`&w=${w}&h=${h}`):url;}
+// Le catalogue peut afficher 150+ cartes d'un coup ; loading="lazy" natif ne déclenche le
+// téléchargement que très près du viewport (encore plus tard sur Safari/iOS), donc en scrollant
+// normalement l'image n'a pas fini d'arriver quand la carte devient visible → case blanche
+// plusieurs secondes. On lance nous-mêmes le téléchargement ~1000px avant que la carte soit à
+// l'écran (le temps de scroller jusque-là, l'image est déjà prête), via IntersectionObserver
+// plutôt que le lazy natif dont la marge n'est pas réglable.
+let gridImgObserver=null;
+function observeGridImages(){
+  if(!gridImgObserver){
+    gridImgObserver=new IntersectionObserver((entries)=>{
+      entries.forEach(entry=>{
+        if(!entry.isIntersecting)return;
+        const img=entry.target;
+        if(img.dataset.src){img.src=img.dataset.src;img.removeAttribute('data-src');}
+        gridImgObserver.unobserve(img);
+      });
+    },{rootMargin:'1000px 0px'});
+  }
+  document.querySelectorAll('#grid img[data-src]').forEach(img=>gridImgObserver.observe(img));
+}
 
 // Même principe que loadMaisonItems() : instantané embarqué toujours revérifié en premier
 // (fichier statique CDN, jamais Google Sheets en direct), cache local seulement en secours
@@ -1641,13 +1661,14 @@ function renderGrid(){
   document.getElementById('grid').innerHTML=filtered.length?filtered.map((r,idx)=>`
     <div class="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm cursor-pointer active:scale-95 transition-transform recipe-card" style="animation:slideUp .3s ease-out ${Math.min(idx,10)*.03}s both">
       <div onclick="${clickAction}(${r.id})">
-        <img src="${imgSize(r.i,320,400)}" alt="${r.n}" class="h-32 w-full object-cover" loading="lazy" decoding="async">
+        <img data-src="${imgSize(r.i,320,400)}" alt="${r.n}" class="h-32 w-full object-cover" style="background:#f1f5f9" decoding="async">
         <div class="p-3"><p class="text-[10px] font-black uppercase truncate text-slate-800">${r.n}</p></div>
       </div>
       <button class="fav-btn ${favorites.has(r.id)?'active':''}" data-fav-id="${r.id}" onclick="toggleFav(${r.id},event)">${favorites.has(r.id)?'❤️':'🤍'}</button>
       <button class="add-btn" onclick="event.stopPropagation();handleAddRecipe(${r.id})">+</button>
       ${allergyBadgeHTML(r)}
     </div>`).join(''):'<div class="col-span-2 text-center py-16 opacity-25"><div class="text-5xl mb-3">🔍</div><div class="font-black text-sm uppercase">Aucune recette trouvée</div></div>';
+  observeGridImages();
 }
 
 function showDetails(id){
