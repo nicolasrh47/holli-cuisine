@@ -1066,6 +1066,14 @@ const renderRecurringManagerDebounced=debounce(()=>renderRecurringManager(),150)
 const renderOnboardRecurringDebounced=debounce(()=>renderOnboardRecurring(),150);
 
 function updateServings(v){
+  // Mode cuisine sur une recette "à la pièce" (tarte/quiche/gâteau) : les +/- de cette recette
+  // ajustent son propre multiplicateur, pas le nombre de personnes du foyer (qui reste inchangé
+  // pour le reste de l'appli).
+  if(v!==0&&document.getElementById('cook-modal').classList.contains('open')&&cookRecipe&&isWholeBatchRecipe(cookRecipe)){
+    adjustBatch(cookRecipe.id,v);
+    renderCookContent();
+    return;
+  }
   servings=Math.max(1,servings+v);
   localStorage.setItem('holli_servings',servings);
   const txt=`${servings} PERS.`;
@@ -1138,16 +1146,21 @@ function scaleQuantitiesInText(text,ratio){
   return text.replace(PREP_SCALE_RE,(match,num,sep,unit)=>`${rnd(parseFloat(num.replace(',','.'))*ratio)}${sep}${unit}`);
 }
 function buildMerged(subset){
-  const ratio=servings/BASE_SERVINGS,map=new Map();
+  // Le ratio n'est plus le même pour toutes les recettes du panier : une tarte/quiche/gâteau
+  // utilise son propre multiplicateur "à la pièce" (recipeRatio), pas le nombre de personnes du
+  // foyer. On applique donc le ratio ligne par ligne, recette par recette, avant de fusionner.
+  const map=new Map();
   (subset||cart).filter(recipe=>!shoppedRecipeNames.has(recipe.n)).forEach(recipe=>{
+    const ratio=recipeRatio(recipe);
     recipe.ing.split(',').forEach(line=>{
       const p=parseIng(line),key=normName(p.name);
       if(!key)return;
-      if(map.has(key)){const ex=map.get(key);if(p.qty!==null&&ex.qty!==null&&ex.unit===p.unit)ex.qty+=p.qty;else if(p.qty!==null&&ex.qty===null){ex.qty=p.qty;ex.unit=p.unit;}ex.recipes.push(recipe.n);}
-      else{map.set(key,{key,displayName:p.name,qty:p.qty,unit:p.unit,recipes:[recipe.n]});}
+      const q=p.qty!==null?p.qty*ratio:null;
+      if(map.has(key)){const ex=map.get(key);if(q!==null&&ex.qty!==null&&ex.unit===p.unit)ex.qty+=q;else if(q!==null&&ex.qty===null){ex.qty=q;ex.unit=p.unit;}ex.recipes.push(recipe.n);}
+      else{map.set(key,{key,displayName:p.name,qty:q,unit:p.unit,recipes:[recipe.n]});}
     });
   });
-  return Array.from(map.values()).map(ing=>({...ing,adjustedQty:ing.qty!==null?ing.qty*ratio:null}));
+  return Array.from(map.values()).map(ing=>({...ing,adjustedQty:ing.qty}));
 }
 
 function save(){
@@ -1613,8 +1626,12 @@ function renderGrid(){
 function showDetails(id){
   const r=recipes.find(x=>x.id==id);if(!r)return;
   const isFav=favorites.has(r.id);
-  const ratio=servings/BASE_SERVINGS;
-  const ings=r.ing.split(',').map(l=>{const p=parseIng(l);const aq=p.qty!==null?rnd(p.qty*ratio):null;return`<p class="mb-2 flex justify-between gap-2"><span>○ ${p.name||l.trim()}</span><span class="text-orange-500 font-black text-xs">${aq!==null?fmtQtyDetailed(aq,p.unit):''}</span></p>`;}).join('');
+  const wb=isWholeBatchRecipe(r);
+  const ratio=recipeRatio(r);
+  const persLabel=wb?batchLabel(r):`${servings} PERS.`;
+  const minusAction=wb?`adjustBatch(${r.id},-1)`:`updateServings(-1)`;
+  const plusAction=wb?`adjustBatch(${r.id},1)`:`updateServings(1)`;
+  const ings=r.ing.split(',').map(l=>{const p=parseIng(l);const aq=p.qty!==null?rnd(p.qty*ratio):null;const qtyTxt=isSeasoningLine(p.name,p.qty)?'1 pincée':(aq!==null?fmtQtyDetailed(aq,p.unit):'');return`<p class="mb-2 flex justify-between gap-2"><span>○ ${p.name||l.trim()}</span><span class="text-orange-500 font-black text-xs">${qtyTxt}</span></p>`;}).join('');
   document.getElementById('modal-content').innerHTML=`
     <div class="relative mb-5">
       <img src="${r.i}" alt="${r.n}" class="w-full h-56 object-cover rounded-[2.5rem] shadow-xl border-4 border-white">
@@ -1623,9 +1640,9 @@ function showDetails(id){
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-xl font-[900] uppercase italic">${r.n}</h2>
       <div class="pers-pill">
-        <button onclick="updateServings(-1);refreshDetailModal(${r.id})">-</button>
-        <span id="detail-pers-disp" style="font-size:10px">${servings} PERS.</span>
-        <button onclick="updateServings(1);refreshDetailModal(${r.id})">+</button>
+        <button onclick="${minusAction};refreshDetailModal(${r.id})">-</button>
+        <span id="detail-pers-disp" style="font-size:10px">${persLabel}</span>
+        <button onclick="${plusAction};refreshDetailModal(${r.id})">+</button>
       </div>
     </div>
     ${(r.temps||r.prix)?`<div class="flex flex-wrap gap-2 mb-4">
@@ -1633,7 +1650,7 @@ function showDetails(id){
       ${r.prix?`<span class="bg-slate-100 text-slate-600 text-[10px] font-black px-3 py-1.5 rounded-full">${prixDisplay(r.prix)}</span>`:''}
     </div>`:''}
     ${getAllergyMatches(r).length?`<div class="bg-red-50 border-2 border-red-200 rounded-2xl p-4 mb-4"><p class="text-red-600 font-black text-xs uppercase">⚠️ Attention</p><p class="text-red-500 font-bold text-[11px] mt-1">Cette recette contient : ${getAllergyMatches(r).join(', ')}</p></div>`:''}
-    <p class="text-[9px] font-black text-orange-500 uppercase mb-1" id="detail-ing-label">Ingrédients · ${servings} pers.</p>
+    <p class="text-[9px] font-black text-orange-500 uppercase mb-1" id="detail-ing-label">Ingrédients · ${wb?batchLabel(r):servings+' pers.'}</p>
     <div class="bg-orange-50 p-5 rounded-[2rem] mb-5 font-bold text-slate-700 text-sm" id="detail-ing-list">${ings}</div>
     <p class="text-[9px] font-black text-orange-500 uppercase mb-2">Préparation</p>
     <div class="space-y-3 mb-5" id="detail-steps-list">${splitPrepSteps(r.prep).map((s,i)=>`<div class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 rounded-full bg-slate-900 text-white text-[11px] font-black flex items-center justify-center">${i+1}</span><p class="text-sm font-semibold text-slate-700 leading-snug pt-0.5">${scaleQuantitiesInText(s,ratio)}</p></div>`).join('')}</div>
@@ -1645,11 +1662,13 @@ function prixDisplay(prix){
   return map[prix]||('💰 '+prix);
 }
 function refreshDetailModal(id){
-  const el=document.getElementById('detail-pers-disp');if(el)el.innerText=`${servings} PERS.`;
-  const lbl=document.getElementById('detail-ing-label');if(lbl)lbl.innerText=`Ingrédients · ${servings} pers.`;
   const r=recipes.find(x=>x.id==id);if(!r)return;
-  const ratio=servings/BASE_SERVINGS;
-  const ings=r.ing.split(',').map(l=>{const p=parseIng(l);const aq=p.qty!==null?rnd(p.qty*ratio):null;return`<p class="mb-2 flex justify-between gap-2"><span>○ ${p.name||l.trim()}</span><span class="text-orange-500 font-black text-xs">${aq!==null?fmtQtyDetailed(aq,p.unit):''}</span></p>`;}).join('');
+  const wb=isWholeBatchRecipe(r);
+  const ratio=recipeRatio(r);
+  const persLabel=wb?batchLabel(r):`${servings} PERS.`;
+  const el=document.getElementById('detail-pers-disp');if(el)el.innerText=persLabel;
+  const lbl=document.getElementById('detail-ing-label');if(lbl)lbl.innerText=`Ingrédients · ${wb?batchLabel(r):servings+' pers.'}`;
+  const ings=r.ing.split(',').map(l=>{const p=parseIng(l);const aq=p.qty!==null?rnd(p.qty*ratio):null;const qtyTxt=isSeasoningLine(p.name,p.qty)?'1 pincée':(aq!==null?fmtQtyDetailed(aq,p.unit):'');return`<p class="mb-2 flex justify-between gap-2"><span>○ ${p.name||l.trim()}</span><span class="text-orange-500 font-black text-xs">${qtyTxt}</span></p>`;}).join('');
   const il=document.getElementById('detail-ing-list');if(il)il.innerHTML=ings;
   const steps=splitPrepSteps(r.prep).map((s,i)=>`<div class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 rounded-full bg-slate-900 text-white text-[11px] font-black flex items-center justify-center">${i+1}</span><p class="text-sm font-semibold text-slate-700 leading-snug pt-0.5">${scaleQuantitiesInText(s,ratio)}</p></div>`).join('');
   const sl=document.getElementById('detail-steps-list');if(sl)sl.innerHTML=steps;
@@ -1742,6 +1761,50 @@ const CAT_FALLBACK_BY_COURSE={entree:'Autres Entrées',plat:'Autres Plats',desse
 function displayCategory(r){
   const key=normalizeSearchText(r.cat||'');
   return CAT_DISPLAY_MAP[key]||CAT_FALLBACK_BY_COURSE[courseKeyForRecipe(r)];
+}
+// Une tarte, une quiche ou un gateau ne se calcule pas "par personne" en continu : on decide
+// d'en faire 1, 2, 3 recettes entieres, pas 1.5. Ces categories utilisent donc un multiplicateur
+// entier dedie a la recette (batchMultipliers), au lieu du ratio "nombre de personnes du foyer"
+// utilise partout ailleurs. Valeur de depart raisonnable : le nombre de recettes entieres qu'il
+// faut pour couvrir le foyer, arrondi au superieur (mieux vaut trop que pas assez) - ajustable
+// ensuite librement avec les boutons +/- sur la fiche recette / en mode cuisine.
+const WHOLE_BATCH_CATS=['Tartes & Quiches Salées','Tartes & Crumbles','Gâteaux & Pâtisseries'];
+// La catégorie ne suffit pas toujours : une "Quiche Lorraine" peut être classée en "Cuisine
+// Française" (catégorie régionale) plutôt qu'en "Tartes & Quiches Salées". On complète donc par
+// le nom de la recette pour les plats clairement "à la pièce" par nature (quiche, tourte,
+// clafoutis, flan) — en excluant les formats individuels ("Mug Cake"), qui eux se calculent bien
+// par personne comme un dessert normal.
+const WHOLE_BATCH_NAME_WORDS=['quiche','tourte','clafoutis','flan'];
+function isWholeBatchRecipe(r){
+  if(!r)return false;
+  if(WHOLE_BATCH_CATS.includes(displayCategory(r)))return true;
+  const n=normalizeSearchText(r.n||'');
+  if(containsFoodWord(n,'mug'))return false;
+  return WHOLE_BATCH_NAME_WORDS.some(w=>containsFoodWord(n,w));
+}
+let batchMultipliers={};
+function getBatchMultiplier(r){
+  if(batchMultipliers[r.id]!=null)return batchMultipliers[r.id];
+  return Math.max(1,Math.ceil(servings/BASE_SERVINGS));
+}
+function adjustBatch(id,delta){
+  const r=recipes.find(x=>x.id==id);if(!r)return;
+  batchMultipliers[id]=Math.max(1,getBatchMultiplier(r)+delta);
+}
+function batchLabel(r){const n=getBatchMultiplier(r);return`${n}\u00d7 recette`;}
+function recipeRatio(r){return isWholeBatchRecipe(r)?getBatchMultiplier(r):servings/BASE_SERVINGS;}
+
+// Le sel, poivre, muscade... n'ont quasiment jamais de vraie quantite dans le Sheet (juste
+// "Sel", "Poivre"), et quand il y en a une elle est deja minuscule (1g de cannelle). Multiplier
+// ca par le nombre de personnes donne des quantites qui n'ont pas de sens ("1.5g de sel"). On
+// affiche "1 pincee" a la place - mais seulement si la quantite de depart est deja petite ou
+// absente, pour ne jamais toucher un vrai ingredient dont le nom contient un mot-cle par hasard
+// (ex: "Poitrine de porc demi-sel 150g" reste affiche normalement).
+const SEASONING_WORDS=['sel','poivre','muscade','cannelle','paprika','curry','curcuma','cumin','laurier','origan','piment'];
+function isSeasoningLine(name,qty){
+  if(qty!==null&&qty>2)return false;
+  const n=normalizeSearchText(name||'');
+  return SEASONING_WORDS.some(w=>containsFoodWord(n,w));
 }
 function recipesByCourse(){
   const buckets={entree:[],plat:[],dessert:[]};
@@ -2050,15 +2113,16 @@ function openCookModal(idx){
   document.getElementById('ck-scroll').scrollTop=0;
 }
 function renderCookContent(){
-  const ratio=servings/BASE_SERVINGS;
-  document.getElementById('ck-pers-disp').innerText=`${servings} PERS.`;
+  const wb=isWholeBatchRecipe(cookRecipe);
+  const ratio=recipeRatio(cookRecipe);
+  document.getElementById('ck-pers-disp').innerText=wb?batchLabel(cookRecipe):`${servings} PERS.`;
   const ings=cookRecipe.ing.split(',').map(l=>{const p=parseIng(l);const aq=p.qty!==null?rnd(p.qty*ratio):null;return{...p,adjustedQty:aq,key:normName(p.name)};}).filter(i=>i.name);
   const usedCount=ings.filter(i=>cookIngChecked.has(i.key)).length;
   document.getElementById('ck-ing-count-label').innerText=`${usedCount}/${ings.length} prêts`;
   document.getElementById('ck-ing-pb').style.width=ings.length?`${Math.round(usedCount/ings.length*100)}%`:'0%';
   document.getElementById('ck-ing-list').innerHTML=ings.map(ing=>{
     const used=cookIngChecked.has(ing.key);
-    const qty=ing.adjustedQty!==null?fmtQtyDetailed(ing.adjustedQty,ing.unit):'';
+    const qty=isSeasoningLine(ing.name,ing.qty)?'1 pincée':(ing.adjustedQty!==null?fmtQtyDetailed(ing.adjustedQty,ing.unit):'');
     const sk=ing.key.replace(/'/g,"\\'");
     return`<div class="ck-ing-item ${used?'used':''}" onclick="toggleCookIng('${sk}')"><div class="ck-ing-chk"></div><div class="ck-ing-name capitalize">${ing.name}</div>${qty?`<div class="ck-ing-qty">${qty}</div>`:''}</div>`;
   }).join('');
