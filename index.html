@@ -13,6 +13,11 @@
 <link rel="icon" href="icon-192.png">
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800;900&display=swap" rel="stylesheet">
+<!-- Le proxy d'images (wsrv.nl) est sur un domaine à part : le préconnecter pendant que le
+     reste de la page charge évite de refaire DNS+TLS au moment où la première carte du
+     catalogue demande sa photo, ce qui se sentait comme un délai avant affichage. -->
+<link rel="preconnect" href="https://wsrv.nl" crossorigin>
+<link rel="dns-prefetch" href="https://wsrv.nl">
 <style>
 /* ========== STYLE COMPLET (identique à l'original) ========== */
 :root{--bg:#f8fafc;--card:#fff;--text:#1e293b;--text2:#64748b;--border:#e2e8f0;--orange:#f97316;--green:#22c55e;--red:#ef4444;}
@@ -1304,7 +1309,12 @@ async function init(){
   if(weekMenu.length===0)generateWeekMenu();
   renderMaison();updateUI();initTouchSystem();checkRecurringItems();
 }
-function formatImg(url){const id=url.match(/\/d\/(.+?)\//)  ||url.match(/id=(.+?)(&|$)/);return id?`https://wsrv.nl/?url=https://docs.google.com/uc?id=${id[1].trim()}&w=800&h=1000&fit=cover`:'';}
+// output=webp+q=75 : le Drive d'origine renvoie du JPEG/PNG plein poids, wsrv.nl le
+// recompresse à la volée. Le WebP à cette qualité pèse 2 à 3 fois moins que le JPEG par
+// défaut pour un rendu quasi identique sur les vignettes — c'est ce qui fait la différence
+// entre une photo qui "pop" tout de suite et une qui met une seconde à apparaître, surtout
+// en 4G. we=1 empêche aussi d'agrandir une image source plus petite que la taille demandée.
+function formatImg(url){const id=url.match(/\/d\/(.+?)\//)  ||url.match(/id=(.+?)(&|$)/);return id?`https://wsrv.nl/?url=https://docs.google.com/uc?id=${id[1].trim()}&w=800&h=1000&fit=cover&output=webp&q=75&we=1`:'';}
 // r.i est toujours généré en 800×1000 (taille "hero", carte swipe / détail recette). Les
 // vignettes (grilles, listes) n'ont besoin de bien moins — leur faire télécharger la même
 // image pleine taille gaspille beaucoup de données, surtout perceptible en 4G/5G. On redemande
@@ -1418,7 +1428,7 @@ function renderFavs(){
   document.getElementById('fav-grid').innerHTML=filtered.map(r=>`
     <div class="fav-card" onclick="showDetails(${r.id})">
       <div class="relative">
-        <img src="${imgSize(r.i,360,450)}" alt="${r.n}" class="w-full h-40 object-cover" loading="lazy">
+        <img src="${imgSize(r.i,360,450)}" alt="${r.n}" class="w-full h-40 object-cover" loading="lazy" decoding="async">
         <button onclick="toggleFav(${r.id},event)" class="fav-btn active" data-fav-id="${r.id}">❤️</button>
         ${allergyBadgeHTML(r)}
         <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-4">
@@ -1562,7 +1572,7 @@ function putWeeklyFeaturedFirst(){
 function renderCataloguePreview(){
   const el=document.getElementById('catalogue-preview');if(!el||!recipes.length)return;
   const sample=shuffleWithSeason(safeRecipes()).slice(0,4);
-  el.innerHTML=sample.map(r=>`<img src="${imgSize(r.i,160,200)}" alt="" loading="lazy">`).join('');
+  el.innerHTML=sample.map(r=>`<img src="${imgSize(r.i,160,200)}" alt="" loading="lazy" decoding="async">`).join('');
 }
 
 let hideAllergens=false;
@@ -1631,7 +1641,7 @@ function renderGrid(){
   document.getElementById('grid').innerHTML=filtered.length?filtered.map((r,idx)=>`
     <div class="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm cursor-pointer active:scale-95 transition-transform recipe-card" style="animation:slideUp .3s ease-out ${Math.min(idx,10)*.03}s both">
       <div onclick="${clickAction}(${r.id})">
-        <img src="${imgSize(r.i,320,400)}" alt="${r.n}" class="h-32 w-full object-cover" loading="lazy">
+        <img src="${imgSize(r.i,320,400)}" alt="${r.n}" class="h-32 w-full object-cover" loading="lazy" decoding="async">
         <div class="p-3"><p class="text-[10px] font-black uppercase truncate text-slate-800">${r.n}</p></div>
       </div>
       <button class="fav-btn ${favorites.has(r.id)?'active':''}" data-fav-id="${r.id}" onclick="toggleFav(${r.id},event)">${favorites.has(r.id)?'❤️':'🤍'}</button>
@@ -1926,7 +1936,7 @@ function courseSlotHTML(item,dayIdx,course){
   }
   const r=recipes.find(x=>x.id===rid);if(!r)return'';
   return`<div class="week-slot">
-    <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="week-slot-img" loading="lazy" onclick="showDetails(${r.id})">
+    <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="week-slot-img" loading="lazy" decoding="async" onclick="showDetails(${r.id})">
     <div class="week-slot-body" onclick="showDetails(${r.id})">
       <span class="week-slot-tag">${meta.emoji} ${meta.label}</span>
       <div class="week-slot-name">${r.n}${allergyBadgeHTML(r,'inline')}</div>
@@ -2078,7 +2088,7 @@ function renderCooking(){
     <button onclick="cookAll()" class="cook-all-btn mb-4"><span class="em">🔥</span><span>Cuisiner tous les plats</span><span class="em">🍽️</span></button>
     ${cart.map((r,idx)=>`
       <div class="bg-white rounded-[2.2rem] border p-4 flex gap-4 items-center mb-2" style="animation:slideUp .4s ease-out ${idx*.08}s both">
-        <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0" loading="lazy">
+        <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0" loading="lazy" decoding="async">
         <div class="flex-1 min-w-0">
           <h3 class="font-black uppercase text-[11px] italic text-slate-800 leading-tight">${r.n}${allergyBadgeHTML(r,'inline')}</h3>
           <p class="text-[9px] text-slate-400 font-bold mt-1">${splitPrepSteps(r.prep).length} étapes${r.temps?` · ⏱ ${r.temps}`:''}</p>
@@ -2093,7 +2103,7 @@ function renderOldRecipes(){
   if(!oldRecipes.length){document.getElementById('old-recipes-grid').innerHTML=`<div class="text-center py-16 opacity-25"><div class="text-5xl mb-4">📚</div><div class="font-black text-base uppercase">Aucune ancienne recette</div><div class="text-sm font-bold mt-1">Les recettes terminées apparaissent ici</div></div>`;return;}
   document.getElementById('old-recipes-grid').innerHTML=oldRecipes.slice().reverse().map((r,i)=>`
     <div class="old-recipe-card" style="animation:slideUp .3s ease-out ${i*.05}s both">
-      <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="w-14 h-14 rounded-2xl object-cover flex-shrink-0" loading="lazy">
+      <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="w-14 h-14 rounded-2xl object-cover flex-shrink-0" loading="lazy" decoding="async">
       <div class="flex-1 min-w-0">
         <p class="font-black text-[11px] uppercase italic text-slate-800 leading-tight truncate">${r.n}</p>
         <p class="text-[9px] text-slate-400 font-bold mt-1">${r.cat}</p>
