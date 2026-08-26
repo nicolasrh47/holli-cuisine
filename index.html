@@ -824,7 +824,10 @@ const SHEET_ID='1u21ZI3eDDm7rfNInC-SL2gLbCxEpZuIy9X7HUsS3oZI';
 const DATA_URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
 // Lien du Google Sheet "Maison" publié en CSV — ajoute une ligne dans la feuille et elle apparaît automatiquement dans l'app
 const MAISON_SHEET_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSTmwoDgK0VtLMgcLFKLE23iwvw5yHY1ixCv_jTORfJMj0XnbVYm6l-ahWklsdybeUWIlSf45nJiuBc/pub?output=csv';
-const BASE_SERVINGS=2;
+// Le Sheet écrit les quantités "pour 1 pers." (en-tête de la colonne Ingrédients) — la base de
+// calcul doit donc être 1, pas 2 : sinon chaque recette affichait la moitié de la vraie quantité
+// pour n'importe quel nombre de personnes (bug trouvé via une capture du Sheet de l'utilisateur).
+const BASE_SERVINGS=1;
 // Filet de sécurité hors-ligne pour les recettes/articles Maison : si l'instantané embarqué
 // (recipes.json/maison.json, servi par le CDN) est injoignable — pas de réseau, coupure — on
 // retombe sur la dernière copie connue plutôt que de planter. Jamais utilisé comme un cache
@@ -1805,20 +1808,14 @@ function adjustBatch(id,delta){
   const r=recipes.find(x=>x.id==id);if(!r)return;
   batchMultipliers[id]=Math.max(1,getBatchMultiplier(r)+delta);
 }
-// "1x recette" ne dit rien de concret a l'utilisateur : mieux vaut dire directement "1 tarte" ou
-// "2 quiches", ce qui confirme que le multiplicateur represente bien des plats entiers, pas une
-// fraction de personnes.
-function batchNoun(r){
-  const n=normalizeSearchText(r.n||'');
-  const map=[['quiche',['quiche','quiches']],['tourte',['tourte','tourtes']],['clafoutis',['clafoutis','clafoutis']],['flan',['flan','flans']],['crumble',['crumble','crumbles']],['tarte',['tarte','tartes']],['cheesecake',['cheesecake','cheesecakes']],['gateau',['gâteau','gâteaux']],['cake',['cake','cakes']]];
-  for(const[w,labels]of map){if(containsFoodWord(n,w))return labels;}
-  return['recette','recettes'];
-}
-function batchLabel(r){
-  const n=getBatchMultiplier(r);
-  const[s,p]=batchNoun(r);
-  return`${n} ${n>1?p:s}`;
-}
+// Le Sheet ecrit les quantites "pour 1 pers." meme pour les tartes/quiches : certaines
+// (ex: Quiche Lorraine "1 fond de pate") representent deja 1 dessert entier par personne, mais
+// d'autres (ex: Tarte aux Pommes "1/4 pate") representent juste une part individuelle. Annoncer
+// "N tartes" serait donc parfois faux (une demi-pate n'est pas 2 tartes). On garde le libelle
+// neutre "N pers." comme pour le reste de l'app - le multiplicateur reste ajustable independamment
+// du nombre de personnes du foyer, mais sans promettre un nombre de plats entiers qu'on ne peut
+// pas garantir tant que les recettes n'utilisent pas toutes la meme convention (1 pate = 1 plat).
+function batchLabel(r){return`${getBatchMultiplier(r)} pers.`;}
 function recipeRatio(r){return isWholeBatchRecipe(r)?getBatchMultiplier(r):servings/BASE_SERVINGS;}
 
 // Le sel, poivre, muscade... n'ont quasiment jamais de vraie quantite dans le Sheet (juste
