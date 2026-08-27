@@ -11,13 +11,21 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
-<script src="https://cdn.tailwindcss.com"></script>
+<!-- defer : sans ça ce script bloque le parsing de TOUT ce qui suit dans le <head> (polices,
+     préconnexions...) le temps de son téléchargement. Sûr ici : Tailwind CDN génère son CSS de
+     façon asynchrone de toute façon (il scanne le DOM une fois chargé), rien avant </head> ne
+     dépend de classes Tailwind déjà appliquées de façon synchrone. -->
+<script src="https://cdn.tailwindcss.com" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800;900&display=swap" rel="stylesheet">
-<!-- Le proxy d'images (wsrv.nl) est sur un domaine à part : le préconnecter pendant que le
-     reste de la page charge évite de refaire DNS+TLS au moment où la première carte du
-     catalogue demande sa photo, ce qui se sentait comme un délai avant affichage. -->
+<!-- Préconnexions : ces domaines vont de toute façon être sollicités tôt (proxy d'images,
+     Tailwind CDN, SDK Firebase) — lancer DNS+TLS pendant que le reste de la page charge évite
+     de le refaire au moment pile où chaque requête part, ce qui se sentait comme un délai
+     supplémentaire avant affichage, surtout sur une connexion à latence élevée (4G). -->
 <link rel="preconnect" href="https://wsrv.nl" crossorigin>
 <link rel="dns-prefetch" href="https://wsrv.nl">
+<link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://www.gstatic.com">
 <style>
 /* ========== STYLE COMPLET (identique à l'original) ========== */
 :root{--bg:#f8fafc;--card:#fff;--text:#1e293b;--text2:#64748b;--border:#e2e8f0;--orange:#f97316;--green:#22c55e;--red:#ef4444;}
