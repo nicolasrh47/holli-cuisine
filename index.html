@@ -1320,7 +1320,16 @@ function formatImg(url){const id=url.match(/\/d\/(.+?)\//)  ||url.match(/id=(.+?
 // image pleine taille gaspille beaucoup de données, surtout perceptible en 4G/5G. On redemande
 // juste une taille plus petite au même service de redimensionnement (wsrv.nl), sans re-décoder
 // l'image originale côté client.
-function imgSize(url,w,h){return url?url.replace(/&w=\d+&h=\d+/,`&w=${w}&h=${h}`):url;}
+// Les photos locales (images/recipes/) n'ont qu'une seule taille "master" (640×800, ~46 Ko) —
+// suffisant pour la carte swipe ou le détail recette, mais gaspillé pour une icône 56×56px
+// (planning de semaine, liste de courses) : sur une 4G moyenne ça se sent, surtout avec
+// plusieurs icônes affichées à la fois. Pour ces petites tailles (<=200px demandés), on sert
+// à la place une vignette 200×250 pré-générée (~7 Ko) rangée dans images/recipes/thumb/.
+function imgSize(url,w,h){
+  if(!url)return url;
+  if(url.startsWith('./images/recipes/')&&w<=200)return url.replace('/recipes/','/recipes/thumb/');
+  return url.replace(/&w=\d+&h=\d+/,`&w=${w}&h=${h}`);
+}
 // Le catalogue peut afficher 150+ cartes d'un coup ; loading="lazy" natif ne déclenche le
 // téléchargement que très près du viewport (encore plus tard sur Safari/iOS), donc en scrollant
 // normalement l'image n'a pas fini d'arriver quand la carte devient visible → case blanche
