@@ -1048,6 +1048,23 @@ function escapeHtml(str){
   return div.innerHTML;
 }
 
+// Échappe une valeur destinée à être insérée dans un attribut du type
+// onclick="maFonction('VALEUR')" : ce cas était traité partout dans le fichier avec un simple
+// .replace(/'/g,"\\'") qui protège la chaîne JS mais PAS l'attribut HTML lui-même — un nom
+// d'article contenant un guillemet double (ex: `Lait" onmouseover="…`) sortait de l'attribut
+// et injectait du HTML/JS actif (faille XSS confirmée, exploitable via la liste de courses
+// partagée entre membres d'un même foyer). Ordre important : d'abord protéger le \, puis la
+// chaîne JS (apostrophe), puis l'attribut HTML (& et " en entités — jamais décodées avant que
+// le navigateur ait déjà déterminé la fin de l'attribut, donc inertes comme délimiteur).
+function jsAttr(str){
+  return(str==null?'':String(str))
+    .replace(/\\/g,'\\\\')
+    .replace(/'/g,"\\'")
+    .replace(/&/g,'&amp;')
+    .replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;');
+}
+
 // Si une seule valeur du localStorage est corrompue (JSON invalide — écriture coupée,
 // ancien format, bug navigateur…), un JSON.parse direct fait planter toute la fonction qui
 // l'appelle. Comme init() lit une dizaine de clés à la suite sans try/catch, UNE seule valeur
@@ -1651,7 +1668,7 @@ function filterByCourse(course){
 function setupCategoryBar(){
   const pool=currentCourseFilter==='tous'?recipes:recipes.filter(r=>courseKeyForRecipe(r)===currentCourseFilter);
   const cats=['Tous',...new Set(pool.map(r=>displayCategory(r)))].sort((a,b)=>a==='Tous'?-1:b==='Tous'?1:a.localeCompare(b,'fr'));
-  document.getElementById('category-bar').innerHTML=cats.map(c=>`<button onclick="filterGrid('${c.replace(/'/g,"\\'")}')" class="cat-tab ${c===currentCat?'active':''}" id="tab-${c}">${c}</button>`).join('');
+  document.getElementById('category-bar').innerHTML=cats.map(c=>`<button onclick="filterGrid('${jsAttr(c)}')" class="cat-tab ${c===currentCat?'active':''}" id="tab-${c}">${c}</button>`).join('');
 }
 function filterGrid(cat){currentCat=cat;document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));document.getElementById('tab-'+cat)?.classList.add('active');renderGrid();}
 // Enlève les accents pour une recherche tolérante ("pate" doit trouver "Pâtes").
@@ -2035,7 +2052,7 @@ function renderCart(){
   const shoppingRecipes=cart.filter(r=>!shoppedRecipeNames.has(r.n));
   if(shoppingRecipes.length>0){
     html+=`<div class="section-title">Recettes (${shoppingRecipes.length})</div><div class="flex flex-wrap gap-2 mb-4">`;
-    html+=shoppingRecipes.map(r=>`<div class="flex items-center gap-2 bg-white border border-slate-100 rounded-2xl px-3 py-2 shadow-sm"><span class="text-[10px] font-black text-slate-700 uppercase">${r.n}</span><button onclick="removeFromCart('${r.n.replace(/'/g,"\\'")}');event.stopPropagation();" class="text-red-400 font-black text-xs border-none bg-transparent cursor-pointer">✕</button></div>`).join('');
+    html+=shoppingRecipes.map(r=>`<div class="flex items-center gap-2 bg-white border border-slate-100 rounded-2xl px-3 py-2 shadow-sm"><span class="text-[10px] font-black text-slate-700 uppercase">${r.n}</span><button onclick="removeFromCart('${jsAttr(r.n)}');event.stopPropagation();" class="text-red-400 font-black text-xs border-none bg-transparent cursor-pointer">✕</button></div>`).join('');
     html+='</div>';
   }
   html+=`<div class="section-title">À trouver — ${unchecked.length} restant(s)</div>`;
@@ -2075,7 +2092,7 @@ function ingRow(ing){
   const isChecked=checkedItems.has(ing.key);
   const manualKey=`qty_${ing.key}`;const hasManual=manualQtys[manualKey]!==undefined;
   const displayQty=hasManual?manualQtys[manualKey]:fmtQty(ing.adjustedQty,ing.unit);
-  const safeKey=ing.key.replace(/'/g,"\\'");
+  const safeKey=jsAttr(ing.key);
   let badge='';
   if(ing.isMaison)badge=' <span style="font-size:9px;background:#dbeafe;color:#1d4ed8;padding:2px 6px;border-radius:6px;font-weight:900">MAISON</span>';
   if(ing.isExtra)badge=' <span style="font-size:9px;color:#94a3b8">·ajouté</span>';
@@ -2086,8 +2103,8 @@ function ingRow(ing){
       ${ing.recipes.length>1?`<div class="recipe-tag">${[...new Set(ing.recipes)].join(' · ')}</div>`:''}
     </div>
     ${(ing.adjustedQty!==null||hasManual)?`<input class="ing-qty-edit" value="${displayQty}" onclick="event.stopPropagation()" onchange="saveManualQty('${safeKey}',this.value)" onblur="saveManualQty('${safeKey}',this.value)">`:``}
-    ${ing.isMaison?`<button onclick="removeMaisonFromCart('${ing.displayName.replace(/'/g,"\\'")}');event.stopPropagation();" class="text-red-300 font-black text-sm ml-1 border-none bg-transparent cursor-pointer">✕</button>`:''}
-    ${ing.isExtra?`<button onclick="removeExtra('${ing.displayName.replace(/'/g,"\\'")}');event.stopPropagation();" class="text-red-300 font-black text-sm ml-1 border-none bg-transparent cursor-pointer">✕</button>`:''}
+    ${ing.isMaison?`<button onclick="removeMaisonFromCart('${jsAttr(ing.displayName)}');event.stopPropagation();" class="text-red-300 font-black text-sm ml-1 border-none bg-transparent cursor-pointer">✕</button>`:''}
+    ${ing.isExtra?`<button onclick="removeExtra('${jsAttr(ing.displayName)}');event.stopPropagation();" class="text-red-300 font-black text-sm ml-1 border-none bg-transparent cursor-pointer">✕</button>`:''}
   </div>`;
 }
 function toggleCheck(key){
@@ -2135,7 +2152,7 @@ function renderCooking(){
         </div>
         <div class="flex gap-3 flex-shrink-0">
           <button onclick="openCookModal(${idx})" class="bg-slate-900 text-white px-3 py-2 rounded-full font-black text-[9px] uppercase border-none cursor-pointer">Cuisiner →</button>
-          <button onclick="removeFromCart('${r.n.replace(/'/g,"\\'")}');event.stopPropagation();" class="text-red-400 bg-red-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase border-none cursor-pointer">Retirer</button>
+          <button onclick="removeFromCart('${jsAttr(r.n)}');event.stopPropagation();" class="text-red-400 bg-red-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase border-none cursor-pointer">Retirer</button>
         </div>
       </div>`).join('')}`;
 }
@@ -2205,7 +2222,7 @@ function renderCookContent(){
   document.getElementById('ck-ing-list').innerHTML=ings.map(ing=>{
     const used=cookIngChecked.has(ing.key);
     const qty=isSeasoningLine(ing.name,ing.qty)?'1 pincée':(ing.adjustedQty!==null?fmtQtyDetailed(ing.adjustedQty,ing.unit):'');
-    const sk=ing.key.replace(/'/g,"\\'");
+    const sk=jsAttr(ing.key);
     return`<div class="ck-ing-item ${used?'used':''}" onclick="toggleCookIng('${sk}')"><div class="ck-ing-chk"></div><div class="ck-ing-name capitalize">${ing.name}</div>${qty?`<div class="ck-ing-qty">${qty}</div>`:''}</div>`;
   }).join('');
   const steps=splitPrepSteps(cookRecipe.prep);
@@ -2298,7 +2315,7 @@ function renderMaison(){
   const rawSearch=(document.getElementById('maison-search')?.value||'').trim();
   const searchTerms=normalizeSearchText(rawSearch).split(/\s+/).filter(Boolean);
   const allCats=['Tous',...sortMaisonCats([...new Set(maisonItems.map(i=>i.cat))])];
-  document.getElementById('maison-cat-bar').innerHTML=allCats.map(c=>`<button onclick="setMaisonCat('${c.replace(/'/g,"\\'")}')" class="mais-cat-tab ${c===currentMaisonCat?'active':''}">${c}</button>`).join('');
+  document.getElementById('maison-cat-bar').innerHTML=allCats.map(c=>`<button onclick="setMaisonCat('${jsAttr(c)}')" class="mais-cat-tab ${c===currentMaisonCat?'active':''}">${c}</button>`).join('');
 
   // "À racheter bientôt" fusionne l'ancienne alerte (stock déjà bas) et les anciennes
   // suggestions (stock bientôt bas) — les deux se recoupaient presque toujours, on évite
@@ -2312,9 +2329,9 @@ function renderMaison(){
     const diff=(next-now)/864e5;
     return diff<=3&&diff>-7;
   });
-  document.getElementById('maison-alerts').innerHTML=dueItems.length?`<div class="maison-alert-box"><p class="maison-alert-title">⚠️ À racheter bientôt</p><div class="flex flex-wrap gap-2">${dueItems.slice(0,8).map(item=>`<button onclick="toggleHome('${item.n.replace(/'/g,"\\'")}')" class="maison-alert-chip">${item.i} ${item.n}</button>`).join('')}</div>${dueItems.length>8?`<p class="maison-alert-more">+${dueItems.length-8} autres</p>`:''}</div>`:'';
+  document.getElementById('maison-alerts').innerHTML=dueItems.length?`<div class="maison-alert-box"><p class="maison-alert-title">⚠️ À racheter bientôt</p><div class="flex flex-wrap gap-2">${dueItems.slice(0,8).map(item=>`<button onclick="toggleHome('${jsAttr(item.n)}')" class="maison-alert-chip">${item.i} ${item.n}</button>`).join('')}</div>${dueItems.length>8?`<p class="maison-alert-more">+${dueItems.length-8} autres</p>`:''}</div>`:'';
   const freqItems=getFrequentItems().filter(item=>!homeCart.includes(item.n));
-  document.getElementById('maison-suggestions').innerHTML=freqItems.length?`<p class="text-[9px] font-black text-purple-500 uppercase mb-2">⭐ Achats fréquents</p><div class="flex flex-wrap gap-2 mb-3">${freqItems.map(item=>`<span class="suggestion-chip" onclick="toggleHome('${item.n.replace(/'/g,"\\'")}')">${item.i} ${item.n}</span>`).join('')}</div>`:'';
+  document.getElementById('maison-suggestions').innerHTML=freqItems.length?`<p class="text-[9px] font-black text-purple-500 uppercase mb-2">⭐ Achats fréquents</p><div class="flex flex-wrap gap-2 mb-3">${freqItems.map(item=>`<span class="suggestion-chip" onclick="toggleHome('${jsAttr(item.n)}')">${item.i} ${item.n}</span>`).join('')}</div>`:'';
   let filtered=maisonItems;
   if(currentMaisonCat!=='Tous')filtered=filtered.filter(i=>i.cat===currentMaisonCat);
   if(searchTerms.length)filtered=filtered.filter(i=>searchTerms.every(t=>normalizeSearchText(i.n).includes(t)));
@@ -2366,7 +2383,7 @@ function renderMaisonGrid(filtered){
       const fl={hebdo:'freq-hebdo',mensuel:'freq-mensuel',trim:'freq-trim'}[item.freq]||'';
       const fl2={hebdo:'Hebdo',mensuel:'Mensuel',trim:'Trim.'}[item.freq]||'';
       let ec='';if(!inCart&&sl==='danger')ec='urgent';else if(!inCart&&sl==='warning')ec='needed';
-      html+=`<button onclick="toggleHome('${item.n.replace(/'/g,"\\'")}')" class="btn-maison ${inCart?'active':''} ${ec}"><span class="text-base">${item.i}</span><span class="flex-1 text-left"><span class="block">${item.n}</span>${fl2?`<span class="freq-badge ${fl}">${fl2}</span>`:''}</span>${inCart?'<span class="text-blue-400 text-[10px]">✓</span>':''}</button>`;
+      html+=`<button onclick="toggleHome('${jsAttr(item.n)}')" class="btn-maison ${inCart?'active':''} ${ec}"><span class="text-base">${item.i}</span><span class="flex-1 text-left"><span class="block">${item.n}</span>${fl2?`<span class="freq-badge ${fl}">${fl2}</span>`:''}</span>${inCart?'<span class="text-blue-400 text-[10px]">✓</span>':''}</button>`;
     });
     html+='</div>';
   });
@@ -2666,7 +2683,7 @@ function onboardNext(){if(onboardStep<5)goToOnboardStep(onboardStep+1);else fini
 function renderAllergyChips(){
   const el=document.getElementById('onboard-allergy-chips');if(!el)return;
   const current=(document.getElementById('onboard-allergies').value||'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
-  el.innerHTML=COMMON_ALLERGENS.map(a=>`<button type="button" class="allergy-chip-btn ${current.includes(a.toLowerCase())?'active':''}" onclick="toggleAllergyChip('${a.replace(/'/g,"\\'")}')">${a}</button>`).join('');
+  el.innerHTML=COMMON_ALLERGENS.map(a=>`<button type="button" class="allergy-chip-btn ${current.includes(a.toLowerCase())?'active':''}" onclick="toggleAllergyChip('${jsAttr(a)}')">${a}</button>`).join('');
 }
 function toggleAllergyChip(term){
   const ta=document.getElementById('onboard-allergies');
@@ -2683,13 +2700,13 @@ function renderOnboardRecurring(){
   const catBarEl=document.getElementById('onboard-recurring-cat-bar');
   if(catBarEl){
     const allCats=['Tous',...sortMaisonCats([...new Set(maisonItems.map(i=>i.cat))])];
-    catBarEl.innerHTML=allCats.map(c=>`<button onclick="setOnboardRecurringCat('${c.replace(/'/g,"\\'")}')" class="mais-cat-tab ${c===currentOnboardRecurringCat?'active':''}">${c}</button>`).join('');
+    catBarEl.innerHTML=allCats.map(c=>`<button onclick="setOnboardRecurringCat('${jsAttr(c)}')" class="mais-cat-tab ${c===currentOnboardRecurringCat?'active':''}">${c}</button>`).join('');
   }
   let activeHtml='';
   if(onboardDraft.recurringItems.length){
     activeHtml+='<p class="onboard-recur-cat">Mes articles actifs</p>';
     onboardDraft.recurringItems.forEach(item=>{
-      const safeName=item.name.replace(/'/g,"\\'");
+      const safeName=jsAttr(item.name);
       activeHtml+=`<div class="onboard-recur-item active onboard-recur-item-fixed">
         <span>${item.icon}</span>
         <span class="onboard-recur-name">${escapeHtml(item.name)}</span>
@@ -2703,7 +2720,7 @@ function renderOnboardRecurring(){
   let starterHtml='<p class="onboard-recur-cat">Suggestions courantes</p><div class="onboard-options" style="margin-bottom:14px">'+
     RECURRING_STARTER_PICKS.map(name=>{
       const active=onboardDraft.recurringItems.some(r=>r.name.toLowerCase()===name.toLowerCase());
-      return `<button type="button" class="onboard-opt ${active?'active':''}" onclick="toggleStarterOnboardRecurring('${name.replace(/'/g,"\\'")}')">${name}</button>`;
+      return `<button type="button" class="onboard-opt ${active?'active':''}" onclick="toggleStarterOnboardRecurring('${jsAttr(name)}')">${name}</button>`;
     }).join('')+'</div>';
   const rawSearch=(document.getElementById('onboard-recurring-search')?.value||'').trim();
   const searchTerms=normalizeSearchText(rawSearch).split(/\s+/).filter(Boolean);
@@ -2717,10 +2734,10 @@ function renderOnboardRecurring(){
   Object.entries(bycat).forEach(([cat,items])=>{
     html+=`<p class="onboard-recur-cat">${cat}</p>`;
     items.forEach(item=>{
-      const safeName=item.n.replace(/'/g,"\\'");
+      const safeName=jsAttr(item.n);
       const picked=onboardDraft.recurringItems.find(r=>r.name===item.n);
       const defDays=freqDays(item.freq);
-      html+=`<div class="onboard-recur-item ${picked?'active':''}" onclick="toggleOnboardRecurring('${safeName}','${item.i}','${cat.replace(/'/g,"\\'")}',${defDays})">
+      html+=`<div class="onboard-recur-item ${picked?'active':''}" onclick="toggleOnboardRecurring('${safeName}','${jsAttr(item.i)}','${jsAttr(cat)}',${defDays})">
         <span>${item.i}</span>
         <span class="onboard-recur-name">${item.n}</span>
         ${picked?'<span class="onboard-recur-check">✓</span>':''}
@@ -2902,13 +2919,13 @@ async function renderRecurringManager(){
   const catBarEl=document.getElementById('recurring-cat-bar');
   if(catBarEl){
     const allCats=['Tous',...sortMaisonCats([...new Set(maisonItems.map(i=>i.cat))])];
-    catBarEl.innerHTML=allCats.map(c=>`<button onclick="setRecurringCat('${c.replace(/'/g,"\\'")}')" class="mais-cat-tab ${c===currentRecurringCat?'active':''}">${c}</button>`).join('');
+    catBarEl.innerHTML=allCats.map(c=>`<button onclick="setRecurringCat('${jsAttr(c)}')" class="mais-cat-tab ${c===currentRecurringCat?'active':''}">${c}</button>`).join('');
   }
   let activeHtml='';
   if(currentUser.profile.recurringItems.length){
     activeHtml+='<p class="onboard-recur-cat">Mes articles actifs</p>';
     currentUser.profile.recurringItems.forEach(item=>{
-      const safeName=item.name.replace(/'/g,"\\'");
+      const safeName=jsAttr(item.name);
       activeHtml+=`<div class="onboard-recur-item active onboard-recur-item-fixed">
         <span>${item.icon}</span>
         <span class="onboard-recur-name">${escapeHtml(item.name)}</span>
@@ -2922,7 +2939,7 @@ async function renderRecurringManager(){
   let starterHtml='<p class="onboard-recur-cat">Suggestions courantes</p><div class="onboard-options" style="margin-bottom:14px">'+
     RECURRING_STARTER_PICKS.map(name=>{
       const active=currentUser.profile.recurringItems.some(r=>r.name.toLowerCase()===name.toLowerCase());
-      return `<button type="button" class="onboard-opt ${active?'active':''}" onclick="toggleStarterRecurringItem('${name.replace(/'/g,"\\'")}')">${name}</button>`;
+      return `<button type="button" class="onboard-opt ${active?'active':''}" onclick="toggleStarterRecurringItem('${jsAttr(name)}')">${name}</button>`;
     }).join('')+'</div>';
   const rawSearch=(document.getElementById('recurring-search')?.value||'').trim();
   const searchTerms=normalizeSearchText(rawSearch).split(/\s+/).filter(Boolean);
@@ -2936,10 +2953,10 @@ async function renderRecurringManager(){
   Object.entries(bycat).forEach(([cat,items])=>{
     html+=`<p class="onboard-recur-cat">${cat}</p>`;
     items.forEach(item=>{
-      const safeName=item.n.replace(/'/g,"\\'");
+      const safeName=jsAttr(item.n);
       const picked=currentUser.profile.recurringItems.find(r=>r.name===item.n);
       const defDays=freqDays(item.freq);
-      html+=`<div class="onboard-recur-item ${picked?'active':''}" onclick="toggleRecurringItem('${safeName}','${item.i}','${cat.replace(/'/g,"\\'")}',${defDays})">
+      html+=`<div class="onboard-recur-item ${picked?'active':''}" onclick="toggleRecurringItem('${safeName}','${jsAttr(item.i)}','${jsAttr(cat)}',${defDays})">
         <span>${item.i}</span>
         <span class="onboard-recur-name">${item.n}</span>
         ${picked?'<span class="onboard-recur-check">✓</span>':''}
