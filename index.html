@@ -816,6 +816,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-check-compat.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -828,6 +829,14 @@ const firebaseConfig = {
   measurementId: "G-YGHN3EPRBW"
 };
 firebase.initializeApp(firebaseConfig);
+// App Check : prouve à Firestore/Auth que les requêtes viennent bien de cette app (et pas d'un
+// script tiers qui utiliserait la config publique ci-dessus, visible par n'importe qui). Le
+// site App Check est en mode Surveiller côté console pour l'instant, donc ceci ne bloque rien
+// tant que ce n'est pas passé en mode Appliquer une fois qu'on aura vérifié que ça fonctionne.
+firebase.appCheck().activate(
+  new firebase.appCheck.ReCaptchaV3Provider('6LfNl50tAAAAAKlwegxBsAm9x8QNgqDZsF8vAaoh'),
+  true
+);
 const fbAuth = firebase.auth();
 const db = firebase.firestore();
 </script>
