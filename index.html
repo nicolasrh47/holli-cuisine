@@ -953,11 +953,13 @@ async function loadMaisonItems() {
   // On tente TOUJOURS l'instantané embarqué en premier, à chaque ouverture — c'est un fichier
   // statique servi par le CDN de l'hébergeur (rapide, gratuit à interroger même à très grande
   // échelle, contrairement à Google Sheets), donc rien n'empêche de vérifier à chaque fois qu'il
-  // n'a pas été mis à jour entre-temps. {cache:'no-store'} pour ne jamais servir une version
-  // mise en cache par le navigateur/GitHub Pages. Le cache local (localStorage) ne sert plus
-  // qu'en secours si l'appareil est hors-ligne ou que le fichier est injoignable.
+  // n'a pas été mis à jour entre-temps. {cache:'no-cache'} (pas 'no-store') : le navigateur
+  // revalide toujours auprès du serveur, mais reçoit un 304 quasi gratuit si le fichier n'a pas
+  // changé au lieu de retélécharger tout le JSON à chaque ouverture — même fraîcheur garantie,
+  // beaucoup moins de bande passante à grande échelle. Le cache local (localStorage) ne sert
+  // plus qu'en secours si l'appareil est hors-ligne ou que le fichier est injoignable.
   try{
-    const res=await fetch('./maison.json',{cache:'no-store'});
+    const res=await fetch('./maison.json',{cache:'no-cache'});
     const data=await res.json();
     if(data.articles&&data.articles.length){
       maisonItems=data.articles;
@@ -1391,7 +1393,7 @@ function observeGridImages(){
 async function loadRecipes(){
   const cacheKey='holli_recipes_sheet_cache';
   try{
-    const res=await fetch('./recipes.json',{cache:'no-store'});
+    const res=await fetch('./recipes.json',{cache:'no-cache'});
     const data=await res.json();
     if(data&&data.length){
       recipes=data;
