@@ -2994,8 +2994,14 @@ function renderProfilePage(){
 // l'inscription de toute façon, et une régie tierce demanderait un bandeau de consentement
 // RGPD avant même le premier affichage. Le jour où il y a un vrai trafic, cette bannière peut
 // être remplacée par un vrai emplacement pub sans changer le reste (statut Premium, palier…).
+// Masqué pour la première publication Play Store (aucun moyen de paiement branché pour
+// l'instant, mieux vaut ne pas afficher un écran d'abonnement "actif" qui ne débite personne).
+// Repasser à true une fois Stripe configuré et prêt à encaisser : rien d'autre à changer,
+// la bannière/l'écran Premium sont déjà entièrement fonctionnels derrière ce flag.
+const PREMIUM_ENABLED=false;
 function updateAdBanner(){
   const el=document.getElementById('ad-banner');if(!el)return;
+  if(!PREMIUM_ENABLED){el.style.display='none';return;}
   el.style.display=currentUser?.premium?'none':'flex';
 }
 function openPremiumModal(){document.getElementById('premium-modal').classList.add('open');}
