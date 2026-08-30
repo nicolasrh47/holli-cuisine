@@ -108,6 +108,15 @@ body.dark .course-filter-btn{background:#1e293b;border-color:#334155;color:#94a3
 body.dark .course-filter-btn.active{background:#f97316;border-color:#f97316;color:white;}
 
 
+#ad-banner{
+  display:flex;align-items:center;gap:8px;background:var(--card);border:1.5px solid var(--border);
+  border-radius:1rem;padding:9px 12px;margin-bottom:10px;cursor:pointer;transition:transform .15s;
+}
+#ad-banner:active{transform:scale(.98);}
+.ad-banner-tag{background:#94a3b8;color:white;font-size:8px;font-weight:900;text-transform:uppercase;padding:2px 7px;border-radius:6px;flex-shrink:0;letter-spacing:.03em;}
+.ad-banner-text{flex:1;font-size:11px;font-weight:700;color:var(--text);}
+.ad-banner-cta{font-size:10px;font-weight:900;text-transform:uppercase;color:var(--orange);flex-shrink:0;}
+
 .week-menu-banner{
   background:linear-gradient(135deg,#f97316 0%,#ea580c 50%,#c2410c 100%);
   border-radius:1.6rem;position:relative;overflow:hidden;
@@ -245,6 +254,16 @@ body.dark #detail-modal{background:#0f172a;}
 #catalogue-search:focus{border-color:#f97316;}
 #recurring-modal{position:fixed;inset:0;background:var(--bg);z-index:405;display:none;overflow-y:auto;padding:2rem 1.5rem 2rem;}
 #recurring-modal.open{display:block;}
+#premium-modal{position:fixed;inset:0;background:var(--bg);z-index:410;display:none;overflow-y:auto;padding:2rem 1.5rem 2rem;}
+#premium-modal.open{display:block;}
+.premium-hero{text-align:center;margin:12px 0 28px;}
+.premium-hero .emoji{font-size:52px;line-height:1;margin-bottom:10px;}
+.premium-price{font-size:34px;font-weight:900;font-style:italic;color:var(--orange);}
+.premium-price span{font-size:13px;font-weight:700;color:var(--text2);font-style:normal;}
+.premium-perk{display:flex;align-items:flex-start;gap:12px;padding:14px 4px;border-bottom:1px solid var(--border);}
+.premium-perk .ic{font-size:20px;flex-shrink:0;}
+.premium-perk .txt{font-size:13px;font-weight:700;color:var(--text);}
+.premium-perk .txt small{display:block;font-weight:600;color:var(--text2);font-size:11px;margin-top:2px;}
 #add-item-modal{position:fixed;bottom:0;left:0;right:0;background:white;z-index:450;border-radius:2rem 2rem 0 0;padding:24px;display:none;box-shadow:0 -20px 60px rgba(0,0,0,.15);}
 body.dark #add-item-modal{background:#1e293b;}
 #add-item-input{width:100%;border:2px solid #e2e8f0;border-radius:1rem;padding:14px 16px;font-size:15px;font-weight:700;font-family:inherit;outline:none;}
@@ -527,6 +546,21 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   <div id="recurring-manager-list"></div>
 </div>
 
+<div id="premium-modal">
+  <button onclick="closePremiumModal()" class="mb-4 font-black text-orange-500 text-xs uppercase">← Retour</button>
+  <div class="premium-hero">
+    <div class="emoji">⭐</div>
+    <h2 class="text-2xl font-[900] italic uppercase tracking-tighter">Holli Premium</h2>
+    <div class="premium-price mt-3">3€<span> / mois</span></div>
+  </div>
+  <div class="premium-perk"><span class="ic">🚫</span><span class="txt">Sans publicité<small>Plus aucune bannière, jamais.</small></span></div>
+  <div class="premium-perk"><span class="ic">👨‍👩‍👧‍👦</span><span class="txt">Foyer partagé illimité<small>Plus de membres dans ton foyer partagé.</small></span></div>
+  <div class="premium-perk"><span class="ic">📤</span><span class="txt">Export de tes listes<small>Envoie ta liste de courses par e-mail ou PDF.</small></span></div>
+  <div class="premium-perk"><span class="ic">💛</span><span class="txt">Soutenir l'app<small>Aide à couvrir les coûts et à faire vivre le projet.</small></span></div>
+  <button onclick="subscribePremium()" class="auth-submit mt-6">S'abonner</button>
+  <p class="text-center text-[10px] font-bold mt-3" style="color:var(--text2)">Résiliable à tout moment.</p>
+</div>
+
 <div id="cook-modal">
   <div class="ck-header">
     <button onclick="closeCook(true)" class="font-black text-orange-500 text-xs uppercase flex-shrink-0">← Fin</button>
@@ -591,6 +625,11 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
 </header>
 
 <section id="page-home" class="page active" role="tabpanel" aria-label="Menu">
+  <div id="ad-banner" onclick="openPremiumModal()" style="display:none">
+    <span class="ad-banner-tag">Pub</span>
+    <span class="ad-banner-text">👀 Retire la pub et débloque tout avec Premium</span>
+    <span class="ad-banner-cta">Voir →</span>
+  </div>
   <div class="flex justify-center mb-2">
     <div class="bg-slate-100 px-4 py-1.5 rounded-full text-[9px] flex items-center gap-2">
       <span class="text-red-400 font-black">✕ Jeter</span>
@@ -1351,7 +1390,7 @@ async function init(){
   putWeeklyFeaturedFirst();
   renderCard();renderCataloguePreview();
   if(weekMenu.length===0)generateWeekMenu();
-  renderMaison();updateUI();initTouchSystem();checkRecurringItems();
+  renderMaison();updateUI();initTouchSystem();checkRecurringItems();updateAdBanner();
 }
 // output=webp+q=75 : le Drive d'origine renvoie du JPEG/PNG plein poids, wsrv.nl le
 // recompresse à la volée. Le WebP à cette qualité pèse 2 à 3 fois moins que le JPEG par
@@ -2502,7 +2541,7 @@ function saveLocalProfiles(obj){localStorage.setItem('holli_profiles_v1',JSON.st
 function getLocalProfile(uid){return getLocalProfiles()[uid]||null;}
 function saveLocalProfile(uid,record){const all=getLocalProfiles();all[uid]=record;saveLocalProfiles(all);}
 function defaultProfileRecord(pseudo,avatar){
-  return{pseudo,avatar:avatar||'🙂',createdAt:new Date().toISOString(),onboarded:false,shareCode:genShareCode(),
+  return{pseudo,avatar:avatar||'🙂',createdAt:new Date().toISOString(),onboarded:false,shareCode:genShareCode(),premium:false,
     profile:{regime:['Omnivore'],householdSize:2,allergies:[],dislikes:[],budget:'',cookTime:'normal',recurringItems:[]}};
 }
 async function buildCurrentUserFromFirebaseUser(fbUser){
@@ -2522,7 +2561,7 @@ async function buildCurrentUserFromFirebaseUser(fbUser){
   return{
     uid:fbUser.uid,email:fbUser.email,pseudo:local.pseudo,avatar:local.avatar,
     provider:isGoogle?'google':'email',createdAt:local.createdAt,onboarded:local.onboarded,
-    shareCode:local.shareCode,profile:local.profile
+    shareCode:local.shareCode,profile:local.profile,premium:local.premium||false
   };
 }
 function authErrorMessage(err){
@@ -2826,7 +2865,8 @@ function finishOnboarding(){
 function persistCurrentUser(){
   const record={
     pseudo:currentUser.pseudo,avatar:currentUser.avatar,createdAt:currentUser.createdAt,
-    onboarded:currentUser.onboarded,shareCode:currentUser.shareCode,profile:currentUser.profile
+    onboarded:currentUser.onboarded,shareCode:currentUser.shareCode,profile:currentUser.profile,
+    premium:currentUser.premium||false
   };
   saveLocalProfile(currentUser.uid,record);
   db.collection('users').doc(currentUser.uid).set(record,{merge:true}).catch(e=>console.warn('Sync profil Firestore échouée',e));
@@ -2948,6 +2988,26 @@ function renderProfilePage(){
     :'<p class="text-[11px] font-bold text-center py-2" style="color:var(--text2)">Aucun article récurrent configuré</p>';
 }
 
+// Bannière "Pub" auto-promo (pas un réseau publicitaire tiers) : visible en accueil pour
+// quiconque n'est pas Premium, invité compris. Volontairement pas de vraie régie (AdSense…)
+// pour l'instant — un site tout neuf sans trafic réel se fait généralement refuser à
+// l'inscription de toute façon, et une régie tierce demanderait un bandeau de consentement
+// RGPD avant même le premier affichage. Le jour où il y a un vrai trafic, cette bannière peut
+// être remplacée par un vrai emplacement pub sans changer le reste (statut Premium, palier…).
+function updateAdBanner(){
+  const el=document.getElementById('ad-banner');if(!el)return;
+  el.style.display=currentUser?.premium?'none':'flex';
+}
+function openPremiumModal(){document.getElementById('premium-modal').classList.add('open');}
+function closePremiumModal(){document.getElementById('premium-modal').classList.remove('open');}
+// Pas de processeur de paiement branché pour l'instant (choix volontaire — configurer un
+// vrai moyen de paiement est une démarche business à part). À remplacer par un vrai flux
+// (Stripe Checkout, etc.) dès qu'un compte est prêt : le reste (statut premium, bannière,
+// palier de fonctionnalités) est déjà en place et n'aura pas besoin de changer.
+function subscribePremium(){
+  if(!requireAccount('t\'abonner à Premium'))return;
+  showToast('🚧 Abonnement bientôt disponible !','#3b82f6');
+}
 function openRecurringManager(){
   document.getElementById('recurring-modal').classList.add('open');
   renderRecurringManager();
