@@ -51,6 +51,27 @@
     <li><strong>Foyer partagé :</strong> si vous partagez votre code foyer avec une autre personne, votre panier et vos listes deviennent visibles et modifiables par toute personne ayant ce code.</li>
   </ul>
 
+  <h2>Base légale et durée de conservation</h2>
+  <ul>
+    <li><strong>Compte et préférences :</strong> traités sur la base de votre <strong>consentement</strong>, donné en créant un compte. Conservés tant que votre compte existe, supprimés immédiatement et définitivement si vous le supprimez.</li>
+    <li><strong>Contenu d'usage (panier, favoris, menu) :</strong> traité pour l'<strong>exécution du service</strong> que vous nous demandez (faire fonctionner l'application). Même durée de conservation que le compte.</li>
+    <li><strong>Protection anti-abus (App Check) :</strong> traité sur la base de notre <strong>intérêt légitime</strong> à protéger le service contre un usage frauduleux. Les jetons générés sont de courte durée (quelques heures maximum) et ne sont pas conservés par nous.</li>
+  </ul>
+
+  <h2>Protection contre les abus (App Check)</h2>
+  <p>Pour empêcher des scripts automatisés d'accéder à la base de données à votre place, l'application utilise <strong>Google reCAPTCHA v3</strong> (via Firebase App Check). Ce service analyse certains signaux techniques de votre navigateur pour vérifier que les requêtes proviennent bien de l'application, sans afficher de test visuel (pas de « cliquez sur les feux tricolores »). Cela implique un échange technique avec les serveurs Google, encadré par la <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">politique de confidentialité de Google</a>.</p>
+
+  <h2>Avec qui vos données transitent (sous-traitants)</h2>
+  <p>Aucune de ces entreprises n'utilise vos données à ses propres fins publicitaires — elles nous fournissent uniquement l'infrastructure technique.</p>
+  <ul>
+    <li><strong>Google Firebase</strong> (Authentication, Firestore) — stockage du compte et des données d'usage</li>
+    <li><strong>Google reCAPTCHA / App Check</strong> — protection anti-abus (voir plus haut)</li>
+    <li><strong>GitHub Pages</strong> — hébergement du site et des fichiers de l'application (pas de données de compte)</li>
+    <li><strong>Google Fonts</strong> — police d'écriture, chargée depuis les serveurs Google (votre navigateur s'y connecte directement)</li>
+    <li><strong>Google Sheets</strong> — source du contenu des recettes uniquement (lecture seule, aucune donnée personnelle n'y est envoyée)</li>
+  </ul>
+  <p>Ces services étant américains, vos données peuvent être traitées en dehors de l'Union européenne. Google s'engage contractuellement (clauses contractuelles types) à leur appliquer un niveau de protection équivalent au RGPD.</p>
+
   <h2>Comment ces données sont stockées</h2>
   <ul>
     <li>L'authentification et les données de compte sont gérées par <strong>Google Firebase</strong> (Authentication et Firestore), hébergé par Google.</li>
@@ -58,8 +79,15 @@
     <li>Certaines préférences (thème sombre, panier local) sont également stockées dans la mémoire locale de votre navigateur (localStorage), sur votre appareil uniquement.</li>
   </ul>
 
-  <h2>Protection contre les abus (App Check)</h2>
-  <p>Pour empêcher des scripts automatisés d'accéder à la base de données à votre place, l'application utilise <strong>Google reCAPTCHA v3</strong> (via Firebase App Check). Ce service analyse certains signaux techniques de votre navigateur pour vérifier que les requêtes proviennent bien de l'application, sans afficher de test visuel (pas de « cliquez sur les feux tricolores »). Cela implique un échange technique avec les serveurs Google, encadré par la <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">politique de confidentialité de Google</a>.</p>
+  <h2>Sécurité</h2>
+  <ul>
+    <li>Toutes les communications avec l'application sont chiffrées (HTTPS).</li>
+    <li>Votre mot de passe n'est jamais stocké ni consultable en clair : il est géré directement par Firebase Authentication selon les standards de Google.</li>
+    <li>Des règles d'accès (Firestore Security Rules) empêchent quiconque d'accéder aux données d'un compte autre que le sien, en dehors des données du foyer que vous avez explicitement partagées via votre code.</li>
+  </ul>
+
+  <h2>Mineurs</h2>
+  <p>L'application ne s'adresse pas spécifiquement aux mineurs et ne collecte pas sciemment de données concernant des personnes de moins de 15 ans. Si vous pensez qu'un mineur nous a transmis des données sans le consentement d'un parent ou tuteur, contactez-nous : nous les supprimerons.</p>
 
   <h2>Ce que nous ne faisons pas</h2>
   <ul>
@@ -76,7 +104,10 @@
     <li><strong>Corriger ou faire supprimer</strong> une donnée inexacte vous concernant.</li>
     <li>Vous déconnecter et régénérer votre code foyer depuis la page Profil.</li>
   </ul>
-  <p>Pour toute demande, contactez-nous à l'adresse ci-dessous.</p>
+  <p>Pour toute demande, contactez-nous à l'adresse ci-dessous. Si vous estimez que vos droits ne sont pas respectés, vous pouvez également introduire une réclamation auprès de la <strong>CNIL</strong> (Commission Nationale de l'Informatique et des Libertés) : <a href="https://www.cnil.fr/fr/plaintes" target="_blank" rel="noopener">cnil.fr/fr/plaintes</a>.</p>
+
+  <h2>Modifications de cette politique</h2>
+  <p>Cette page peut évoluer si l'application change (nouvelle fonctionnalité, nouveau prestataire technique). La date de dernière mise à jour en haut de page vous permet de suivre ces changements. En cas de modification importante, nous ferons de notre mieux pour vous en informer directement dans l'application.</p>
 
   <h2>Contact</h2>
   <div class="contact">
