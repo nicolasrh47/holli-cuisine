@@ -1339,6 +1339,14 @@ function setBadge(id, count){
 // libre (accueil, catalogue, détail recette) reste ouverte en mode "juste regarder".
 const ACCOUNT_REQUIRED_PAGES=new Set(['favs','cart','cooking','maison','week','profile']);
 function switchPage(p){
+  if(!currentUser&&p==='profile'){
+    // "Profil" est le seul endroit où un invité VEUT vraiment atterrir sur l'écran de
+    // connexion — c'est le point d'entrée volontaire pour créer un compte, contrairement à
+    // un tap accidentel sur Favoris/Courses pendant la navigation libre (voir plus bas).
+    setAuthTab('signup');
+    document.getElementById('auth-screen').classList.add('show');
+    return;
+  }
   if(ACCOUNT_REQUIRED_PAGES.has(p)&&!requireAccount('accéder à cette page'))return;
   document.querySelectorAll('.page,.nav-item').forEach(e=>e.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
@@ -2890,11 +2898,12 @@ function continueAsGuest(){
   enterApp();
   hideBootScreen();
 }
+// Juste un message, on ne bascule plus vers l'écran de connexion : un invité qui tape par
+// erreur sur Favoris/Courses garde l'accès à tout ce qui est déjà libre (catalogue, détail
+// recette…) au lieu de se retrouver éjecté vers la page de connexion. Pour créer un vrai
+// compte, l'invité utilise le bouton dédié sur l'onglet Profil (voir renderProfilePage).
 function promptAccountRequired(actionLabel){
   showToast(`🔒 Crée un compte pour ${actionLabel}`,'#3b82f6');
-  document.getElementById('app-shell').style.display='none';
-  setAuthTab('signup');
-  document.getElementById('auth-screen').classList.add('show');
 }
 // true si connecté (rien à faire) ; sinon affiche l'invite de création de compte et renvoie
 // false — à utiliser en tout début des actions réservées aux comptes : if(!requireAccount('...'))return;
