@@ -117,6 +117,16 @@ body.dark .course-filter-btn.active{background:#f97316;border-color:#f97316;colo
 .ad-banner-text{flex:1;font-size:11px;font-weight:700;color:var(--text);}
 .ad-banner-cta{font-size:10px;font-weight:900;text-transform:uppercase;color:var(--orange);flex-shrink:0;}
 
+.recurring-banner{
+  background:linear-gradient(135deg,#f59e0b 0%,#d97706 50%,#b45309 100%);
+  border-radius:1.6rem;position:relative;overflow:hidden;
+  height:64px;display:flex;align-items:center;
+  box-shadow:0 10px 30px rgba(217,119,6,.4);cursor:pointer;
+  margin-bottom:10px;transition:transform .15s;
+}
+.recurring-banner:active{transform:scale(.98);}
+.recurring-banner-deco{position:absolute;right:-14px;top:-14px;font-size:80px;opacity:.15;transform:rotate(15deg);pointer-events:none;}
+
 .week-menu-banner{
   background:linear-gradient(135deg,#f97316 0%,#ea580c 50%,#c2410c 100%);
   border-radius:1.6rem;position:relative;overflow:hidden;
@@ -654,6 +664,15 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   <div class="flex justify-center gap-6 mb-3">
     <button onclick="handleNope()" class="w-14 h-14 bg-white rounded-full shadow-lg flex items-center justify-center text-red-500 border border-red-50 active:scale-90 transition-transform">✕</button>
     <button onclick="handleLike()" class="w-14 h-14 bg-orange-500 rounded-full shadow-lg flex items-center justify-center text-white text-2xl active:scale-90 transition-transform">✓</button>
+  </div>
+
+  <div id="recurring-banner" class="recurring-banner" onclick="switchPage('maison')" style="display:none">
+    <div class="recurring-banner-deco">🔔</div>
+    <div class="flex-1 px-5 z-10">
+      <div class="text-white/70 text-[9px] font-black uppercase tracking-widest mb-0.5">À racheter</div>
+      <div class="text-white text-base font-black uppercase italic leading-tight" id="recurringBannerTitle"></div>
+    </div>
+    <div class="pr-5 text-white/30 text-3xl">›</div>
   </div>
 
   <div class="week-menu-banner" onclick="switchPage('week')">
@@ -1278,7 +1297,20 @@ function save(){
   pushToFirestore();
 }
 
+// Bannière d'accueil pour ne plus oublier les articles Maison en rupture (récurrents ou
+// ajoutés à la main) — le petit point orange sur l'onglet Courses passait trop inaperçu vu
+// que c'est justement ce qu'on oublie de vérifier. Bien visible dès l'ouverture de l'app,
+// avant même de penser à checker Maison.
+function updateRecurringBanner(){
+  const el=document.getElementById('recurring-banner');if(!el)return;
+  if(!homeCart.length){el.style.display='none';return;}
+  el.style.display='flex';
+  const names=homeCart.slice(0,3).join(', ');
+  const rest=homeCart.length>3?` +${homeCart.length-3}`:'';
+  document.getElementById('recurringBannerTitle').innerText=`${names}${rest} 🛒`;
+}
 function updateUI(){
+  updateRecurringBanner();
   // Badge Maison (articles maison ajoutés)
   setBadge('cart-badge', homeCart.length);
   
@@ -2504,7 +2536,7 @@ function checkRecurringItems(){
   });
   if(changed)save();
   if(newlyAdded.length){
-    renderMaison();
+    renderMaison();updateRecurringBanner();
     showToast(`🔔 Bientôt à court de : ${newlyAdded.join(', ')} — ajouté${newlyAdded.length>1?'s':''} aux courses`,'#f59e0b');
   }
 }
