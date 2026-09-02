@@ -1370,7 +1370,7 @@ function setBadge(id, count){
 // infos de compte, donc réservés à un compte. Courses et Maison restent volontairement libres
 // (choix produit) : ils fonctionnent en local (localStorage) même sans compte, seulement sans
 // synchronisation entre appareils/foyer tant qu'on n'est pas connecté.
-const ACCOUNT_REQUIRED_PAGES=new Set(['favs','week','profile']);
+const ACCOUNT_REQUIRED_PAGES=new Set(['favs','week','profile','cooking']);
 function switchPage(p){
   if(!currentUser&&p==='profile'){
     // "Profil" est le seul endroit où un invité VEUT vraiment atterrir sur l'écran de
