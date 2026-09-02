@@ -1,6 +1,6 @@
 {
-  "name": "Holli. Cuisine & Maison",
-  "short_name": "Holli.",
+  "name": "Cuisine en Tribu",
+  "short_name": "Cuisine Tribu",
   "description": "Recettes, menus de la semaine et liste de courses partagée.",
   "start_url": "./index.html",
   "scope": "./",
