@@ -1334,10 +1334,11 @@ function setBadge(id, count){
   // Le badge cart-badge est géré séparément par updateCartBadge
 }
 
-// Pages qui ont vraiment besoin d'un compte : favoris/courses/Maison/planning se synchronisent
-// via Firestore (households/{code}) et le profil affiche des infos de compte — la navigation
-// libre (accueil, catalogue, détail recette) reste ouverte en mode "juste regarder".
-const ACCOUNT_REQUIRED_PAGES=new Set(['favs','cart','cooking','maison','week','profile']);
+// Favoris/planning se synchronisent via Firestore (households/{code}) et le profil affiche des
+// infos de compte, donc réservés à un compte. Courses et Maison restent volontairement libres
+// (choix produit) : ils fonctionnent en local (localStorage) même sans compte, seulement sans
+// synchronisation entre appareils/foyer tant qu'on n'est pas connecté.
+const ACCOUNT_REQUIRED_PAGES=new Set(['favs','week','profile']);
 function switchPage(p){
   if(!currentUser&&p==='profile'){
     // "Profil" est le seul endroit où un invité VEUT vraiment atterrir sur l'écran de
@@ -2086,7 +2087,7 @@ function renderWeekMenu(){
     </div>`).join('');
 }
 
-function addToCart(r){if(!r)return;if(!requireAccount('ajouter des recettes à tes courses'))return;if(!cart.find(x=>x.n===r.n)){cart.push(r);resetRecipeChecked(r);save();showToast(`✓ ${r.n} ajouté !`);}}
+function addToCart(r){if(!r)return;if(!cart.find(x=>x.n===r.n)){cart.push(r);resetRecipeChecked(r);save();showToast(`✓ ${r.n} ajouté !`);}}
 function handleAddRecipe(id){const r=recipes.find(x=>x.id==id);if(!r)return;if(cart.find(x=>x.n===r.n)){if(confirm(`"${r.n}" est déjà dans le panier. Réinitialiser ?`))resetRecipeChecked(r);}else addToCart(r);}
 function removeFromCart(name){cart=cart.filter(r=>r.n!==name);save();renderCart();renderCooking();}
 function resetRecipeChecked(recipe){recipe.ing.split(',').forEach(l=>{const p=parseIng(l);checkedItems.delete(normName(p.name));});shoppedRecipeNames.delete(recipe.n);localStorage.setItem('holli_checked',JSON.stringify([...checkedItems]));localStorage.setItem('holli_shopped',JSON.stringify([...shoppedRecipeNames]));pushToFirestore();if(document.getElementById('page-cart').classList.contains('active'))renderCart();}
@@ -2887,11 +2888,11 @@ function enterApp(){
   document.getElementById('app-shell').style.display='block';
   init().catch(e=>console.error('Erreur au démarrage de l\'app',e)); // filet de sécurité : ne laisse jamais une erreur inattendue passer silencieusement
 }
-// Mode "juste regarder" : parcourir les recettes (swipe, catalogue, détail d'une recette) ne
-// nécessite aucune donnée personnelle ni synchronisation — currentUser reste null et le reste
-// du code gère déjà ce cas (getAvoidList, pushToFirestore… no-opent si currentUser est absent).
-// Seules les actions qui ont vraiment besoin d'un compte (favoris, courses, Maison, planning,
-// profil) sont bloquées via requireAccount()/promptAccountRequired(), pas la navigation libre.
+// Mode "juste regarder" : parcourir les recettes (swipe, catalogue, détail d'une recette),
+// gérer ses courses et sa Maison ne nécessitent aucune donnée personnelle — currentUser reste
+// null et le reste du code gère déjà ce cas (getAvoidList, pushToFirestore… no-opent si
+// currentUser est absent). Seules les actions qui ont vraiment besoin d'un compte (favoris,
+// planning, profil) sont bloquées via requireAccount()/promptAccountRequired().
 function continueAsGuest(){
   currentUser=null;
   appAlreadyEntered=true;
