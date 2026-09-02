@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Cuisine en Tribu</title>
+<title>Cuisine en Famille</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#f97316">
@@ -432,7 +432,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
       <div class="holli-logo-icon">🍳</div>
       <div>
         <div class="holli-logo-text">Cuisine</div>
-        <div class="holli-logo-sub">en Tribu</div>
+        <div class="holli-logo-sub">en Famille</div>
       </div>
     </div>
     <div class="auth-tabs">
@@ -560,7 +560,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   <button onclick="closePremiumModal()" class="mb-4 font-black text-orange-500 text-xs uppercase">← Retour</button>
   <div class="premium-hero">
     <div class="emoji">⭐</div>
-    <h2 class="text-2xl font-[900] italic uppercase tracking-tighter">Tribu Premium</h2>
+    <h2 class="text-2xl font-[900] italic uppercase tracking-tighter">Famille Premium</h2>
     <div class="premium-price mt-3">3,99€<span> / mois</span></div>
   </div>
   <div class="premium-perk"><span class="ic">🚫</span><span class="txt">Sans publicité<small>Plus aucune bannière, jamais.</small></span></div>
@@ -621,7 +621,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
     <div class="holli-logo-icon">🍳</div>
     <div>
       <div class="holli-logo-text">Cuisine</div>
-      <div class="holli-logo-sub">en Tribu</div>
+      <div class="holli-logo-sub">en Famille</div>
     </div>
   </div>
   <div class="flex items-center gap-2">
@@ -2226,7 +2226,7 @@ function shareCart(){
   unchecked.forEach(ing=>{const r=ing.isMaison?'✨ Maison':getRayon(ing.displayName);if(!byRayon[r])byRayon[r]=[];byRayon[r].push(ing);});
   let txt=`🛒 LISTE DE COURSES — ${servings} pers.\nRecettes : ${cart.map(r=>r.n).join(', ')}\n\n`;
   Object.entries(sortRayons(byRayon)).forEach(([rayon,ings])=>{txt+=`${rayon}\n`;ings.forEach(ing=>{const q=fmtQty(ing.adjustedQty,ing.unit);txt+=`  □ ${ing.displayName}${q?' — '+q:''}\n`;});txt+='\n';});
-  if(navigator.share)navigator.share({title:'Liste Cuisine en Tribu',text:txt});
+  if(navigator.share)navigator.share({title:'Liste Cuisine en Famille',text:txt});
   else navigator.clipboard.writeText(txt).then(()=>showToast('📋 Liste copiée !','#3b82f6'));
 }
 

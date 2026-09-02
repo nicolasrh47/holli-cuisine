@@ -1,13 +1,13 @@
 {
-  "name": "Cuisine en Tribu",
-  "short_name": "Cuisine Tribu",
+  "name": "Cuisine en Famille",
+  "short_name": "Cuisine Famille",
   "description": "Recettes, menus de la semaine et liste de courses partagée.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f8fafc",
-  "theme_color": "#f97316",
+  "theme_color": "#c2410c",
   "lang": "fr",
   "icons": [
     {
