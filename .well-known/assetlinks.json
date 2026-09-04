@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.nicolasrh47.cuisineenfamille",
+        "sha256_cert_fingerprints": ["29:0B:1E:35:A4:65:2B:9E:2B:DD:48:FC:81:08:00:A5:E5:F5:7F:C1:08:3D:15:C1:67:41:2D:EE:FE:DC:2E:97"]
+      }
+    }]
