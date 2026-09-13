@@ -1906,7 +1906,20 @@ const CAT_COURSE_MAP={
   '🧁':'dessert','🍋':'dessert','🍊':'dessert','🍧':'dessert','🍓':'dessert','🍌':'dessert','🥥':'dessert',
   '🍯':'dessert','🍇':'dessert','pineapple':'dessert','🍐':'dessert','🥞':'dessert'
 };
+// Les catégories du Sheet classent par cuisine/thème (Italien, Marocain, Japonais…), pas par
+// type de plat : la table ci-dessus retombe donc sur "plat" par défaut pour toute cuisine, ce
+// qui classe à tort des desserts ("Tiramisu Italien", catégorie 🇮🇹) ou des entrées ("Gaspacho
+// Andalou", catégorie 🇪🇸) en plat principal. Ces mots-clés de nom, vérifiés en premier,
+// corrigent les cas non ambigus avant de retomber sur la catégorie cuisine.
+const COURSE_NAME_FRUIT_WORDS=['fraise','agrume','ananas','peche','pêche','poire','mangue','melon','pasteque','pastèque','fruit'];
+const COURSE_NAME_DESSERT_WORDS=['tiramisu','mug cake','cheesecake','creme brulee','crème brûlée','muffin','gateau','gâteau','cookie','mousse au','panna cotta','affogato'];
+const COURSE_NAME_ENTREE_WORDS=['gaspacho','houmous','miso soupe','carpaccio de boeuf','carpaccio de bœuf','carpaccio de saumon','salade caprese','salade grecque','salade libanaise'];
 function courseKeyForRecipe(r){
+  const n=normalizeSearchText(r.n||'');
+  const isSaladSoupCarpaccio=/salade|soupe|carpaccio/.test(n);
+  if(isSaladSoupCarpaccio&&COURSE_NAME_FRUIT_WORDS.some(w=>n.includes(w)))return'dessert';
+  if(COURSE_NAME_DESSERT_WORDS.some(w=>n.includes(w)))return'dessert';
+  if(COURSE_NAME_ENTREE_WORDS.some(w=>n.includes(w)))return'entree';
   const c=normalizeSearchText(r.cat||'');
   if(CAT_COURSE_MAP[c])return CAT_COURSE_MAP[c];
   if(c.includes('dessert'))return'dessert';
