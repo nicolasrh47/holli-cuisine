@@ -69,6 +69,13 @@ body.dark .cook-tab-btn.active{background:#f97316;border-color:#f97316;color:whi
 .nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;color:#94a3b8;flex:1;font-weight:800;font-size:10px;text-transform:uppercase;transition:all .2s;cursor:pointer;position:relative;}
 .nav-item.active{color:#f97316;transform:translateY(-4px);}
 
+.tutorial-highlight{position:fixed;border-radius:1.2rem;box-shadow:0 0 0 9999px rgba(15,23,42,.65);transition:all .3s ease;pointer-events:none;z-index:501;}
+.tutorial-bubble{position:fixed;left:16px;right:16px;bottom:104px;background:var(--card);border-radius:1.4rem;padding:16px 18px;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:502;}
+.tutorial-bubble p{font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;line-height:1.4;}
+.tutorial-actions{display:flex;justify-content:space-between;align-items:center;}
+.tutorial-skip{background:none;border:none;font-size:11px;font-weight:900;color:var(--text2);text-transform:uppercase;cursor:pointer;padding:6px 4px;}
+.tutorial-next{background:#f97316;color:white;border:none;font-size:11px;font-weight:900;text-transform:uppercase;padding:10px 22px;border-radius:99px;cursor:pointer;}
+
 .page{display:none;padding:16px;animation:fadeIn .3s ease-out;}
 .page.active{display:block;}
 .section-title{font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin:18px 0 8px;padding-left:6px;border-left:3px solid #f97316;}
@@ -866,6 +873,17 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   <button onclick="switchPage('maison')" id="btn-maison" class="nav-item">✨<span>Maison</span></button>
   <button onclick="switchPage('profile')" id="btn-profile" class="nav-item">👤<span>Profil</span></button>
 </nav>
+
+<div id="tutorial-overlay" style="display:none">
+  <div class="tutorial-highlight" id="tutorial-highlight"></div>
+  <div class="tutorial-bubble">
+    <p id="tutorial-text"></p>
+    <div class="tutorial-actions">
+      <button onclick="skipTutorial()" class="tutorial-skip">Passer</button>
+      <button onclick="nextTutorialStep()" id="tutorial-next-btn" class="tutorial-next">Suivant</button>
+    </div>
+  </div>
+</div>
 </div>
 
 <footer style="text-align:center; font-size:8px; padding:16px; color:#94a3b8; background:var(--bg); border-top:1px solid var(--border); margin-top:20px;">
@@ -3023,6 +3041,48 @@ function enterApp(){
   document.getElementById('onboard-screen').classList.remove('show');
   document.getElementById('app-shell').style.display='block';
   init().catch(e=>console.error('Erreur au démarrage de l\'app',e)); // filet de sécurité : ne laisse jamais une erreur inattendue passer silencieusement
+  maybeStartTutorial();
+}
+// Petit tour guidé en bulles au tout premier lancement (invité, connexion ou fin d'inscription
+// passent tous par enterApp) : une bulle par onglet de la barre de navigation, jamais réaffiché
+// une fois vu ou passé (drapeau localStorage, par appareil comme le reste des réglages locaux).
+const TUTORIAL_STEPS=[
+  {target:'btn-home',text:'🍴 Ici tu retrouves toutes les recettes et tu crées ton menu de la semaine.'},
+  {target:'btn-favs',text:'❤️ Garde tes recettes préférées sous la main.'},
+  {target:'btn-cart',text:'🛒 Ta liste de courses, partagée avec tout ton foyer en temps réel.'},
+  {target:'btn-cooking',text:'👨‍🍳 Les recettes que tu cuisines, avec les étapes pas à pas.'},
+  {target:'btn-maison',text:'✨ Ajoute les articles du quotidien (lessive, papier toilette…) à ta liste de courses.'},
+  {target:'btn-profile',text:'👤 Tes préférences, ton budget hebdo et le code pour inviter ton foyer.'}
+];
+let tutorialStepIdx=0;
+function maybeStartTutorial(){
+  if(localStorage.getItem('holli_tutorial_seen'))return;
+  tutorialStepIdx=0;
+  setTimeout(showTutorialStep,600);
+}
+function showTutorialStep(){
+  const step=TUTORIAL_STEPS[tutorialStepIdx];
+  const target=step&&document.getElementById(step.target);
+  const overlay=document.getElementById('tutorial-overlay');
+  if(!step||!target||!overlay){skipTutorial();return;}
+  const rect=target.getBoundingClientRect();
+  const hl=document.getElementById('tutorial-highlight');
+  hl.style.left=(rect.left-4)+'px';
+  hl.style.top=(rect.top-4)+'px';
+  hl.style.width=(rect.width+8)+'px';
+  hl.style.height=(rect.height+8)+'px';
+  document.getElementById('tutorial-text').innerText=step.text;
+  document.getElementById('tutorial-next-btn').innerText=tutorialStepIdx===TUTORIAL_STEPS.length-1?'Terminer':'Suivant';
+  overlay.style.display='block';
+}
+function nextTutorialStep(){
+  tutorialStepIdx++;
+  if(tutorialStepIdx>=TUTORIAL_STEPS.length){skipTutorial();return;}
+  showTutorialStep();
+}
+function skipTutorial(){
+  document.getElementById('tutorial-overlay').style.display='none';
+  localStorage.setItem('holli_tutorial_seen','1');
 }
 // Mode "juste regarder" : parcourir les recettes (swipe, catalogue, détail d'une recette),
 // gérer ses courses et sa Maison ne nécessitent aucune donnée personnelle — currentUser reste
