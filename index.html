@@ -163,10 +163,6 @@ body.dark .week-slot-actions button.danger{background:#3f1d1d;}
 .week-slot-empty{width:100%;display:flex;align-items:center;justify-content:space-between;background:transparent;border:2px dashed var(--border);border-radius:1.3rem;padding:12px 14px;margin-bottom:6px;cursor:pointer;}
 .week-slot-empty-label{font-size:10px;font-weight:900;color:#f97316;text-transform:uppercase;}
 
-.nb-selector{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
-.nb-btn{padding:10px 20px;border-radius:14px;font-size:13px;font-weight:900;border:2px solid #e2e8f0;background:white;color:#64748b;cursor:pointer;transition:all .2s;}
-.nb-btn.active{background:#f97316;border-color:#f97316;color:white;}
-
 .cart-ing{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #f1f5f9;transition:all .25s;cursor:pointer;min-height:56px;}
 .cart-ing:last-child{border-bottom:none;}
 .cart-ing.checked .ing-text{text-decoration:line-through;color:#cbd5e1;}
@@ -710,7 +706,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
   <div id="week-budget" class="mb-4"></div>
   <div class="mb-2">
     <p class="section-title">Combien de jours ?</p>
-    <div class="nb-selector" id="nb-selector"></div>
+    <div class="pers-pill" id="nb-selector"></div>
   </div>
   <div class="mb-5">
     <p class="section-title">Quels plats ?</p>
@@ -1863,10 +1859,15 @@ function refreshDetailModal(id){
 function closeDetails(){document.getElementById('detail-modal').style.display='none';}
 
 function renderNbSelector(){
-  const options=[3,4,5,6,7];
-  document.getElementById('nb-selector').innerHTML=options.map(n=>`<button class="nb-btn ${weekCount===n?'active':''}" onclick="setWeekCount(${n})">${n} jours</button>`).join('');
+  const el=document.getElementById('nb-selector');if(!el)return;
+  el.innerHTML=`<button onclick="updateWeekCount(-1)">-</button><span>${weekCount} JOUR${weekCount>1?'S':''}</span><button onclick="updateWeekCount(1)">+</button>`;
 }
 function setWeekCount(n){weekCount=n;localStorage.setItem('holli_week_count',n);renderNbSelector();generateWeekMenu();}
+function updateWeekCount(delta){
+  const n=Math.min(DAYS.length,Math.max(1,weekCount+delta));
+  if(n===weekCount)return;
+  setWeekCount(n);
+}
 
 // Chaque jour propose Entrée / Plat / Dessert (selon la sélection de l'utilisateur).
 // On devine la catégorie d'une recette à partir de son champ "cat" (tolérant
@@ -1913,14 +1914,19 @@ const CAT_COURSE_MAP={
 // Andalou", catégorie 🇪🇸) en plat principal. Ces mots-clés de nom, vérifiés en premier,
 // corrigent les cas non ambigus avant de retomber sur la catégorie cuisine.
 const COURSE_NAME_FRUIT_WORDS=['fraise','agrume','ananas','peche','pêche','poire','mangue','melon','pasteque','pastèque','fruit'];
-const COURSE_NAME_DESSERT_WORDS=['tiramisu','mug cake','cheesecake','creme brulee','crème brûlée','muffin','gateau','gâteau','cookie','mousse au','panna cotta','affogato'];
-const COURSE_NAME_ENTREE_WORDS=['gaspacho','houmous','miso soupe','carpaccio de boeuf','carpaccio de bœuf','carpaccio de saumon','salade caprese','salade grecque','salade libanaise'];
+const COURSE_NAME_DESSERT_WORDS=['tiramisu','mug cake','cheesecake','creme brulee','crème brûlée','muffin','gateau','gâteau','cookie','mousse au','panna cotta','affogato',
+  'arroz con leche','baklava','brochettes de fruits','compote','key lime pie','pudding','lassi indien','tartine briochee'];
+const COURSE_NAME_ENTREE_WORDS=['gaspacho','houmous','hummus','miso soupe','carpaccio de boeuf','carpaccio de bœuf','carpaccio de saumon','salade caprese','salade grecque','salade libanaise',
+  'bruschetta','foie gras','pan con tomate','patatas bravas','al ajillo','chorizo au cidre','tomates mozza','ceviche'];
 function courseKeyForRecipe(r){
   const n=normalizeSearchText(r.n||'');
   const isSaladSoupCarpaccio=/salade|soupe|carpaccio/.test(n);
   if(isSaladSoupCarpaccio&&COURSE_NAME_FRUIT_WORDS.some(w=>n.includes(w)))return'dessert';
   if(COURSE_NAME_DESSERT_WORDS.some(w=>n.includes(w)))return'dessert';
   if(COURSE_NAME_ENTREE_WORDS.some(w=>n.includes(w)))return'entree';
+  // Une salade non sucrée est presque toujours une entrée, quelle que soit la catégorie
+  // cuisine du Sheet (ex: "Salade Marocaine Carottes et Orange" taguée 🇲🇦 retombait en plat).
+  if(n.includes('salade'))return'entree';
   const c=normalizeSearchText(r.cat||'');
   if(CAT_COURSE_MAP[c])return CAT_COURSE_MAP[c];
   if(c.includes('dessert'))return'dessert';
@@ -2187,24 +2193,34 @@ function renderWeekMenu(){
       ${activeCourses.map(c=>courseSlotHTML(item,i,c.key)).join('')}
     </div>`).join('');
 }
-// N'affiche rien si l'utilisateur n'a pas renseigné de budget hebdo (invité, ou champ laissé
-// vide dans le profil) — pas de relance intrusive, juste une info disponible pour qui l'a activée.
-function renderWeekBudget(){
-  const el=document.getElementById('week-budget');if(!el)return;
-  const budget=parseFloat(currentUser?.profile?.budget);
-  if(!budget||!isFinite(budget)||budget<=0){el.innerHTML='';return;}
-  const total=estimatedWeekTotal();
+// Boîte réutilisée par la page Semaine (budget hebdo vs menu généré) et la page Courses
+// (budget des recettes du panier) — mêmes couleurs/format pour une lecture cohérente.
+function budgetBoxHTML(total,budget){
+  if(!budget||!isFinite(budget)||budget<=0){
+    return`<div style="background:var(--card);border:1.5px solid var(--border);border-radius:1.2rem;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:13px;font-weight:900;">~${total.toFixed(0)}€ estimés</div>
+      <div style="font-size:22px;">💶</div>
+    </div>`;
+  }
   const over=total>budget;
   const pctOver=over?Math.round(((total-budget)/budget)*100):0;
   const color=over?(pctOver>20?'#ef4444':'#f59e0b'):'#22c55e';
   const msg=over?`~${pctOver}% au-dessus de ton budget`:'Dans ton budget';
-  el.innerHTML=`<div style="background:${color}1a;border:1.5px solid ${color}55;border-radius:1.2rem;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
+  return`<div style="background:${color}1a;border:1.5px solid ${color}55;border-radius:1.2rem;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
     <div>
       <div style="font-size:9px;font-weight:900;text-transform:uppercase;color:${color};letter-spacing:.5px;">${msg}</div>
       <div style="font-size:13px;font-weight:900;">~${total.toFixed(0)}€ estimés <span style="opacity:.5;font-weight:700;">/ ${budget.toFixed(0)}€ budget</span></div>
     </div>
     <div style="font-size:22px;">${over?'⚠️':'✅'}</div>
   </div>`;
+}
+// N'affiche rien si l'utilisateur n'a pas renseigné de budget hebdo (invité, ou champ laissé
+// vide dans le profil) — pas de relance intrusive, juste une info disponible pour qui l'a activée.
+function renderWeekBudget(){
+  const el=document.getElementById('week-budget');if(!el)return;
+  const budget=parseFloat(currentUser?.profile?.budget);
+  if(!budget||!isFinite(budget)||budget<=0){el.innerHTML='';return;}
+  el.innerHTML=budgetBoxHTML(estimatedWeekTotal(),budget);
 }
 
 function addToCart(r){if(!r)return;if(!cart.find(x=>x.n===r.n)){cart.push(r);resetRecipeChecked(r);save();showToast(`✓ ${r.n} ajouté !`);}}
@@ -2239,9 +2255,9 @@ function renderCart(){
   let html='';
   const shoppingRecipes=cart.filter(r=>!shoppedRecipeNames.has(r.n));
   if(shoppingRecipes.length>0){
-    html+=`<div class="section-title">Recettes (${shoppingRecipes.length})</div><div class="flex flex-wrap gap-2 mb-4">`;
-    html+=shoppingRecipes.map(r=>`<div class="flex items-center gap-2 bg-white border border-slate-100 rounded-2xl px-3 py-2 shadow-sm"><span class="text-[10px] font-black text-slate-700 uppercase">${r.n}</span><button onclick="removeFromCart('${jsAttr(r.n)}');event.stopPropagation();" class="text-red-400 font-black text-xs border-none bg-transparent cursor-pointer">✕</button></div>`).join('');
-    html+='</div>';
+    const cartTotal=shoppingRecipes.reduce((sum,r)=>sum+estimatedRecipePrice(r),0);
+    const budget=parseFloat(currentUser?.profile?.budget);
+    html+=`<div class="section-title">Recettes (${shoppingRecipes.length})</div><div class="mb-4">${budgetBoxHTML(cartTotal,budget)}</div>`;
   }
   html+=`<div class="section-title">À trouver — ${unchecked.length} restant(s)</div>`;
   if(allFound){
