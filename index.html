@@ -2327,6 +2327,15 @@ function clearCartIngredients(goToCooking){
   if(autoClearTimer){clearTimeout(autoClearTimer);autoClearTimer=null;}
   cart.forEach(r=>shoppedRecipeNames.add(r.n));
   localStorage.setItem('holli_shopped',JSON.stringify([...shoppedRecipeNames]));
+  // "Acheté" se mesure ici (course confirmée), pas au moment où l'article est ajouté à la
+  // liste — sinon un article ajouté puis retiré sans achat réel faussait le suivi de stock.
+  const boughtNow=new Date().toISOString();
+  homeCart.forEach(name=>{
+    if(!checkedItems.has(normName(name)))return;
+    itemLastBought[name]=boughtNow;
+    if(!itemPurchaseHistory[name])itemPurchaseHistory[name]=[];
+    itemPurchaseHistory[name].push(boughtNow);
+  });
   homeCart=[];extraItems=[];checkedItems.clear();manualQtys={};
   localStorage.removeItem('holli_checked');localStorage.removeItem('holli_manual_qtys');localStorage.removeItem('holli_extras');
   localStorage.setItem('holli_home_v4',JSON.stringify(homeCart));
@@ -2640,7 +2649,7 @@ function toggleHome(name){
   const idx=homeCart.indexOf(name);
   let added=false;
   if(idx>-1){homeCart.splice(idx,1);}
-  else{homeCart.push(name);itemLastBought[name]=new Date().toISOString();if(!itemPurchaseHistory[name])itemPurchaseHistory[name]=[];itemPurchaseHistory[name].push(new Date().toISOString());localStorage.setItem('holli_last_bought',JSON.stringify(itemLastBought));localStorage.setItem('holli_purchase_history',JSON.stringify(itemPurchaseHistory));added=true;}
+  else{homeCart.push(name);added=true;}
   save();renderMaison();updateUI();
   if(added)bumpCartBadge();
 }
