@@ -1104,19 +1104,27 @@ async function loadSiteContent() {
   if(bannerTitle) bannerTitle.innerHTML = siteContent.week?.bannerTitle || 'Crée ta semaine de menus 🍽️';
 }
 
-const RAYONS_ORDER=['🥦 Fruits & Légumes','🥩 Viandes & Poissons','🥛 Produits Laitiers','🥚 Oeufs','🍞 Boulangerie','🌾 Épicerie Sèche','🥫 Conserves','🌿 Herbes & Épices','🧴 Condiments','🛒 Divers'];
+const RAYONS_ORDER=['🥩 Viandes & Poissons','🥚 Oeufs','🥛 Produits Laitiers','🥫 Conserves','🥦 Fruits & Légumes','🍞 Boulangerie','🌿 Herbes & Épices','🧴 Condiments','🍫 Sucré & Pâtisserie','🌾 Épicerie Sèche','🛒 Divers'];
+// Ordre important : les catégories les plus specifiques doivent passer avant les plus larges
+// (ex: Conserves avant Fruits & Légumes pour que "tomate pelée" ne tombe pas dans "tomate" ;
+// Viandes avant Oeufs pour que "bœuf" ne matche pas "œuf" qu'il contient comme sous-chaîne).
 const RAYONS={
-  '🥩 Viandes & Poissons':['poulet','boeuf','veau','porc','agneau','saumon','thon','crevette','lardons','jambon','merguez','viande','steak','côte','filet','escalope','dinde','canard'],
-  '🥛 Produits Laitiers':['lait','crème','beurre','fromage','yaourt','parmesan','gruyère','mozzarella','ricotta','camembert','emmental','feta','mascarpone','chèvre','crème fraîche','beaufort'],
   '🥚 Oeufs':['oeuf','oeufs'],
-  '🥦 Fruits & Légumes':['tomate','oignon','carotte','courgette','aubergine','poivron','salade','épinard','brocoli','chou','pomme','citron','avocat','ail','echalote','poireau','champignon','concombre','haricot','petits pois','lentille','potiron','patate','pomme de terre'],
-  '🌾 Épicerie Sèche':['farine','riz','pâtes','quinoa','semoule','sucre','sel','poivre','huile','vinaigre','moutarde','sauce','concentré','bouillon','cube','maïzena','fécule'],
+  '🥩 Viandes & Poissons':['poulet','boeuf','veau','porc','agneau','saumon','thon','crevette','lardons','jambon','merguez','viande','steak','côte','filet','escalope','dinde','canard','lapin','gésier','magret','foie gras','calamar','morue','cabillaud','gambas','moule','escargot','andouillette','saucisse','chair à saucisse','poisson','lard','rascasse','grondin','congre','moelle'],
+  '🥛 Produits Laitiers':['lait','crème','beurre','fromage','yaourt','parmesan','gruyère','mozzarella','ricotta','camembert','emmental','feta','mascarpone','chèvre','crème fraîche','beaufort','comté','cheddar'],
   '🥫 Conserves':['boîte','conserve','sardine','maïs','pois chiche','haricot blanc','tomate pelée'],
-  '🍞 Boulangerie':['pain','baguette','brioche','chapelure'],
-  '🌿 Herbes & Épices':['herbe','épice','basilic','thym','romarin','persil','coriandre','cumin','paprika','curry','curcuma','cannelle','muscade','laurier','origan','piment'],
-  '🧴 Condiments':['ketchup','mayonnaise','soja','tabasco','tahini','pesto'],
+  '🥦 Fruits & Légumes':['tomate','oignon','carotte','courgette','aubergine','poivron','salade','épinard','brocoli','chou','pomme','citron','avocat','ail','echalote','échalote','poireau','champignon','concombre','haricot','petits pois','lentille','potiron','patate','pomme de terre','banane','orange','poire','fraise','framboise','myrtille','cerise','ananas','mangue','pamplemousse','figue','raisin','betterave','roquette','asperge','endive','navet','céleri','melon','citronnelle','pruneau','fruits rouges','fruits frais','jus de lime'],
+  '🍞 Boulangerie':['pain','baguette','brioche','chapelure','crêpe','croûton','galette de sarrasin'],
+  '🌿 Herbes & Épices':['herbe','épice','basilic','thym','romarin','persil','coriandre','cumin','paprika','curry','curcuma','cannelle','muscade','laurier','origan','piment','gingembre','safran','cardamome','clou de girofle','baies de genièvre','bouquet garni','ciboulette','aneth','menthe','sauge','sumac'],
+  '🧴 Condiments':['ketchup','mayonnaise','soja','tabasco','tahini','pesto','câpres','cornichon','olive','vin','bière','cidre','pastis'],
+  '🍫 Sucré & Pâtisserie':['chocolat','cacao','miel','vanille','amande','noix','noisette','gélatine','biscuit','spéculoos','pépite','pâte feuilletée','pâte brisée','pâte sablée','pâte filo','pâte à choux','pâte à beignet','génoise','joconde','sucre glace','cassonade','levure','rhum','grand marnier','amaretto','fondant','ganache','crème au beurre','praline','nougat','caramel','pistache','coco','matcha','frangipane','fève','confiture','pâte à tartiner','café','chantilly','fond de tartelette','fond sablé','savarin','pignon','sirop d\'érable','bicarbonate','chia'],
+  '🌾 Épicerie Sèche':['farine','riz','pâtes','quinoa','semoule','sucre','sel','poivre','huile','vinaigre','moutarde','sauce','concentré','bouillon','cube','maïzena','fécule','couscous','sésame','coquillette','gnocchi','nouille','tortilla','houmous','tofu','miso','algue','falafel'],
 };
-function getRayon(n){const lo=n.toLowerCase();for(const[r,kws]of Object.entries(RAYONS)){if(kws.some(k=>lo.includes(k)))return r;}return'🛒 Divers';}
+// Comme normalizeSearchText : ignore accents et ligatures (œ/æ) pour que "œuf"/"bœuf" (graphie
+// réellement utilisée dans les recettes) matchent bien "oeuf"/"boeuf", et que "échalote" matche
+// "echalote" peu importe l'accentuation utilisée dans le Sheet.
+function normalizeRayonText(s){return(s||'').toLowerCase().replace(/œ/g,'oe').replace(/æ/g,'ae').normalize('NFD').replace(/[̀-ͯ]/g,'');}
+function getRayon(n){const lo=normalizeRayonText(n);for(const r of RAYONS_ORDER){const kws=RAYONS[r];if(kws&&kws.some(k=>lo.includes(normalizeRayonText(k))))return r;}return'🛒 Divers';}
 function sortRayons(map){const s={};RAYONS_ORDER.forEach(r=>{if(map[r])s[r]=map[r];});Object.keys(map).forEach(r=>{if(!s[r])s[r]=map[r];});return s;}
 
 function toggleDark(){isDark=!isDark;localStorage.setItem('holli_dark',isDark);document.body.classList.toggle('dark',isDark);document.getElementById('dark-btn').innerText=isDark?'☀️':'🌓';}
@@ -1225,6 +1233,13 @@ function resolveIngUnit(word,rest){
 }
 function parseIng(raw){
   raw=raw.trim();
+  // "c. à café"/"c. à soupe" (avec point, espaces variables) ne sont pas reconnus tels quels par
+  // les regex ci-dessous (le point casse la capture de l'unité) : tout le groupe se retrouvait
+  // collé au nom de l'ingrédient ("1 c. à café moutarde" restait entier au lieu de donner "1 cc"
+  // + "moutarde"). On les normalise d'abord en "cc"/"cs", déjà gérés plus bas.
+  // (?![a-zà-ÿ]) plutôt que \b après "café" : \b ne détecte pas de limite après un é en JS
+  // (accent non reconnu comme caractère de mot par défaut), donc "café" restait non détecté.
+  raw=raw.replace(/\bc\.?\s*à\s*café(?![a-zà-ÿ])/gi,'cc').replace(/\bc\.?\s*à\s*soupe(?![a-zà-ÿ])/gi,'cs');
   let m;
   // Nombre collé à l'unité sans espace : "10gBeurre"
   m=raw.match(/^(\d+(?:[.,]\d+)?)(g|kg|ml|cl|dl|l|cs|cc|tsp|tbsp)([A-Za-zÀ-ÿ].*)$/i);
