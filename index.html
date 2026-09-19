@@ -2023,11 +2023,11 @@ function adjustBatch(id,delta){
 // Le Sheet ecrit les quantites "pour 1 pers." meme pour les tartes/quiches : certaines
 // (ex: Quiche Lorraine "1 fond de pate") representent deja 1 dessert entier par personne, mais
 // d'autres (ex: Tarte aux Pommes "1/4 pate") representent juste une part individuelle. Annoncer
-// "N tartes" serait donc parfois faux (une demi-pate n'est pas 2 tartes). On garde le libelle
-// neutre "N pers." comme pour le reste de l'app - le multiplicateur reste ajustable independamment
-// du nombre de personnes du foyer, mais sans promettre un nombre de plats entiers qu'on ne peut
-// pas garantir tant que les recettes n'utilisent pas toutes la meme convention (1 pate = 1 plat).
-function batchLabel(r){return`${getBatchMultiplier(r)} pers.`;}
+// "N tartes" serait donc parfois faux (une demi-pate n'est pas 2 tartes). On affiche donc un
+// multiplicateur neutre "×N" plutot que "N pers." : un utilisateur confondait ce +/- avec le
+// nombre de personnes du foyer (qui reste inchange par ce bouton) et se retrouvait avec une
+// recette multipliee par erreur en pensant juste l'ajuster a sa famille.
+function batchLabel(r){return`×${getBatchMultiplier(r)}`;}
 function recipeRatio(r){return isWholeBatchRecipe(r)?getBatchMultiplier(r):servings/BASE_SERVINGS;}
 
 // Le sel, poivre, muscade... n'ont quasiment jamais de vraie quantite dans le Sheet (juste
