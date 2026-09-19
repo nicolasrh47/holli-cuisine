@@ -3359,16 +3359,16 @@ function getAvoidList(){
 // concrets ; tout ce qui n'est pas dans cette liste reste comparé tel quel
 // (ex: un ingrédient précis comme "coriandre" continue de matcher direct).
 const ALLERGEN_KEYWORDS={
-  'gluten':['farine','ble','pain','pate','pates','chapelure','semoule','orge','seigle','avoine','couscous','biscuit','brioche','tortilla','nouilles','vermicelle','crepe'],
-  'lactose':['lait','creme','beurre','fromage','yaourt','mascarpone','parmesan','gruyere','mozzarella','ricotta','camembert','emmental','feta','chevre','beaufort'],
-  'produits laitiers':['lait','creme','beurre','fromage','yaourt','mascarpone','parmesan','gruyere','mozzarella','ricotta','camembert','emmental','feta','chevre','beaufort'],
+  'gluten':['farine','ble','pain','pate','pates','chapelure','semoule','orge','seigle','avoine','couscous','biscuit','brioche','tortilla','nouilles','vermicelle','crepe','sable','speculoos','tartelette'],
+  'lactose':['lait','creme','beurre','fromage','yaourt','mascarpone','parmesan','gruyere','mozzarella','ricotta','camembert','emmental','feta','chevre','beaufort','comte','cheddar'],
+  'produits laitiers':['lait','creme','beurre','fromage','yaourt','mascarpone','parmesan','gruyere','mozzarella','ricotta','camembert','emmental','feta','chevre','beaufort','comte','cheddar'],
   'oeuf':['oeuf'],'oeufs':['oeuf'],
   'fruits a coque':['amande','noisette','noix','pistache','cajou','pecan','macadamia','pralin'],
   'arachide':['arachide','cacahuete'],'arachides':['arachide','cacahuete'],'cacahuete':['arachide','cacahuete'],
-  'poisson':['saumon','thon','cabillaud','poisson','truite','anchois','sardine','colin','merlan','dorade'],
-  'poissons':['saumon','thon','cabillaud','poisson','truite','anchois','sardine','colin','merlan','dorade'],
-  'crustaces':['crevette','crabe','homard','langouste','langoustine'],
-  'fruits de mer':['crevette','crabe','homard','langouste','langoustine','moule','huitre','escargot','calamar','poulpe','saint-jacques'],
+  'poisson':['saumon','thon','cabillaud','poisson','truite','anchois','sardine','colin','merlan','dorade','sole','morue','congre','grondin','rascasse'],
+  'poissons':['saumon','thon','cabillaud','poisson','truite','anchois','sardine','colin','merlan','dorade','sole','morue','congre','grondin','rascasse'],
+  'crustaces':['crevette','crabe','homard','langouste','langoustine','gambas'],
+  'fruits de mer':['crevette','crabe','homard','langouste','langoustine','moule','huitre','escargot','calamar','poulpe','saint-jacques','gambas'],
   'mollusques':['moule','huitre','escargot','calamar','poulpe','saint-jacques'],
   'soja':['soja','tofu','edamame'],
   'celeri':['celeri'],
@@ -3386,10 +3386,15 @@ function containsFoodWord(haystack,word){
   const esc=word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   return new RegExp(`(^|[^a-z0-9])${esc}s?([^a-z0-9]|$)`).test(haystack);
 }
+// "Lait de coco" contient le mot "lait" mais n'est pas un produit laitier : sans ce retrait, une
+// allergie au lactose excluait a tort une recette qui n'en contient pas. Retirer la phrase avant
+// la recherche du mot "lait" seul evite le faux positif sans toucher aux vrais produits laitiers.
+const NON_DAIRY_MILK_PHRASES=['lait de coco'];
 function getAllergyMatches(recipe){
   const avoid=getAvoidList();
   if(!avoid.length||!recipe)return[];
-  const ing=normalizeSearchText(recipe.ing);
+  let ing=normalizeSearchText(recipe.ing);
+  NON_DAIRY_MILK_PHRASES.forEach(p=>{ing=ing.replace(new RegExp(normalizeSearchText(p),'g'),'');});
   return avoid.filter(a=>{
     const na=normalizeSearchText(a);
     const keywords=ALLERGEN_KEYWORDS[na]||[na];
