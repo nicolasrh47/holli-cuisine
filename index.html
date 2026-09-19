@@ -1211,6 +1211,18 @@ function updateServings(v){
 // espace ("10gBeurre"). On essaie les deux sens plutôt que de supposer un seul
 // format, sinon la quantité ne se met pas à jour avec le nombre de personnes
 // pour toute recette écrite "nom d'abord".
+const ING_KNOWN_UNITS=new Set(['g','kg','ml','cl','dl','l','cs','cc','tsp','tbsp']);
+// Le mot qui suit (ou précède) le nombre n'est pas toujours une unité de mesure : "1 gousse
+// d'ail", "1 pincée de sel", "2 tranches de jambon", "1 biscuit joconde"... Sans cette vérification,
+// ce mot était avalé comme "unité" quel qu'il soit, et disparaissait de l'ingrédient affiché (ex :
+// "1 gousse d'ail" devenait l'ingrédient "d'ail" avec la quantité "1 gousse" au lieu de l'ingrédient
+// "gousse d'ail" avec "× 1"). On ne le traite comme unité que s'il fait partie des unités connues,
+// sinon on le remet dans le nom.
+function resolveIngUnit(word,rest){
+  const w=(word||'').toLowerCase();
+  if(ING_KNOWN_UNITS.has(w))return{unit:w,name:rest.trim().toLowerCase()};
+  return{unit:'',name:(w?w+' ':'')+rest.trim().toLowerCase()};
+}
 function parseIng(raw){
   raw=raw.trim();
   let m;
@@ -1219,19 +1231,19 @@ function parseIng(raw){
   if(m)return{qty:parseFloat(m[1].replace(',','.')),unit:m[2].toLowerCase(),name:m[3].trim().toLowerCase()};
   // Fraction en préfixe : "1/2 oignon"
   m=raw.match(/^(\d+)\/(\d+)\s*([a-zA-ZÀ-ÿ]*)\s+(.+)$/);
-  if(m)return{qty:parseFloat(m[1])/parseFloat(m[2]),unit:(m[3]||'').toLowerCase(),name:m[4].trim().toLowerCase()};
+  if(m){const{unit,name}=resolveIngUnit(m[3],m[4]);return{qty:parseFloat(m[1])/parseFloat(m[2]),unit,name};}
   // Nombre en préfixe : "150g Veau", "1 Carotte", "3cs sauce soja"
   m=raw.match(/^(\d+(?:[.,]\d+)?)\s*([a-zA-ZÀ-ÿ]*)\s+(.+)$/);
-  if(m)return{qty:parseFloat(m[1].replace(',','.')),unit:(m[2]||'').toLowerCase(),name:m[3].trim().toLowerCase()};
+  if(m){const{unit,name}=resolveIngUnit(m[2],m[3]);return{qty:parseFloat(m[1].replace(',','.')),unit,name};}
   // Nombre seul, sans rien après : "1"
   m=raw.match(/^(\d+(?:[.,]\d+)?)\s*([a-zA-ZÀ-ÿ]*)$/);
   if(m&&m[2])return{qty:parseFloat(m[1].replace(',','.')),unit:'',name:m[2].trim().toLowerCase()};
   // Fraction en suffixe : "Oignon 1/2"
   m=raw.match(/^(.+?)\s+(\d+)\/(\d+)\s*([a-zA-ZÀ-ÿ]*)$/);
-  if(m)return{qty:parseFloat(m[2])/parseFloat(m[3]),unit:(m[4]||'').toLowerCase(),name:m[1].trim().toLowerCase()};
+  if(m){const w=(m[4]||'').toLowerCase();const known=ING_KNOWN_UNITS.has(w);return{qty:parseFloat(m[2])/parseFloat(m[3]),unit:known?w:'',name:(known?m[1]:m[1]+(w?' '+w:'')).trim().toLowerCase()};}
   // Nombre en suffixe : "Veau (épaule ou tendron) 150g", "Carotte 1"
   m=raw.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*([a-zA-ZÀ-ÿ]*)$/);
-  if(m)return{qty:parseFloat(m[2].replace(',','.')),unit:(m[3]||'').toLowerCase(),name:m[1].trim().toLowerCase()};
+  if(m){const w=(m[3]||'').toLowerCase();const known=ING_KNOWN_UNITS.has(w);return{qty:parseFloat(m[2].replace(',','.')),unit:known?w:'',name:(known?m[1]:m[1]+(w?' '+w:'')).trim().toLowerCase()};}
   return{qty:null,unit:'',name:raw.toLowerCase()};
 }
 function normName(n){return n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().replace(/s\b/g,'');}
@@ -1995,7 +2007,7 @@ const WHOLE_BATCH_CATS=['Tartes & Quiches Salées','Tartes & Crumbles','Gâteaux
 // Française" (catégorie régionale) plutôt qu'en "Tartes & Quiches Salées". On complète donc par
 // le nom de la recette pour les plats clairement "à la pièce" par nature (quiche, tourte,
 // clafoutis, flan).
-const WHOLE_BATCH_NAME_WORDS=['quiche','tourte','clafoutis','flan'];
+const WHOLE_BATCH_NAME_WORDS=['quiche','tourte','clafoutis','flan','opera'];
 // Les formats individuels ("Mug Cake", "Mini Tarte Tatin", desserts "Express") se calculent
 // bien par personne comme un dessert normal, même s'ils tombent dans une catégorie ou un mot-clé
 // "à la pièce" ci-dessus — l'exclusion est donc vérifiée en priorité, quelle que soit la raison
