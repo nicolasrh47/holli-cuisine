@@ -2047,14 +2047,31 @@ function adjustBatch(id,delta){
   const r=recipes.find(x=>x.id==id);if(!r)return;
   batchMultipliers[id]=Math.max(1,getBatchMultiplier(r)+delta);
 }
-// Le Sheet ecrit les quantites "pour 1 pers." meme pour les tartes/quiches : certaines
-// (ex: Quiche Lorraine "1 fond de pate") representent deja 1 dessert entier par personne, mais
-// d'autres (ex: Tarte aux Pommes "1/4 pate") representent juste une part individuelle. Annoncer
-// "N tartes" serait donc parfois faux (une demi-pate n'est pas 2 tartes). On affiche donc un
-// multiplicateur neutre "×N" plutot que "N pers." : un utilisateur confondait ce +/- avec le
-// nombre de personnes du foyer (qui reste inchange par ce bouton) et se retrouvait avec une
-// recette multipliee par erreur en pensant juste l'ajuster a sa famille.
-function batchLabel(r){return`×${getBatchMultiplier(r)}`;}
+// "×N" restait trop abstrait : on affiche maintenant le vrai mot ("1 tourte", "2 tartes",
+// "3 quiches"...) deduit du nom de la recette, avec le bon pluriel (accord irregulier pour
+// gateau/gateaux). Le multiplicateur +/- ajuste bien le nombre de plats entiers a preparer,
+// jamais le nombre de personnes du foyer (servings), qui reste independant.
+const BATCH_UNIT_WORDS=[
+  ['tourte','tourte','tourtes'],
+  ['quiche','quiche','quiches'],
+  ['clafoutis','clafoutis','clafoutis'],
+  ['flan','flan','flans'],
+  ['opera','opéra','opéras'],
+  ['cheesecake','cheesecake','cheesecakes'],
+  ['crumble','crumble','crumbles'],
+  ['cake','cake','cakes'],
+  ['gateau','gâteau','gâteaux'],
+  ['tarte','tarte','tartes'],
+];
+const BATCH_UNIT_BY_CAT={'Tartes & Quiches Salées':['tarte','tartes'],'Tartes & Crumbles':['tarte','tartes'],'Gâteaux & Pâtisseries':['gâteau','gâteaux']};
+function batchUnitWord(r){
+  const n=normalizeSearchText(r.n||'');
+  const nameMatch=BATCH_UNIT_WORDS.find(([kw])=>containsFoodWord(n,kw));
+  if(nameMatch)return[nameMatch[1],nameMatch[2]];
+  const byCat=BATCH_UNIT_BY_CAT[displayCategory(r)];
+  return byCat||['recette','recettes'];
+}
+function batchLabel(r){const count=getBatchMultiplier(r);const[sing,plur]=batchUnitWord(r);return`${count} ${count>1?plur:sing}`.toUpperCase();}
 function recipeRatio(r){return isWholeBatchRecipe(r)?getBatchMultiplier(r):servings/BASE_SERVINGS;}
 
 // Le sel, poivre, muscade... n'ont quasiment jamais de vraie quantite dans le Sheet (juste
