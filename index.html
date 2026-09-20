@@ -145,6 +145,14 @@ body.dark .course-filter-btn.active{background:#f97316;border-color:#f97316;colo
 .week-menu-banner:active{transform:scale(.98);}
 .week-menu-banner-deco{position:absolute;right:-20px;top:-20px;font-size:100px;opacity:.15;transform:rotate(15deg);pointer-events:none;}
 
+.banner-swipe-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:6px;}
+.banner-swipe-track::-webkit-scrollbar{display:none;}
+.banner-swipe-slide{flex:0 0 100%;display:flex;scroll-snap-align:start;min-width:0;}
+.banner-swipe-dots{display:flex;justify-content:center;gap:6px;margin-bottom:10px;}
+.banner-swipe-dots .dot{width:6px;height:6px;border-radius:50%;background:#e2e8f0;border:none;padding:0;cursor:pointer;transition:.2s;}
+.banner-swipe-dots .dot.active{background:#f97316;width:18px;border-radius:99px;}
+body.dark .banner-swipe-dots .dot{background:#334155;}
+
 .recipe-card{position:relative;}
 .add-btn{position:absolute;top:8px;right:8px;width:32px;height:32px;background:#f97316;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;box-shadow:0 4px 10px rgba(0,0,0,.15);z-index:5;transition:transform .15s;cursor:pointer;border:none;}
 .add-btn:active{transform:scale(.88);}
@@ -680,25 +688,34 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
     <div class="pr-5 text-white/30 text-3xl">›</div>
   </div>
 
-  <div class="week-menu-banner" onclick="switchPage('week')">
-    <div class="week-menu-banner-deco">🗓</div>
-    <div class="flex-1 px-5 z-10">
-      <div class="text-white/70 text-[9px] font-black uppercase tracking-widest mb-0.5" id="weekBannerSub">Menu personnalisé</div>
-      <div class="text-white text-base font-black uppercase italic leading-tight" id="weekBannerTitle">Crée ta semaine de menus 🍽️</div>
+  <div class="banner-swipe-track" id="banner-swipe-track" onscroll="handleBannerScroll()">
+    <div class="banner-swipe-slide">
+      <div class="week-menu-banner" onclick="switchPage('week')" style="width:100%;margin-bottom:0">
+        <div class="week-menu-banner-deco">🗓</div>
+        <div class="flex-1 px-5 z-10">
+          <div class="text-white/70 text-[9px] font-black uppercase tracking-widest mb-0.5" id="weekBannerSub">Menu personnalisé</div>
+          <div class="text-white text-base font-black uppercase italic leading-tight" id="weekBannerTitle">Crée ta semaine de menus 🍽️</div>
+        </div>
+        <div class="pr-5 text-white/30 text-3xl">›</div>
+      </div>
     </div>
-    <div class="pr-5 text-white/30 text-3xl">›</div>
+    <div class="banner-swipe-slide">
+      <button onclick="openCatalogueModal()" class="w-full flex items-center justify-between bg-white border border-slate-100 rounded-[1.6rem] shadow-sm px-4 active:scale-[.98] transition-transform" style="border:1.5px solid var(--border);background:var(--card);margin-bottom:0">
+        <span class="flex items-center gap-3">
+          <span id="catalogue-preview" class="catalogue-preview-stack"></span>
+          <span class="text-left">
+            <span class="block font-[900] text-sm uppercase italic" style="color:var(--text)" id="catalogueTitle">Voir tout le catalogue</span>
+            <span class="block text-[10px] font-bold" style="color:var(--text2)">Toutes les recettes, par catégorie</span>
+          </span>
+        </span>
+        <span class="text-orange-500 text-2xl">›</span>
+      </button>
+    </div>
   </div>
-
-  <button onclick="openCatalogueModal()" class="w-full flex items-center justify-between bg-white border border-slate-100 rounded-[1.8rem] shadow-sm px-4 py-3 active:scale-[.98] transition-transform" style="border:1.5px solid var(--border);background:var(--card)">
-    <span class="flex items-center gap-3">
-      <span id="catalogue-preview" class="catalogue-preview-stack"></span>
-      <span class="text-left">
-        <span class="block font-[900] text-sm uppercase italic" style="color:var(--text)" id="catalogueTitle">Voir tout le catalogue</span>
-        <span class="block text-[10px] font-bold" style="color:var(--text2)">Toutes les recettes, par catégorie</span>
-      </span>
-    </span>
-    <span class="text-orange-500 text-2xl">›</span>
-  </button>
+  <div class="banner-swipe-dots" id="banner-swipe-dots">
+    <button class="dot active" onclick="jumpToBanner(0)" aria-label="Créer ta semaine"></button>
+    <button class="dot" onclick="jumpToBanner(1)" aria-label="Catalogue"></button>
+  </div>
 </section>
 
 <section id="page-week" class="page" role="tabpanel" aria-label="Semaine">
@@ -944,6 +961,10 @@ const DAYS=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
 let recipes=[],shuffledRecipes=[];
 let weeklyFeaturedId=null;
 let cart=[],homeCart=[],extraItems=[];
+// Jour d'origine (Lundi, Mardi...) de chaque recette ajoutée via "Créer ta semaine" — permet de
+// regrouper la page Cuisiner par jour au lieu d'une liste mélangée. Une recette ajoutée
+// autrement (fiche recette, swipe, catalogue) n'a pas d'entrée ici, et tombe dans "Autres".
+let cartDayTags={};
 let checkedItems=new Set(),manualQtys={};
 // Recettes du panier déjà "trouvées" (Tout trouvé) : leurs ingrédients ne
 // réapparaissent plus dans Courses tant qu'on ne les rajoute/relance pas —
@@ -1330,6 +1351,7 @@ function save(){
   localStorage.setItem('holli_servings',servings);
   localStorage.setItem('holli_last_bought',JSON.stringify(itemLastBought));
   localStorage.setItem('holli_purchase_history',JSON.stringify(itemPurchaseHistory));
+  localStorage.setItem('holli_cart_daytags',JSON.stringify(cartDayTags));
   localStorage.setItem('holli_favorites',JSON.stringify([...favorites]));
   localStorage.setItem('holli_week_menu',JSON.stringify(weekMenu));
   localStorage.setItem('holli_week_count',weekCount);
@@ -1452,6 +1474,7 @@ async function init(){
   servings=parseInt(localStorage.getItem('holli_servings'))||2;
   itemLastBought=safeJSON('holli_last_bought',{});
   itemPurchaseHistory=safeJSON('holli_purchase_history',{});
+  cartDayTags=safeJSON('holli_cart_daytags',{});
   favorites=new Set(safeJSON('holli_favorites',[]));
   weekMenu=safeJSON('holli_week_menu',[]);
   // Migration ancien format ({day,recipeId}) -> nouveau ({day,recipes:{entree,plat,dessert}})
@@ -1765,6 +1788,15 @@ function putWeeklyFeaturedFirst(){
   shuffledRecipes=shuffledRecipes.filter(r=>r.id!==featured.id);
   shuffledRecipes.unshift(featured);
   curIdx=0;
+}
+function handleBannerScroll(){
+  const track=document.getElementById('banner-swipe-track');if(!track)return;
+  const idx=Math.round(track.scrollLeft/track.clientWidth);
+  document.querySelectorAll('#banner-swipe-dots .dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+}
+function jumpToBanner(idx){
+  const track=document.getElementById('banner-swipe-track');if(!track)return;
+  track.scrollTo({left:idx*track.clientWidth,behavior:'smooth'});
 }
 function renderCataloguePreview(){
   const el=document.getElementById('catalogue-preview');if(!el||!recipes.length)return;
@@ -2196,9 +2228,10 @@ function addAllWeekToCart(){
     COURSES.forEach(c=>{
       if(!weekCourses.has(c.key))return;
       const rid=item.recipes[c.key];
-      if(rid!==null){const r=recipes.find(x=>x.id===rid);if(r){addToCart(r);count++;}}
+      if(rid!==null){const r=recipes.find(x=>x.id===rid);if(r){addToCart(r);cartDayTags[r.id]=item.day;count++;}}
     });
   });
+  save();
   showToast(`🛒 ${count} recette${count>1?'s':''} ajoutée${count>1?'s':''} au panier !`);
 }
 let weekPickerDayIdx=null,weekPickerCourse=null;
@@ -2284,7 +2317,7 @@ function renderWeekBudget(){
 
 function addToCart(r){if(!r)return;if(!cart.find(x=>x.n===r.n)){cart.push(r);resetRecipeChecked(r);save();showToast(`✓ ${r.n} ajouté !`);}}
 function handleAddRecipe(id){const r=recipes.find(x=>x.id==id);if(!r)return;if(cart.find(x=>x.n===r.n)){if(confirm(`"${r.n}" est déjà dans le panier. Réinitialiser ?`))resetRecipeChecked(r);}else addToCart(r);}
-function removeFromCart(name){cart=cart.filter(r=>r.n!==name);save();renderCart();renderCooking();}
+function removeFromCart(name){cart.filter(r=>r.n===name).forEach(r=>{delete cartDayTags[r.id];});cart=cart.filter(r=>r.n!==name);save();renderCart();renderCooking();}
 function resetRecipeChecked(recipe){recipe.ing.split(',').forEach(l=>{const p=parseIng(l);checkedItems.delete(normName(p.name));});shoppedRecipeNames.delete(recipe.n);localStorage.setItem('holli_checked',JSON.stringify([...checkedItems]));localStorage.setItem('holli_shopped',JSON.stringify([...shoppedRecipeNames]));pushToFirestore();if(document.getElementById('page-cart').classList.contains('active'))renderCart();}
 function openAddItem(){document.getElementById('add-item-modal').style.display='block';setTimeout(()=>document.getElementById('add-item-input').focus(),100);}
 function closeAddItem(){document.getElementById('add-item-modal').style.display='none';document.getElementById('add-item-input').value='';}
@@ -2413,10 +2446,27 @@ function setCookTab(tab){
 function renderCooking(){
   document.getElementById('cook-tab-current').innerText=`🍳 Recettes (${cart.length})`;
   if(cart.length===0){document.getElementById('cook-grid').innerHTML=`<div class="text-center py-20 opacity-25"><div class="text-6xl mb-4">👨‍🍳</div><div class="font-black text-lg uppercase">Aucune recette</div><div class="text-sm font-bold mt-1 text-slate-400">Ajoute des recettes depuis le menu</div></div>`;return;}
-  document.getElementById('cook-grid').innerHTML=`
-    <button onclick="cookAll()" class="cook-all-btn mb-4"><span class="em">🔥</span><span>Cuisiner tous les plats</span><span class="em">🍽️</span></button>
-    ${cart.map((r,idx)=>`
-      <div class="bg-white rounded-[2.2rem] border p-4 flex gap-4 items-center mb-2" style="animation:slideUp .4s ease-out ${idx*.08}s both">
+  // Regroupe par jour (Lundi, Mardi...) quand les recettes viennent de "Créer ta semaine",
+  // pour suivre facilement où on en est plutôt qu'une liste mélangée — une recette ajoutée
+  // autrement (fiche recette, swipe...) tombe dans "Autres recettes".
+  const groups={},order=[];
+  cart.forEach(r=>{
+    const label=cartDayTags[r.id]||'Autres recettes';
+    if(!groups[label]){groups[label]=[];order.push(label);}
+    groups[label].push(r);
+  });
+  order.sort((a,b)=>{
+    const ia=DAYS.indexOf(a),ib=DAYS.indexOf(b);
+    if(ia===-1&&ib===-1)return 0;
+    if(ia===-1)return 1;
+    if(ib===-1)return -1;
+    return ia-ib;
+  });
+  const showHeaders=order.length>1;
+  let animIdx=0;
+  const cardHTML=r=>{
+    const idx=cart.indexOf(r),anim=animIdx++;
+    return`<div class="bg-white rounded-[2.2rem] border p-4 flex gap-4 items-center mb-2" style="animation:slideUp .4s ease-out ${anim*.08}s both">
         <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0" loading="lazy" decoding="async">
         <div class="flex-1 min-w-0">
           <h3 class="font-black uppercase text-[11px] italic text-slate-800 leading-tight">${r.n}${allergyBadgeHTML(r,'inline')}</h3>
@@ -2426,7 +2476,12 @@ function renderCooking(){
           <button onclick="openCookModal(${idx})" class="bg-slate-900 text-white px-3 py-2 rounded-full font-black text-[9px] uppercase border-none cursor-pointer">Cuisiner →</button>
           <button onclick="removeFromCart('${jsAttr(r.n)}');event.stopPropagation();" class="text-red-400 bg-red-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase border-none cursor-pointer">Retirer</button>
         </div>
-      </div>`).join('')}`;
+      </div>`;
+  };
+  const groupsHTML=order.map(label=>`${showHeaders?`<div class="section-title">${label}</div>`:''}${groups[label].map(cardHTML).join('')}`).join('');
+  document.getElementById('cook-grid').innerHTML=`
+    <button onclick="cookAll()" class="cook-all-btn mb-4"><span class="em">🔥</span><span>Cuisiner tous les plats</span><span class="em">🍽️</span></button>
+    ${groupsHTML}`;
 }
 function renderOldRecipes(){
   if(!oldRecipes.length){document.getElementById('old-recipes-grid').innerHTML=`<div class="text-center py-16 opacity-25"><div class="text-5xl mb-4">📚</div><div class="font-black text-base uppercase">Aucune ancienne recette</div><div class="text-sm font-bold mt-1">Les recettes terminées apparaissent ici</div></div>`;return;}
@@ -2541,7 +2596,7 @@ function toggleTimer(stepIdx,totalSecs){
 }
 function finishCooking(){
   if(navigator.vibrate)navigator.vibrate([200,100,200,100,400]);
-  if(cookRecipe){const toSave={...cookRecipe,cookedAt:new Date().toISOString()};oldRecipes.push(toSave);if(oldRecipes.length>50)oldRecipes.shift();const i=cart.findIndex(r=>r.n===cookRecipe.n);if(i!==-1)cart.splice(i,1);save();resetRecipeChecked(cookRecipe);}
+  if(cookRecipe){const toSave={...cookRecipe,cookedAt:new Date().toISOString()};oldRecipes.push(toSave);if(oldRecipes.length>50)oldRecipes.shift();delete cartDayTags[cookRecipe.id];const i=cart.findIndex(r=>r.n===cookRecipe.n);if(i!==-1)cart.splice(i,1);save();resetRecipeChecked(cookRecipe);}
   // "Cuisiner tous les plats" : on enchaîne sur la recette suivante du panier
   // au lieu de juste fermer — sinon le bouton ne cuisinait en réalité que la
   // toute première recette malgré son nom.
@@ -3474,7 +3529,7 @@ function pushToFirestore(){
       shoppedRecipeNames:[...shoppedRecipeNames],
       favorites:[...favorites],
       weekMenu,weekCount,oldRecipes,
-      itemLastBought,itemPurchaseHistory,
+      itemLastBought,itemPurchaseHistory,cartDayTags,
       servings,
       updatedAt:firebase.firestore.FieldValue.serverTimestamp()
     };
@@ -3499,6 +3554,7 @@ function applyHouseholdSnapshot(d){
   oldRecipes=d.oldRecipes||[];
   itemLastBought=d.itemLastBought||{};
   itemPurchaseHistory=d.itemPurchaseHistory||{};
+  cartDayTags=d.cartDayTags||{};
   if(d.servings)servings=d.servings;
   renderAllAfterSync();
 }
