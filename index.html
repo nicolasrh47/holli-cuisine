@@ -1493,6 +1493,7 @@ async function init(){
   await loadRecipes();
   shuffledRecipes=shuffleWithSeason(safeRecipes());
   putWeeklyFeaturedFirst();
+  applySeasonalTheme();
   renderCard();renderCataloguePreview();
   if(weekMenu.length===0)generateWeekMenu();
   renderMaison();updateUI();initTouchSystem();checkRecurringItems();updateAdBanner();
@@ -1593,7 +1594,56 @@ async function fetchRecipesFromSheet(cacheKey,updateLive){
 
 function getSeason(){const m=new Date().getMonth();if(m>=2&&m<=4)return'printemps';if(m>=5&&m<=7)return'ete';if(m>=8&&m<=10)return'automne';return'hiver';}
 function seasonWeight(r){const s=getSeason(),n=r.n.toLowerCase(),c=r.cat.toLowerCase();if(s==='printemps'&&(n.includes('asperge')||n.includes('fraise')||c.includes('légume')))return 2;if(s==='ete'&&(n.includes('tomate')||n.includes('salade')))return 2;if(s==='automne'&&(n.includes('potiron')||n.includes('champignon')))return 2;if(s==='hiver'&&(n.includes('soupe')||n.includes('tartiflette')||n.includes('fondue')))return 2;return 1;}
-function shuffleWithSeason(arr){let pool=[];arr.forEach(r=>{for(let i=0;i<seasonWeight(r);i++)pool.push(r);});for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}return pool;}
+// Gros événements (Halloween, Noël, Chandeleur, Saint-Valentin) : fenêtres de dates fixes,
+// volontairement sans Pâques (date mobile, calcul plus risqué à faire juste). Un événement actif
+// prend le pas sur la simple saison météo, aussi bien pour le thème visuel que pour la mise en
+// avant des recettes.
+function getActiveEvent(){
+  const now=new Date(),m=now.getMonth(),d=now.getDate();
+  if(m===9&&d>=15)return'halloween'; // 15-31 octobre
+  if(m===11&&d<=25)return'noel'; // 1er-25 décembre
+  if(m===1&&d<=2)return'chandeleur'; // 1er-2 février
+  if(m===1&&d>=10&&d<=14)return'valentin'; // 10-14 février
+  return null;
+}
+const EVENT_KEYWORDS={
+  halloween:['potiron','citrouille','araignee','fantome','effrayant','sorciere','momie','monstre'],
+  noel:['buche','dinde','marron','foie gras','sapin','pain depice','papillote','chapon','huitre','saint-jacques'],
+  chandeleur:['crepe','galette de sarrasin'],
+  valentin:['coeur','pour deux','duo','champagne','romantique']
+};
+function eventWeight(r,event){
+  if(!event)return 1;
+  const words=EVENT_KEYWORDS[event];if(!words)return 1;
+  const n=normalizeSearchText(r.n);
+  return words.some(w=>containsFoodWord(n,w))?4:1;
+}
+const SEASON_THEME={
+  printemps:{emoji:'🌸',gradient:'linear-gradient(135deg,#fb7185 0%,#f472b6 50%,#c026d3 100%)',badge:'🌸 Recette de saison'},
+  ete:{emoji:'☀️',gradient:'linear-gradient(135deg,#fbbf24 0%,#f97316 50%,#ea580c 100%)',badge:'☀️ Recette de saison'},
+  automne:{emoji:'🍂',gradient:'linear-gradient(135deg,#d97706 0%,#b45309 50%,#78350f 100%)',badge:'🍂 Recette de saison'},
+  hiver:{emoji:'☃️',gradient:'linear-gradient(135deg,#0ea5e9 0%,#0369a1 50%,#1e3a8a 100%)',badge:'☃️ Recette de saison'}
+};
+const EVENT_THEME={
+  halloween:{emoji:'🎃',gradient:'linear-gradient(135deg,#7c3aed 0%,#c2410c 55%,#ea580c 100%)',badge:'🎃 Recette d\'Halloween'},
+  noel:{emoji:'🎄',gradient:'linear-gradient(135deg,#b91c1c 0%,#166534 60%,#15803d 100%)',badge:'🎄 Recette de Noël'},
+  chandeleur:{emoji:'🥞',gradient:'linear-gradient(135deg,#f59e0b 0%,#d97706 50%,#b45309 100%)',badge:'🥞 Recette de la Chandeleur'},
+  valentin:{emoji:'💝',gradient:'linear-gradient(135deg,#db2777 0%,#be185d 50%,#831843 100%)',badge:'💝 Recette de Saint-Valentin'}
+};
+function currentTheme(){const event=getActiveEvent();return event?EVENT_THEME[event]:SEASON_THEME[getSeason()];}
+// Applique juste le dégradé de la bannière, l'emoji décoratif et le texte du badge "recette
+// en avant" — pas de nouvel élément DOM, pas d'animation : léger par design (cf. discussion
+// sur les décors saisonniers).
+function applySeasonalTheme(){
+  const theme=currentTheme();if(!theme)return;
+  const banner=document.querySelector('.week-menu-banner');
+  if(banner)banner.style.background=theme.gradient;
+  const deco=document.querySelector('.week-menu-banner-deco');
+  if(deco)deco.innerText=theme.emoji;
+  const badge=document.getElementById('seasonal-badge');
+  if(badge&&theme.badge)badge.innerHTML=theme.badge;
+}
+function shuffleWithSeason(arr){const event=getActiveEvent();let pool=[];arr.forEach(r=>{const w=event?eventWeight(r,event):seasonWeight(r);for(let i=0;i<w;i++)pool.push(r);});for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}return pool;}
 
 function toggleFav(id,e){
   if(e){e.stopPropagation();e.preventDefault();}
@@ -1777,8 +1827,9 @@ function pickWeeklyFeatured(){
   if(!pool0.length)return null;
   const now=new Date(),oj=new Date(now.getFullYear(),0,1);
   const wk=Math.ceil((((now-oj)/86400000)+oj.getDay()+1)/7);
-  const seasonal=pool0.filter(r=>seasonWeight(r)===2);
-  const pool=seasonal.length?seasonal:pool0;
+  const event=getActiveEvent();
+  const matched=event?pool0.filter(r=>eventWeight(r,event)>1):pool0.filter(r=>seasonWeight(r)===2);
+  const pool=matched.length?matched:pool0;
   return pool[wk%pool.length]||null;
 }
 function putWeeklyFeaturedFirst(){
