@@ -1308,6 +1308,37 @@ function scaleQuantitiesInText(text,ratio){
   if(!text||ratio===1)return text;
   return text.replace(PREP_SCALE_RE,(match,num,sep,unit)=>`${fmtNum(parseFloat(num.replace(',','.'))*ratio)}${sep}${unit}`);
 }
+// Beaucoup d'étapes citent un ingrédient sans jamais redonner sa quantité ("ajoutez le
+// beurre", "versez le lait") — pour la lire il fallait remonter à la liste d'ingrédients
+// en haut de la page. On ajoute la quantité entre parenthèses à la première mention de
+// chaque ingrédient dans les étapes, sauf si un nombre est déjà écrit juste à côté (la
+// quantité est alors déjà visible, pas la peine de la répéter) ou si elle a déjà été
+// ajoutée à une étape précédente.
+const FR_LETTER_CLASS='a-zA-ZàâäéèêëïîôöùûüÿñçÀÂÄÉÈÊËÏÎÔÖÙÛÜŸÑÇœŒæÆ';
+function annotateStepQuantities(text,ingsParsed,usedSet){
+  if(!text||!ingsParsed||!ingsParsed.length)return text;
+  const sorted=[...ingsParsed].sort((a,b)=>(b.name||'').length-(a.name||'').length);
+  const found=[];
+  for(const ing of sorted){
+    if(!ing.name||ing.name.length<3||usedSet.has(ing.key))continue;
+    const qtyTxt=isSeasoningLine(ing.name,ing.qty)?'1 pincée':(ing.adjustedQty!==null?fmtQtyDetailed(ing.adjustedQty,ing.unit):'');
+    if(!qtyTxt)continue;
+    const escaped=ing.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    let re;
+    try{re=new RegExp(`(?<![${FR_LETTER_CLASS}])${escaped}s?(?![${FR_LETTER_CLASS}])`,'i');}catch(e){continue;}
+    const m=re.exec(text);
+    if(!m)continue;
+    usedSet.add(ing.key);
+    const nearby=text.slice(Math.max(0,m.index-25),Math.min(text.length,m.index+m[0].length+10));
+    if(/\d/.test(nearby))continue; // quantité déjà visible juste à côté
+    found.push({end:m.index+m[0].length,qtyTxt});
+  }
+  if(!found.length)return text;
+  found.sort((a,b)=>b.end-a.end);
+  let result=text;
+  for(const f of found)result=`${result.slice(0,f.end)} <span class="text-orange-500 font-black">(${f.qtyTxt})</span>${result.slice(f.end)}`;
+  return result;
+}
 function buildMerged(subset){
   // Le ratio n'est plus le même pour toutes les recettes du panier : une tarte/quiche/gâteau
   // utilise son propre multiplicateur "à la pièce" (recipeRatio), pas le nombre de personnes du
@@ -1912,7 +1943,9 @@ function showDetails(id){
   const persLabel=wb?batchLabel(r):`${servings} PERS.`;
   const minusAction=wb?`adjustBatch(${r.id},-1)`:`updateServings(-1)`;
   const plusAction=wb?`adjustBatch(${r.id},1)`:`updateServings(1)`;
-  const ings=r.ing.split(',').map(l=>{const p=parseIng(l);const aq=p.qty!==null?rnd(p.qty*ratio):null;const qtyTxt=isSeasoningLine(p.name,p.qty)?'1 pincée':(aq!==null?fmtQtyDetailed(aq,p.unit):'');return`<p class="mb-2 flex justify-between gap-2"><span>○ ${p.name||l.trim()}</span><span class="text-orange-500 font-black text-xs">${qtyTxt}</span></p>`;}).join('');
+  const ingsParsed=r.ing.split(',').map(l=>{const p=parseIng(l);const aq=p.qty!==null?p.qty*ratio:null;return{...p,adjustedQty:aq,key:normName(p.name||''),raw:l.trim()};});
+  const ings=ingsParsed.map(p=>{const qtyTxt=isSeasoningLine(p.name,p.qty)?'1 pincée':(p.adjustedQty!==null?fmtQtyDetailed(p.adjustedQty,p.unit):'');return`<p class="mb-2 flex justify-between gap-2"><span>○ ${p.name||p.raw}</span><span class="text-orange-500 font-black text-xs">${qtyTxt}</span></p>`;}).join('');
+  const detailQtyUsedSet=new Set();
   document.getElementById('modal-content').innerHTML=`
     <div class="relative mb-5">
       <img src="${r.i}" alt="${r.n}" class="w-full h-56 object-cover rounded-[2.5rem] shadow-xl border-4 border-white">
@@ -1934,7 +1967,7 @@ function showDetails(id){
     <p class="text-[9px] font-black text-orange-500 uppercase mb-1" id="detail-ing-label">Ingrédients · ${wb?batchLabel(r):servings+' pers.'}</p>
     <div class="bg-orange-50 p-5 rounded-[2rem] mb-5 font-bold text-slate-700 text-sm" id="detail-ing-list">${ings}</div>
     <p class="text-[9px] font-black text-orange-500 uppercase mb-2">Préparation</p>
-    <div class="space-y-3 mb-5" id="detail-steps-list">${splitPrepSteps(r.prep).map((s,i)=>`<div class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 rounded-full bg-slate-900 text-white text-[11px] font-black flex items-center justify-center">${i+1}</span><p class="text-sm font-semibold text-slate-700 leading-snug pt-0.5">${scaleQuantitiesInText(s,ratio)}</p></div>`).join('')}</div>
+    <div class="space-y-3 mb-5" id="detail-steps-list">${splitPrepSteps(r.prep).map((s,i)=>`<div class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 rounded-full bg-slate-900 text-white text-[11px] font-black flex items-center justify-center">${i+1}</span><p class="text-sm font-semibold text-slate-700 leading-snug pt-0.5">${annotateStepQuantities(scaleQuantitiesInText(s,ratio),ingsParsed,detailQtyUsedSet)}</p></div>`).join('')}</div>
     <button onclick="addToCart(recipes.find(x=>x.id==${id}));closeDetails();" class="w-full bg-orange-500 text-white p-5 rounded-full font-black uppercase shadow-lg border-none cursor-pointer">Ajouter au panier</button>`;
   document.getElementById('detail-modal').style.display='block';
 }
@@ -1949,9 +1982,11 @@ function refreshDetailModal(id){
   const persLabel=wb?batchLabel(r):`${servings} PERS.`;
   const el=document.getElementById('detail-pers-disp');if(el)el.innerText=persLabel;
   const lbl=document.getElementById('detail-ing-label');if(lbl)lbl.innerText=`Ingrédients · ${wb?batchLabel(r):servings+' pers.'}`;
-  const ings=r.ing.split(',').map(l=>{const p=parseIng(l);const aq=p.qty!==null?rnd(p.qty*ratio):null;const qtyTxt=isSeasoningLine(p.name,p.qty)?'1 pincée':(aq!==null?fmtQtyDetailed(aq,p.unit):'');return`<p class="mb-2 flex justify-between gap-2"><span>○ ${p.name||l.trim()}</span><span class="text-orange-500 font-black text-xs">${qtyTxt}</span></p>`;}).join('');
+  const ingsParsed=r.ing.split(',').map(l=>{const p=parseIng(l);const aq=p.qty!==null?p.qty*ratio:null;return{...p,adjustedQty:aq,key:normName(p.name||''),raw:l.trim()};});
+  const ings=ingsParsed.map(p=>{const qtyTxt=isSeasoningLine(p.name,p.qty)?'1 pincée':(p.adjustedQty!==null?fmtQtyDetailed(p.adjustedQty,p.unit):'');return`<p class="mb-2 flex justify-between gap-2"><span>○ ${p.name||p.raw}</span><span class="text-orange-500 font-black text-xs">${qtyTxt}</span></p>`;}).join('');
   const il=document.getElementById('detail-ing-list');if(il)il.innerHTML=ings;
-  const steps=splitPrepSteps(r.prep).map((s,i)=>`<div class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 rounded-full bg-slate-900 text-white text-[11px] font-black flex items-center justify-center">${i+1}</span><p class="text-sm font-semibold text-slate-700 leading-snug pt-0.5">${scaleQuantitiesInText(s,ratio)}</p></div>`).join('');
+  const detailQtyUsedSet=new Set();
+  const steps=splitPrepSteps(r.prep).map((s,i)=>`<div class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 rounded-full bg-slate-900 text-white text-[11px] font-black flex items-center justify-center">${i+1}</span><p class="text-sm font-semibold text-slate-700 leading-snug pt-0.5">${annotateStepQuantities(scaleQuantitiesInText(s,ratio),ingsParsed,detailQtyUsedSet)}</p></div>`).join('');
   const sl=document.getElementById('detail-steps-list');if(sl)sl.innerHTML=steps;
 }
 function closeDetails(){document.getElementById('detail-modal').style.display='none';}
@@ -2566,7 +2601,7 @@ function renderCookContent(){
   const wb=isWholeBatchRecipe(cookRecipe);
   const ratio=recipeRatio(cookRecipe);
   document.getElementById('ck-pers-disp').innerText=wb?batchLabel(cookRecipe):`${servings} PERS.`;
-  const ings=cookRecipe.ing.split(',').map(l=>{const p=parseIng(l);const aq=p.qty!==null?rnd(p.qty*ratio):null;return{...p,adjustedQty:aq,key:normName(p.name)};}).filter(i=>i.name);
+  const ings=cookRecipe.ing.split(',').map(l=>{const p=parseIng(l);const aq=p.qty!==null?p.qty*ratio:null;return{...p,adjustedQty:aq,key:normName(p.name)};}).filter(i=>i.name);
   const usedCount=ings.filter(i=>cookIngChecked.has(i.key)).length;
   document.getElementById('ck-ing-count-label').innerText=`${usedCount}/${ings.length} prêts`;
   document.getElementById('ck-ing-pb').style.width=ings.length?`${Math.round(usedCount/ings.length*100)}%`:'0%';
@@ -2577,8 +2612,9 @@ function renderCookContent(){
     return`<div class="ck-ing-item ${used?'used':''}" onclick="toggleCookIng('${sk}')"><div class="ck-ing-chk"></div><div class="ck-ing-name capitalize">${ing.name}</div>${qty?`<div class="ck-ing-qty">${qty}</div>`:''}</div>`;
   }).join('');
   const steps=splitPrepSteps(cookRecipe.prep);
+  const qtyUsedSet=new Set();
   document.getElementById('ck-steps-list').innerHTML=steps.map((s,i)=>{
-    const text=scaleQuantitiesInText(s.trim(),ratio);
+    const text=annotateStepQuantities(scaleQuantitiesInText(s.trim(),ratio),ings,qtyUsedSet);
     const isDone=cookStepsDone.has(i);
     const isFirst=!isDone&&[...Array(i).keys()].every(j=>cookStepsDone.has(j));
     const timerSecs=detectTimer(text);
