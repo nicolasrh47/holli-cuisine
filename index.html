@@ -1619,23 +1619,36 @@ async function fetchRecipesFromSheet(cacheKey,updateLive){
 
 function getSeason(){const m=new Date().getMonth();if(m>=2&&m<=4)return'printemps';if(m>=5&&m<=7)return'ete';if(m>=8&&m<=10)return'automne';return'hiver';}
 function seasonWeight(r){const s=getSeason(),n=r.n.toLowerCase(),c=r.cat.toLowerCase();if(s==='printemps'&&(n.includes('asperge')||n.includes('fraise')||c.includes('légume')))return 2;if(s==='ete'&&(n.includes('tomate')||n.includes('salade')))return 2;if(s==='automne'&&(n.includes('potiron')||n.includes('champignon')))return 2;if(s==='hiver'&&(n.includes('soupe')||n.includes('tartiflette')||n.includes('fondue')))return 2;return 1;}
-// Gros événements (Halloween, Noël, Chandeleur, Saint-Valentin) : fenêtres de dates fixes,
-// volontairement sans Pâques (date mobile, calcul plus risqué à faire juste). Un événement actif
-// prend le pas sur la simple saison météo, aussi bien pour le thème visuel que pour la mise en
-// avant des recettes.
+// Gros événements (Halloween, Noël, Chandeleur, Saint-Valentin, Pâques) : fenêtres de dates
+// autour de chacun. Un événement actif prend le pas sur la simple saison météo, aussi bien pour
+// le thème visuel que pour la mise en avant des recettes.
+// Pâques est une fête mobile (dépend du calendrier lunaire) : calculée via l'algorithme du
+// comput grégorien (Meeus/Jones/Butcher), valide pour toute année du calendrier grégorien.
+function getEasterSunday(year){
+  const a=year%19,b=Math.floor(year/100),c=year%100,d=Math.floor(b/4),e=b%4,
+    f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,
+    i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+    month=Math.floor((h+l-7*m+114)/31),day=((h+l-7*m+114)%31)+1;
+  return new Date(year,month-1,day);
+}
 function getActiveEvent(){
   const now=new Date(),m=now.getMonth(),d=now.getDate();
   if(m===9&&d>=15)return'halloween'; // 15-31 octobre
   if(m===11&&d<=25)return'noel'; // 1er-25 décembre
   if(m===1&&d<=2)return'chandeleur'; // 1er-2 février
   if(m===1&&d>=10&&d<=14)return'valentin'; // 10-14 février
+  const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const easter=getEasterSunday(now.getFullYear());
+  const diffDays=Math.round((today-easter)/86400000);
+  if(diffDays>=-9&&diffDays<=1)return'paques'; // du dimanche des Rameaux au lundi de Pâques
   return null;
 }
 const EVENT_KEYWORDS={
   halloween:['potiron','citrouille','araignee','fantome','effrayant','sorciere','momie','monstre'],
   noel:['buche','dinde','marron','foie gras','sapin','pain depice','papillote','chapon','huitre','saint-jacques'],
   chandeleur:['crepe','galette de sarrasin'],
-  valentin:['coeur','pour deux','duo','champagne','romantique']
+  valentin:['coeur','pour deux','duo','champagne','romantique'],
+  paques:['paques','agneau pascal','agneau de paques','nid de paques','chocolat de paques','lapin de paques']
 };
 function eventWeight(r,event){
   if(!event)return 1;
@@ -1653,15 +1666,16 @@ const EVENT_THEME={
   halloween:{emoji:'🎃',gradient:'linear-gradient(135deg,#7c3aed 0%,#c2410c 55%,#ea580c 100%)',badge:'🎃 Recette d\'Halloween'},
   noel:{emoji:'🎄',gradient:'linear-gradient(135deg,#b91c1c 0%,#166534 60%,#15803d 100%)',badge:'🎄 Recette de Noël'},
   chandeleur:{emoji:'🥞',gradient:'linear-gradient(135deg,#f59e0b 0%,#d97706 50%,#b45309 100%)',badge:'🥞 Recette de la Chandeleur'},
-  valentin:{emoji:'💝',gradient:'linear-gradient(135deg,#db2777 0%,#be185d 50%,#831843 100%)',badge:'💝 Recette de Saint-Valentin'}
+  valentin:{emoji:'💝',gradient:'linear-gradient(135deg,#db2777 0%,#be185d 50%,#831843 100%)',badge:'💝 Recette de Saint-Valentin'},
+  paques:{emoji:'🐰',gradient:'linear-gradient(135deg,#fbbf24 0%,#a3e635 50%,#38bdf8 100%)',badge:'🐰 Recette de Pâques'}
 };
 function currentTheme(){const event=getActiveEvent();return event?EVENT_THEME[event]:SEASON_THEME[getSeason()];}
 // Particules qui tombent en fond sur la page d'accueil (flocons l'hiver, feuilles l'automne,
 // pétales au printemps, chauves-souris à Halloween...) — en CSS pur (@keyframes), jamais en JS
 // par frame, pour rester léger. Désactivées automatiquement si l'utilisateur préfère moins
 // d'animations (prefers-reduced-motion).
-const SEASON_PARTICLES={printemps:['🌸','🌷'],ete:['✨'],automne:['🍂','🍁'],hiver:['❄️']};
-const EVENT_PARTICLES={halloween:['🦇','🕸️'],noel:['❄️','✨'],chandeleur:[],valentin:['💕','💗']};
+const SEASON_PARTICLES={printemps:['🌸','🌷'],ete:['☀️','🍉','🍦'],automne:['🍂','🍁'],hiver:['❄️']};
+const EVENT_PARTICLES={halloween:['🦇','🕸️'],noel:['❄️','✨'],chandeleur:[],valentin:['💕','💗'],paques:['🐰','🥚','🐣']};
 function renderSeasonFx(){
   const el=document.getElementById('season-fx');if(!el)return;
   const event=getActiveEvent();
