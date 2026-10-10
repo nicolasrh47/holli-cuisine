@@ -145,6 +145,17 @@ body.dark .course-filter-btn.active{background:#f97316;border-color:#f97316;colo
 .week-menu-banner:active{transform:scale(.98);}
 .week-menu-banner-deco{position:absolute;right:-20px;top:-20px;font-size:100px;opacity:.15;transform:rotate(15deg);pointer-events:none;}
 
+.season-fx{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:1;}
+.season-fx-particle{position:absolute;top:-10vh;will-change:transform;animation:season-fall linear infinite;opacity:.8;}
+@keyframes season-fall{
+  0%{transform:translateY(0) translateX(0) rotate(0deg);}
+  50%{transform:translateY(55vh) translateX(var(--drift,15px)) rotate(180deg);}
+  100%{transform:translateY(115vh) translateX(0) rotate(360deg);}
+}
+@media (prefers-reduced-motion: reduce){
+  .season-fx-particle{animation:none;display:none;}
+}
+
 .recipe-card{position:relative;}
 .add-btn{position:absolute;top:8px;right:8px;width:32px;height:32px;background:#f97316;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;box-shadow:0 4px 10px rgba(0,0,0,.15);z-index:5;transition:transform .15s;cursor:pointer;border:none;}
 .add-btn:active{transform:scale(.88);}
@@ -640,6 +651,7 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
 </header>
 
 <section id="page-home" class="page active" role="tabpanel" aria-label="Menu">
+  <div id="season-fx" class="season-fx" aria-hidden="true"></div>
   <div id="ad-banner" onclick="openPremiumModal()" style="display:none">
     <span class="ad-banner-tag">Pub</span>
     <span class="ad-banner-text">👀 Retire la pub et débloque tout avec Premium</span>
@@ -1644,9 +1656,32 @@ const EVENT_THEME={
   valentin:{emoji:'💝',gradient:'linear-gradient(135deg,#db2777 0%,#be185d 50%,#831843 100%)',badge:'💝 Recette de Saint-Valentin'}
 };
 function currentTheme(){const event=getActiveEvent();return event?EVENT_THEME[event]:SEASON_THEME[getSeason()];}
-// Applique juste le dégradé de la bannière, l'emoji décoratif et le texte du badge "recette
-// en avant" — pas de nouvel élément DOM, pas d'animation : léger par design (cf. discussion
-// sur les décors saisonniers).
+// Particules qui tombent en fond sur la page d'accueil (flocons l'hiver, feuilles l'automne,
+// pétales au printemps, chauves-souris à Halloween...) — en CSS pur (@keyframes), jamais en JS
+// par frame, pour rester léger. Désactivées automatiquement si l'utilisateur préfère moins
+// d'animations (prefers-reduced-motion).
+const SEASON_PARTICLES={printemps:['🌸','🌷'],ete:['✨'],automne:['🍂','🍁'],hiver:['❄️']};
+const EVENT_PARTICLES={halloween:['🦇','🕸️'],noel:['❄️','✨'],chandeleur:[],valentin:['💕','💗']};
+function renderSeasonFx(){
+  const el=document.getElementById('season-fx');if(!el)return;
+  const event=getActiveEvent();
+  const chars=event?EVENT_PARTICLES[event]:SEASON_PARTICLES[getSeason()];
+  if(!chars||!chars.length){el.innerHTML='';return;}
+  const COUNT=14;
+  let html='';
+  for(let i=0;i<COUNT;i++){
+    const ch=chars[i%chars.length];
+    const left=Math.round(Math.random()*100);
+    const duration=(9+Math.random()*7).toFixed(1);
+    const delay=(Math.random()*-16).toFixed(1);
+    const size=(14+Math.random()*12).toFixed(0);
+    const drift=Math.round((Math.random()-0.5)*60);
+    html+=`<span class="season-fx-particle" style="left:${left}%;font-size:${size}px;animation-duration:${duration}s;animation-delay:${delay}s;--drift:${drift}px">${ch}</span>`;
+  }
+  el.innerHTML=html;
+}
+// Applique le dégradé de la bannière, l'emoji décoratif, le texte du badge "recette en avant"
+// et les particules de fond — tout reste CSS/texte, pas de logique lourde par frame.
 function applySeasonalTheme(){
   const theme=currentTheme();if(!theme)return;
   const banner=document.querySelector('.week-menu-banner');
@@ -1655,6 +1690,7 @@ function applySeasonalTheme(){
   if(deco)deco.innerText=theme.emoji;
   const badge=document.getElementById('seasonal-badge');
   if(badge&&theme.badge)badge.innerHTML=theme.badge;
+  renderSeasonFx();
 }
 function shuffleWithSeason(arr){const event=getActiveEvent();let pool=[];arr.forEach(r=>{const w=event?eventWeight(r,event):seasonWeight(r);for(let i=0;i<w;i++)pool.push(r);});for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}return pool;}
 
