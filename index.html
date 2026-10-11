@@ -2825,9 +2825,9 @@ function renderMaison(){
     const diff=(next-now)/864e5;
     return diff<=3&&diff>-7;
   });
-  document.getElementById('maison-alerts').innerHTML=dueItems.length?`<div class="maison-alert-box"><p class="maison-alert-title">⚠️ À racheter bientôt</p><div class="flex flex-wrap gap-2">${dueItems.slice(0,8).map(item=>`<button onclick="toggleHome('${jsAttr(item.n)}')" class="maison-alert-chip">${item.i} ${item.n}</button>`).join('')}</div>${dueItems.length>8?`<p class="maison-alert-more">+${dueItems.length-8} autres</p>`:''}</div>`:'';
+  document.getElementById('maison-alerts').innerHTML=dueItems.length?`<div class="maison-alert-box"><p class="maison-alert-title">⚠️ À racheter bientôt</p><div class="flex flex-wrap gap-2">${dueItems.slice(0,8).map(item=>`<button onclick="toggleHome('${jsAttr(item.n)}')" class="maison-alert-chip">${escapeHtml(item.i)} ${escapeHtml(item.n)}</button>`).join('')}</div>${dueItems.length>8?`<p class="maison-alert-more">+${dueItems.length-8} autres</p>`:''}</div>`:'';
   const freqItems=getFrequentItems().filter(item=>!homeCart.includes(item.n));
-  document.getElementById('maison-suggestions').innerHTML=freqItems.length?`<p class="text-[9px] font-black text-purple-500 uppercase mb-2">⭐ Achats fréquents</p><div class="flex flex-wrap gap-2 mb-3">${freqItems.map(item=>`<span class="suggestion-chip" onclick="toggleHome('${jsAttr(item.n)}')">${item.i} ${item.n}</span>`).join('')}</div>`:'';
+  document.getElementById('maison-suggestions').innerHTML=freqItems.length?`<p class="text-[9px] font-black text-purple-500 uppercase mb-2">⭐ Achats fréquents</p><div class="flex flex-wrap gap-2 mb-3">${freqItems.map(item=>`<span class="suggestion-chip" onclick="toggleHome('${jsAttr(item.n)}')">${escapeHtml(item.i)} ${escapeHtml(item.n)}</span>`).join('')}</div>`:'';
   let filtered=maisonItems;
   if(currentMaisonCat!=='Tous')filtered=filtered.filter(i=>i.cat===currentMaisonCat);
   if(searchTerms.length)filtered=filtered.filter(i=>searchTerms.every(t=>normalizeSearchText(i.n).includes(t)));
@@ -2879,7 +2879,7 @@ function renderMaisonGrid(filtered){
       const fl={hebdo:'freq-hebdo',mensuel:'freq-mensuel',trim:'freq-trim'}[item.freq]||'';
       const fl2={hebdo:'Hebdo',mensuel:'Mensuel',trim:'Trim.'}[item.freq]||'';
       let ec='';if(!inCart&&sl==='danger')ec='urgent';else if(!inCart&&sl==='warning')ec='needed';
-      html+=`<button onclick="toggleHome('${jsAttr(item.n)}')" class="btn-maison ${inCart?'active':''} ${ec}"><span class="text-base">${item.i}</span><span class="flex-1 text-left"><span class="block">${item.n}</span>${fl2?`<span class="freq-badge ${fl}">${fl2}</span>`:''}</span>${inCart?'<span class="text-blue-400 text-[10px]">✓</span>':''}</button>`;
+      html+=`<button onclick="toggleHome('${jsAttr(item.n)}')" class="btn-maison ${inCart?'active':''} ${ec}"><span class="text-base">${escapeHtml(item.i)}</span><span class="flex-1 text-left"><span class="block">${escapeHtml(item.n)}</span>${fl2?`<span class="freq-badge ${fl}">${fl2}</span>`:''}</span>${inCart?'<span class="text-blue-400 text-[10px]">✓</span>':''}</button>`;
     });
     html+='</div>';
   });
@@ -3234,8 +3234,8 @@ function renderOnboardRecurring(){
       const picked=onboardDraft.recurringItems.find(r=>r.name===item.n);
       const defDays=freqDays(item.freq);
       html+=`<div class="onboard-recur-item ${picked?'active':''}" onclick="toggleOnboardRecurring('${safeName}','${jsAttr(item.i)}','${jsAttr(cat)}',${defDays})">
-        <span>${item.i}</span>
-        <span class="onboard-recur-name">${item.n}</span>
+        <span>${escapeHtml(item.i)}</span>
+        <span class="onboard-recur-name">${escapeHtml(item.n)}</span>
         ${picked?'<span class="onboard-recur-check">✓</span>':''}
       </div>`;
     });
@@ -3547,8 +3547,8 @@ async function renderRecurringManager(){
       const picked=currentUser.profile.recurringItems.find(r=>r.name===item.n);
       const defDays=freqDays(item.freq);
       html+=`<div class="onboard-recur-item ${picked?'active':''}" onclick="toggleRecurringItem('${safeName}','${jsAttr(item.i)}','${jsAttr(cat)}',${defDays})">
-        <span>${item.i}</span>
-        <span class="onboard-recur-name">${item.n}</span>
+        <span>${escapeHtml(item.i)}</span>
+        <span class="onboard-recur-name">${escapeHtml(item.n)}</span>
         ${picked?'<span class="onboard-recur-check">✓</span>':''}
       </div>`;
     });
