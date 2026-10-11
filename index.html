@@ -87,7 +87,7 @@ body.dark .cook-tab-btn.active{background:#f97316;border-color:#f97316;color:whi
 .holli-logo-sub{font-size:8px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;line-height:1;margin-top:1px;}
 
 .pers-pill{display:inline-flex;align-items:center;background:white;border:1.5px solid #e2e8f0;border-radius:99px;padding:5px 4px;gap:2px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
-.pers-pill button{width:26px;height:26px;border-radius:50%;background:#f1f5f9;border:none;font-weight:900;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.pers-pill button{width:36px;height:36px;border-radius:50%;background:#f1f5f9;border:none;font-weight:900;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;}
 .pers-pill button:active{background:#e2e8f0;}
 .pers-pill span{font-size:10px;font-weight:900;color:#1e293b;min-width:58px;text-align:center;text-transform:uppercase;}
 body.dark .pers-pill button{background:#334155;color:#e2e8f0;}
@@ -158,9 +158,9 @@ body.dark .course-filter-btn.active{background:#f97316;border-color:#f97316;colo
 }
 
 .recipe-card{position:relative;}
-.add-btn{position:absolute;top:8px;right:8px;width:32px;height:32px;background:#f97316;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;box-shadow:0 4px 10px rgba(0,0,0,.15);z-index:5;transition:transform .15s;cursor:pointer;border:none;}
+.add-btn{position:absolute;top:8px;right:8px;width:40px;height:40px;background:#f97316;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;box-shadow:0 4px 10px rgba(0,0,0,.15);z-index:5;transition:transform .15s;cursor:pointer;border:none;}
 .add-btn:active{transform:scale(.88);}
-.fav-btn{position:absolute;top:8px;left:8px;width:32px;height:32px;background:rgba(255,255,255,.92);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;z-index:5;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.12);border:none;}
+.fav-btn{position:absolute;top:8px;left:8px;width:40px;height:40px;background:rgba(255,255,255,.92);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;z-index:5;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.12);border:none;}
 .fav-btn:active{transform:scale(.88);}
 .fav-btn.active{background:#fef2f2;animation:heartPop .4s ease;}
 
@@ -174,8 +174,8 @@ body.dark .course-filter-btn.active{background:#f97316;border-color:#f97316;colo
 .week-slot-body{flex:1;min-width:0;cursor:pointer;}
 .week-slot-tag{font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;}
 .week-slot-name{font-size:12px;font-weight:900;color:var(--text);text-transform:uppercase;font-style:italic;line-height:1.3;margin-top:1px;}
-.week-slot-actions{display:flex;gap:5px;flex-shrink:0;}
-.week-slot-actions button{width:28px;height:28px;border-radius:50%;border:none;background:#f1f5f9;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .08s,background .08s;box-shadow:0 2px 5px rgba(0,0,0,.15);}
+.week-slot-actions{display:flex;gap:7px;flex-shrink:0;}
+.week-slot-actions button{width:40px;height:40px;border-radius:50%;border:none;background:#f1f5f9;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .08s,background .08s;box-shadow:0 2px 5px rgba(0,0,0,.15);}
 .week-slot-actions button:active{transform:scale(.68);box-shadow:none;background:#e2e8f0;}
 body.dark .week-slot-actions button{background:#334155;}
 body.dark .week-slot-actions button:active{background:#1e293b;}
@@ -366,10 +366,11 @@ body.dark .auth-tabs{background:#334155;}
 .auth-pw-wrap{position:relative;}
 .auth-pw-wrap .auth-input{padding-right:44px;}
 .auth-pw-toggle{position:absolute;right:6px;top:50%;transform:translateY(calc(-50% - 5px));width:32px;height:32px;border:none;background:none;color:var(--text);font-size:15px;cursor:pointer;opacity:.55;}
+.auth-pw-toggle::before{content:'';position:absolute;top:50%;left:50%;width:44px;height:44px;transform:translate(-50%,-50%);}
 .auth-submit[disabled],.auth-google-btn[disabled]{opacity:.6;pointer-events:none;}
 
 .onboard-card{position:relative;width:100%;max-width:420px;background:var(--card);border-radius:2.5rem;padding:28px 24px 24px;box-shadow:0 24px 60px -12px rgba(0,0,0,.15);border:1.5px solid var(--border);}
-.onboard-cancel-btn{position:absolute;top:18px;right:18px;width:30px;height:30px;border-radius:50%;border:none;background:#f1f5f9;color:#64748b;font-size:13px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:1;transition:transform .08s,background .08s;box-shadow:0 2px 5px rgba(0,0,0,.12);}
+.onboard-cancel-btn{position:absolute;top:18px;right:18px;width:40px;height:40px;border-radius:50%;border:none;background:#f1f5f9;color:#64748b;font-size:13px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:1;transition:transform .08s,background .08s;box-shadow:0 2px 5px rgba(0,0,0,.12);}
 .onboard-cancel-btn:active{transform:scale(.7);background:#e2e8f0;}
 body.dark .onboard-cancel-btn{background:#334155;color:#cbd5e1;}
 body.dark .onboard-cancel-btn:active{background:#1e293b;}
@@ -406,7 +407,7 @@ body.dark .onboard-recur-item.active{background:#3a2415;}
 .onboard-recur-name{flex:1;font-size:12px;font-weight:800;color:var(--text);}
 .onboard-recur-freq{font-size:10px;font-weight:800;border:1.5px solid var(--border);border-radius:8px;padding:5px 6px;background:var(--card);color:var(--text);font-family:inherit;}
 .onboard-recur-item-fixed{cursor:default;}
-.onboard-recur-remove{width:24px;height:24px;flex-shrink:0;border-radius:50%;border:none;background:#fee2e2;color:#dc2626;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .08s,background .08s;}
+.onboard-recur-remove{width:36px;height:36px;flex-shrink:0;border-radius:50%;border:none;background:#fee2e2;color:#dc2626;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .08s,background .08s;}
 .onboard-recur-remove:active{transform:scale(.68);background:#fca5a5;}
 body.dark .onboard-recur-remove{background:#4a1d1d;color:#f87171;}
 body.dark .onboard-recur-remove:active{background:#7f1d1d;}
@@ -513,9 +514,9 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
       <p class="sub">Combien de personnes à nourrir en général ?</p>
       <div class="flex justify-center my-8">
         <div class="pers-pill" style="padding:8px 6px">
-          <button onclick="onboardHousehold(-1)" style="width:38px;height:38px;font-size:18px">-</button>
+          <button onclick="onboardHousehold(-1)" style="width:44px;height:44px;font-size:18px">-</button>
           <span id="onboard-household-disp" style="min-width:90px;font-size:14px">2 PERS.</span>
-          <button onclick="onboardHousehold(1)" style="width:38px;height:38px;font-size:18px">+</button>
+          <button onclick="onboardHousehold(1)" style="width:44px;height:44px;font-size:18px">+</button>
         </div>
       </div>
     </div>
@@ -566,7 +567,7 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
 <div id="catalogue-modal">
   <button onclick="closeCatalogueModal()" class="mb-4 font-black text-orange-500 text-xs uppercase">← Retour</button>
   <h2 class="text-2xl font-[900] italic uppercase tracking-tighter mb-1" id="catalogue-modal-title">Toutes les recettes</h2>
-  <p class="text-slate-400 font-bold text-[11px] mb-4" id="catalogue-count"></p>
+  <p class="text-[var(--text2)] font-bold text-[11px] mb-4" id="catalogue-count"></p>
   <input id="catalogue-search" placeholder="🔍 Rechercher une recette…" oninput="renderGridDebounced()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:12px;background:var(--card);color:var(--text)">
   <div id="course-filter-bar" class="flex gap-2 mb-3"></div>
   <button id="hide-allergens-btn" onclick="toggleHideAllergens()" class="mais-cat-tab mb-4" style="display:none">🙈 Masquer mes allergènes</button>
@@ -577,7 +578,7 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
 <div id="recurring-modal">
   <button onclick="closeRecurringManager()" class="mb-4 font-black text-orange-500 text-xs uppercase">← Retour</button>
   <h2 class="text-2xl font-[900] italic uppercase tracking-tighter mb-1">Articles récurrents</h2>
-  <p class="text-slate-400 font-bold text-[11px] mb-4">Coche ce que tu rachètes régulièrement et choisis la fréquence — l'app les ajoute automatiquement à tes courses le moment venu.</p>
+  <p class="text-[var(--text2)] font-bold text-[11px] mb-4">Coche ce que tu rachètes régulièrement et choisis la fréquence — l'app les ajoute automatiquement à tes courses le moment venu.</p>
   <input id="recurring-search" placeholder="🔍 Rechercher un article…" oninput="renderRecurringManagerDebounced()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:12px;background:var(--card);color:var(--text)">
   <div id="recurring-cat-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-4 pb-1"></div>
   <div class="add-custom-recur">
@@ -621,7 +622,7 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
       <div class="ck-ing-header" onclick="toggleCkIng()">
         <span class="ck-ing-header-title">🧺 Ingrédients</span>
         <div class="flex items-center gap-2">
-          <span class="text-slate-400 font-black text-[10px]" id="ck-ing-count-label"></span>
+          <span class="text-[var(--text2)] font-black text-[10px]" id="ck-ing-count-label"></span>
           <span class="ck-ing-icon" id="ck-ing-icon">▼</span>
         </div>
       </div>
@@ -638,10 +639,10 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
 </div>
 
 <div id="add-item-modal">
-  <p class="text-xs font-black uppercase text-slate-400 mb-3">Ajouter un article</p>
+  <p class="text-xs font-black uppercase text-[var(--text2)] mb-3">Ajouter un article</p>
   <input id="add-item-input" type="text" placeholder="Ex: Sel, Huile d'olive…" maxlength="60">
   <div class="flex gap-3 mt-4">
-    <button onclick="closeAddItem()" class="flex-1 py-3 rounded-full border border-slate-200 font-black text-xs uppercase text-slate-400">Annuler</button>
+    <button onclick="closeAddItem()" class="flex-1 py-3 rounded-full border border-slate-200 font-black text-xs uppercase text-[var(--text2)]">Annuler</button>
     <button onclick="confirmAddItem()" class="flex-1 py-3 rounded-full bg-orange-500 text-white font-black text-xs uppercase">Ajouter</button>
   </div>
 </div>
@@ -698,7 +699,7 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
   <div class="flex justify-center gap-6 mb-3">
     <div class="flex flex-col items-center gap-1">
       <button onclick="handleNope()" aria-label="Passer cette recette" class="w-14 h-14 bg-white rounded-full shadow-lg flex items-center justify-center text-red-500 border border-red-50 active:scale-90 transition-transform">✕</button>
-      <span class="text-[9px] font-black uppercase text-red-400">Passer</span>
+      <span class="text-[9px] font-black uppercase text-red-700">Passer</span>
     </div>
     <div class="flex flex-col items-center gap-1">
       <button onclick="handleLike()" aria-label="Garder cette recette" class="w-14 h-14 bg-orange-500 rounded-full shadow-lg flex items-center justify-center text-white text-2xl active:scale-90 transition-transform">✓</button>
@@ -741,7 +742,7 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
   </div>
   <div class="mb-5">
     <h2 class="text-2xl font-[900] italic uppercase tracking-tighter mb-1" id="weekTitle">🗓 Crée ta semaine</h2>
-    <p class="text-slate-400 font-bold text-sm" id="weekSubtitle">Entrée, plat, dessert pour chaque jour — on s'occupe du reste.</p>
+    <p class="text-[var(--text2)] font-bold text-sm" id="weekSubtitle">Entrée, plat, dessert pour chaque jour — on s'occupe du reste.</p>
   </div>
   <div id="week-progress" class="mb-4"></div>
   <div id="week-budget" class="mb-4"></div>
@@ -754,7 +755,7 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
     <div class="onboard-options" id="week-course-selector" style="margin-bottom:0"></div>
   </div>
   <div class="flex items-center justify-between mb-5">
-    <p class="text-[10px] font-black text-slate-400 uppercase">Nombre de personnes</p>
+    <p class="text-[10px] font-black text-[var(--text2)] uppercase">Nombre de personnes</p>
     <div class="pers-pill">
       <button onclick="updateServings(-1)">-</button>
       <span id="week-pers-disp">2 PERS.</span>
@@ -771,7 +772,7 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
 <section id="page-favs" class="page" role="tabpanel" aria-label="Favoris">
   <div class="flex justify-between items-center mb-4">
     <h2 class="text-3xl font-black italic uppercase">❤️ Favoris</h2>
-    <span id="fav-count-label" class="text-slate-400 font-black text-xs uppercase"></span>
+    <span id="fav-count-label" class="text-[var(--text2)] font-black text-xs uppercase"></span>
   </div>
   <input id="fav-search" placeholder="🔍 Rechercher dans mes favoris…" oninput="renderFavsDebounced()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:12px;background:var(--card);color:var(--text)">
   <p class="text-[9px] font-black uppercase tracking-wide mb-2" style="color:var(--text2)">Cuisine</p>
@@ -785,7 +786,7 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
   <div class="flex justify-between items-center mb-4">
     <h2 class="text-3xl font-black italic uppercase">Maison</h2>
     <div class="flex items-center gap-2">
-      <button onclick="clearMaison()" class="text-red-500 font-black text-[10px] uppercase bg-red-50 px-3 py-1.5 rounded-full shadow-md active:scale-75 active:bg-red-200 active:shadow-none transition-all duration-100">✕ Vider</button>
+      <button onclick="clearMaison()" class="text-red-700 font-black text-[10px] uppercase bg-red-50 px-3 py-1.5 rounded-full shadow-md active:scale-75 active:bg-red-200 active:shadow-none transition-all duration-100">✕ Vider</button>
     </div>
   </div>
   <div id="maison-normal">
@@ -806,7 +807,7 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
 <section id="page-cart" class="page" role="tabpanel" aria-label="Courses">
   <div class="flex justify-between items-center mb-2 px-1">
     <h2 class="text-3xl font-black italic uppercase" id="cartTitle">Courses</h2>
-    <button onclick="clearCartIngredients()" class="text-red-500 font-black text-[10px] uppercase bg-red-50 px-3 py-2 rounded-full shadow-md active:scale-75 active:bg-red-200 active:shadow-none transition-all duration-100">✕ Vider</button>
+    <button onclick="clearCartIngredients()" class="text-red-700 font-black text-[10px] uppercase bg-red-50 px-3 py-2 rounded-full shadow-md active:scale-75 active:bg-red-200 active:shadow-none transition-all duration-100">✕ Vider</button>
   </div>
   <div class="flex gap-2 mb-3 px-1">
     <button onclick="openAddItem()" class="bg-orange-500 text-white font-black text-[10px] uppercase px-4 py-2 rounded-full flex-1">+ Article</button>
@@ -840,8 +841,8 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
     <div class="profile-avatar" id="profile-avatar" onclick="cycleAvatar()">🙂</div>
     <div class="flex-1 min-w-0">
       <p class="font-black uppercase italic text-base leading-tight truncate" id="profile-pseudo-disp">—</p>
-      <p class="text-[10px] font-bold text-slate-400 truncate" id="profile-email-disp">—</p>
-      <p class="text-[9px] font-bold text-slate-300 mt-0.5" id="profile-since-disp">—</p>
+      <p class="text-[10px] font-bold text-[var(--text2)] truncate" id="profile-email-disp">—</p>
+      <p class="text-[9px] font-bold text-[var(--text2)] mt-0.5" id="profile-since-disp">—</p>
     </div>
     <button onclick="openEditPseudo()" class="text-orange-500 font-black text-[9px] uppercase bg-orange-50 px-3 py-1.5 rounded-full flex-shrink-0">✎</button>
   </div>
@@ -856,12 +857,12 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
 
   <div class="section-title">Partage foyer / famille</div>
   <div class="profile-card">
-    <p class="text-[11px] font-bold text-slate-400 mb-2">Partage ce code avec ton/ta conjoint(e) ou coloc pour synchroniser votre liste de courses.</p>
+    <p class="text-[11px] font-bold text-[var(--text2)] mb-2">Partage ce code avec ton/ta conjoint(e) ou coloc pour synchroniser votre liste de courses.</p>
     <div class="flex items-center gap-2">
       <div class="share-code-box" style="flex:1;margin-bottom:0">
         <div class="share-code-val" id="profile-share-code">------</div>
       </div>
-      <button onclick="regenShareCode()" title="Générer un nouveau code" class="border-2 border-slate-200 text-slate-400 font-black text-base px-3.5 py-3 rounded-full flex-shrink-0">🔄</button>
+      <button onclick="regenShareCode()" title="Générer un nouveau code" class="border-2 border-slate-200 text-[var(--text2)] font-black text-base px-3.5 py-3 rounded-full flex-shrink-0">🔄</button>
     </div>
     <button onclick="copyShareCode()" class="w-full bg-orange-500 text-white font-black text-[10px] uppercase py-3 rounded-full mt-3">📋 Copier le code</button>
     <p class="text-[9px] font-black uppercase tracking-wide mt-4 mb-2" style="color:var(--text2)">Rejoindre un foyer existant</p>
@@ -875,13 +876,13 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
   <div class="profile-card">
     <div class="pref-row">
       <span class="pref-label">Session</span>
-      <button onclick="handleLogout()" class="text-red-500 font-black text-[10px] uppercase bg-red-50 px-4 py-2 rounded-full">Déconnexion</button>
+      <button onclick="handleLogout()" class="text-red-700 font-black text-[10px] uppercase bg-red-50 px-4 py-2 rounded-full">Déconnexion</button>
     </div>
   </div>
 
   <div class="section-title" style="color:#ef4444">Zone dangereuse</div>
   <div class="profile-card">
-    <p class="text-[11px] font-bold text-slate-400 mb-3">Supprime définitivement ton compte, ton profil et tes préférences. Cette action est irréversible.</p>
+    <p class="text-[11px] font-bold text-[var(--text2)] mb-3">Supprime définitivement ton compte, ton profil et tes préférences. Cette action est irréversible.</p>
     <button onclick="handleDeleteAccount()" class="w-full bg-red-50 text-red-600 font-black text-xs uppercase py-3 rounded-full active:scale-95 transition-transform">🗑️ Supprimer mon compte</button>
   </div>
 </section>
@@ -2047,7 +2048,7 @@ function showDetails(id){
       ${r.temps?`<span class="bg-slate-100 text-slate-600 text-[10px] font-black px-3 py-1.5 rounded-full">⏱ ${r.temps}</span>`:''}
       ${r.prix?`<span class="bg-slate-100 text-slate-600 text-[10px] font-black px-3 py-1.5 rounded-full">${prixDisplay(r.prix)}</span>`:''}
     </div>`:''}
-    ${getAllergyMatches(r).length?`<div class="bg-red-50 border-2 border-red-200 rounded-2xl p-4 mb-4"><p class="text-red-600 font-black text-xs uppercase">⚠️ Attention</p><p class="text-red-500 font-bold text-[11px] mt-1">Cette recette contient : ${getAllergyMatches(r).join(', ')}</p></div>`:''}
+    ${getAllergyMatches(r).length?`<div class="bg-red-50 border-2 border-red-200 rounded-2xl p-4 mb-4"><p class="text-red-700 font-black text-xs uppercase">⚠️ Attention</p><p class="text-red-700 font-bold text-[11px] mt-1">Cette recette contient : ${getAllergyMatches(r).join(', ')}</p></div>`:''}
     <p class="text-[9px] font-black text-orange-500 uppercase mb-1" id="detail-ing-label">Ingrédients · ${wb?batchLabel(r):servings+' pers.'}</p>
     <div class="bg-orange-50 p-5 rounded-[2rem] mb-5 font-bold text-slate-700 text-sm" id="detail-ing-list">${ings}</div>
     <p class="text-[9px] font-black text-orange-500 uppercase mb-2">Préparation</p>
@@ -2105,7 +2106,7 @@ function emptyStateHTML(emoji,title,subtitle,opts){
   return`<div class="text-center ${py} ${extra}">
     <div class="mx-auto mb-4 flex items-center justify-center rounded-full" style="width:${box}px;height:${box}px;background:#fff7ed;font-size:${fs}px">${emoji}</div>
     <div class="font-black ${opts.small?'text-sm':'text-lg'} uppercase text-slate-800">${title}</div>
-    ${subtitle?`<div class="text-sm font-bold mt-2 text-slate-400">${subtitle}</div>`:''}
+    ${subtitle?`<div class="text-sm font-bold mt-2 text-[var(--text2)]">${subtitle}</div>`:''}
   </div>`;
 }
 function courseBadgeHTML(r){
@@ -2444,7 +2445,7 @@ function renderWeekMenu(){
   const totalSlots=weekMenu.length*activeCourses.length;
   const filledSlots=weekMenu.reduce((sum,item)=>sum+activeCourses.filter(c=>item.recipes[c.key]!==null).length,0);
   const pct=totalSlots?Math.round((filledSlots/totalSlots)*100):0;
-  document.getElementById('week-progress').innerHTML=`<div class="flex items-center justify-between mb-1"><span class="text-[9px] font-black text-slate-400 uppercase">${filledSlots}/${totalSlots} repas planifiés</span><span class="text-[9px] font-black text-orange-500">${pct}%</span></div><div class="cart-progress"><div class="cart-progress-bar" style="width:${pct}%"></div></div>`;
+  document.getElementById('week-progress').innerHTML=`<div class="flex items-center justify-between mb-1"><span class="text-[9px] font-black text-[var(--text2)] uppercase">${filledSlots}/${totalSlots} repas planifiés</span><span class="text-[9px] font-black text-orange-500">${pct}%</span></div><div class="cart-progress"><div class="cart-progress-bar" style="width:${pct}%"></div></div>`;
   renderWeekBudget();
   document.getElementById('week-menu-list').innerHTML=weekMenu.map((item,i)=>`
     <div class="week-day-group" style="animation:slideUp .3s ease-out ${i*.05}s both">
@@ -2510,7 +2511,7 @@ function renderCart(){
   const unchecked=merged.filter(i=>!checkedItems.has(i.key));
   const pct=total>0?Math.round((checkedCount/total)*100):0;
   const allFound=total>0&&checkedCount===total;
-  rayonProgEl.innerHTML=`<div class="flex items-center justify-between mb-1"><span class="text-[9px] font-black text-slate-400 uppercase">${checkedCount}/${total} trouvés</span><span class="text-[9px] font-black text-orange-500">${pct}%</span></div><div class="cart-progress"><div class="cart-progress-bar" style="width:${pct}%"></div></div>`;
+  rayonProgEl.innerHTML=`<div class="flex items-center justify-between mb-1"><span class="text-[9px] font-black text-[var(--text2)] uppercase">${checkedCount}/${total} trouvés</span><span class="text-[9px] font-black text-orange-500">${pct}%</span></div><div class="cart-progress"><div class="cart-progress-bar" style="width:${pct}%"></div></div>`;
   let html='';
   const shoppingRecipes=cart.filter(r=>!shoppedRecipeNames.has(r.n));
   if(shoppingRecipes.length>0){
@@ -2529,7 +2530,7 @@ function renderCart(){
     unchecked.forEach(ing=>{const r=ing.isMaison?'✨ Maison':ing.isExtra?'➕ Ajouts':getRayon(ing.displayName);if(!byRayon[r])byRayon[r]=[];byRayon[r].push(ing);});
     Object.entries(sortRayons(byRayon)).forEach(([rayon,ings])=>{
       html+=`<div class="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden mb-3">`;
-      html+=`<div class="rayon-header">${rayon}<span class="ml-auto text-[9px] font-black text-slate-300">${ings.length}</span></div>`;
+      html+=`<div class="rayon-header">${rayon}<span class="ml-auto text-[9px] font-black text-[var(--text2)]">${ings.length}</span></div>`;
       ings.forEach(ing=>{html+=ingRow(ing);});
       html+='</div>';
     });
@@ -2637,11 +2638,11 @@ function renderCooking(){
         <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0" loading="lazy" decoding="async">
         <div class="flex-1 min-w-0">
           <h3 class="font-black uppercase text-[11px] italic text-slate-800 leading-tight">${r.n}${allergyBadgeHTML(r,'inline')}</h3>
-          <p class="text-[9px] text-slate-400 font-bold mt-1">${splitPrepSteps(r.prep).length} étapes${r.temps?` · ⏱ ${r.temps}`:''}</p>
+          <p class="text-[9px] text-[var(--text2)] font-bold mt-1">${splitPrepSteps(r.prep).length} étapes${r.temps?` · ⏱ ${r.temps}`:''}</p>
         </div>
         <div class="flex gap-3 flex-shrink-0">
           <button onclick="openCookModal(${idx})" class="bg-slate-900 text-white px-3 py-2 rounded-full font-black text-[9px] uppercase border-none cursor-pointer">Cuisiner →</button>
-          <button onclick="removeFromCart('${jsAttr(r.n)}');event.stopPropagation();" class="text-red-400 bg-red-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase border-none cursor-pointer">Retirer</button>
+          <button onclick="removeFromCart('${jsAttr(r.n)}');event.stopPropagation();" class="text-red-700 bg-red-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase border-none cursor-pointer">Retirer</button>
         </div>
       </div>`;
   };
@@ -2657,8 +2658,8 @@ function renderOldRecipes(){
       <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="w-14 h-14 rounded-2xl object-cover flex-shrink-0" loading="lazy" decoding="async">
       <div class="flex-1 min-w-0">
         <p class="font-black text-[11px] uppercase italic text-slate-800 leading-tight truncate">${r.n}</p>
-        <p class="text-[9px] text-slate-400 font-bold mt-1">${r.cat}</p>
-        ${r.cookedAt?`<p class="text-[8px] text-slate-300 font-bold">${new Date(r.cookedAt).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</p>`:''}
+        <p class="text-[9px] text-[var(--text2)] font-bold mt-1">${r.cat}</p>
+        ${r.cookedAt?`<p class="text-[8px] text-[var(--text2)] font-bold">${new Date(r.cookedAt).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</p>`:''}
       </div>
       <div class="flex flex-col gap-2 flex-shrink-0">
         <button onclick="addToCart(oldRecipes[oldRecipes.length-1-${i}])" class="bg-orange-500 text-white px-3 py-1.5 rounded-full font-black text-[9px] uppercase border-none cursor-pointer">+ Panier</button>
@@ -3455,11 +3456,11 @@ function renderProfilePage(){
     <div class="pref-row"><span class="pref-label">Temps de cuisine</span><span class="pref-value">${cookLabel}</span></div>
     <div class="pref-row" style="display:block">
       <span class="pref-label">Allergies</span>
-      <div class="mt-2">${p.allergies.length?p.allergies.map(a=>`<span class="chip allergy">⚠️ ${escapeHtml(a)}</span>`).join(''):'<span class="text-slate-300 text-[11px] font-bold">Aucune</span>'}</div>
+      <div class="mt-2">${p.allergies.length?p.allergies.map(a=>`<span class="chip allergy">⚠️ ${escapeHtml(a)}</span>`).join(''):'<span class="text-[var(--text2)] text-[11px] font-bold">Aucune</span>'}</div>
     </div>
     <div class="pref-row" style="display:block">
       <span class="pref-label">Ingrédients détestés</span>
-      <div class="mt-2">${p.dislikes.length?p.dislikes.map(a=>`<span class="chip">${escapeHtml(a)}</span>`).join(''):'<span class="text-slate-300 text-[11px] font-bold">Aucun</span>'}</div>
+      <div class="mt-2">${p.dislikes.length?p.dislikes.map(a=>`<span class="chip">${escapeHtml(a)}</span>`).join(''):'<span class="text-[var(--text2)] text-[11px] font-bold">Aucun</span>'}</div>
     </div>`;
   const recur=p.recurringItems||[];
   document.getElementById('profile-recurring-card').innerHTML=recur.length
