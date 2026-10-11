@@ -175,7 +175,8 @@ body.dark .course-filter-btn.active{background:#f97316;border-color:#f97316;colo
 .week-slot-tag{font-size:8px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;}
 .week-slot-name{font-size:12px;font-weight:900;color:var(--text);text-transform:uppercase;font-style:italic;line-height:1.3;margin-top:1px;}
 .week-slot-actions{display:flex;gap:5px;flex-shrink:0;}
-.week-slot-actions button{width:28px;height:28px;border-radius:50%;border:none;background:#f1f5f9;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.week-slot-actions button{width:28px;height:28px;border-radius:50%;border:none;background:#f1f5f9;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.week-slot-actions button:active{transform:scale(.82);box-shadow:0 1px 1px rgba(0,0,0,.08);}
 body.dark .week-slot-actions button{background:#334155;}
 .week-slot-actions button.danger{background:#fef2f2;color:#ef4444;}
 body.dark .week-slot-actions button.danger{background:#3f1d1d;}
@@ -365,7 +366,8 @@ body.dark .auth-tabs{background:#334155;}
 .auth-submit[disabled],.auth-google-btn[disabled]{opacity:.6;pointer-events:none;}
 
 .onboard-card{position:relative;width:100%;max-width:420px;background:var(--card);border-radius:2.5rem;padding:28px 24px 24px;box-shadow:0 24px 60px -12px rgba(0,0,0,.15);border:1.5px solid var(--border);}
-.onboard-cancel-btn{position:absolute;top:18px;right:18px;width:30px;height:30px;border-radius:50%;border:none;background:#f1f5f9;color:#64748b;font-size:13px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:1;}
+.onboard-cancel-btn{position:absolute;top:18px;right:18px;width:30px;height:30px;border-radius:50%;border:none;background:#f1f5f9;color:#64748b;font-size:13px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:1;transition:transform .15s;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.onboard-cancel-btn:active{transform:scale(.85);}
 body.dark .onboard-cancel-btn{background:#334155;color:#cbd5e1;}
 .onboard-progress{height:5px;background:#f1f5f9;border-radius:99px;overflow:hidden;margin-bottom:6px;}
 body.dark .onboard-progress{background:#334155;}
@@ -400,7 +402,8 @@ body.dark .onboard-recur-item.active{background:#3a2415;}
 .onboard-recur-name{flex:1;font-size:12px;font-weight:800;color:var(--text);}
 .onboard-recur-freq{font-size:10px;font-weight:800;border:1.5px solid var(--border);border-radius:8px;padding:5px 6px;background:var(--card);color:var(--text);font-family:inherit;}
 .onboard-recur-item-fixed{cursor:default;}
-.onboard-recur-remove{width:24px;height:24px;flex-shrink:0;border-radius:50%;border:none;background:#fee2e2;color:#dc2626;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.onboard-recur-remove{width:24px;height:24px;flex-shrink:0;border-radius:50%;border:none;background:#fee2e2;color:#dc2626;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s;}
+.onboard-recur-remove:active{transform:scale(.82);}
 body.dark .onboard-recur-remove{background:#4a1d1d;color:#f87171;}
 .onboard-recur-check{color:#f97316;font-weight:900;font-size:14px;}
 
@@ -777,7 +780,7 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
   <div class="flex justify-between items-center mb-4">
     <h2 class="text-3xl font-black italic uppercase">Maison</h2>
     <div class="flex items-center gap-2">
-      <button onclick="clearMaison()" class="text-red-400 font-black text-[10px] uppercase bg-red-50 px-3 py-1.5 rounded-full">✕ Vider</button>
+      <button onclick="clearMaison()" class="text-red-400 font-black text-[10px] uppercase bg-red-50 px-3 py-1.5 rounded-full shadow-sm active:scale-90 transition-transform">✕ Vider</button>
     </div>
   </div>
   <div id="maison-normal">
@@ -798,7 +801,7 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
 <section id="page-cart" class="page" role="tabpanel" aria-label="Courses">
   <div class="flex justify-between items-center mb-2 px-1">
     <h2 class="text-3xl font-black italic uppercase" id="cartTitle">Courses</h2>
-    <button onclick="clearCartIngredients()" class="text-red-500 font-black text-[10px] uppercase bg-red-50 px-3 py-2 rounded-full">✕</button>
+    <button onclick="clearCartIngredients()" class="text-red-500 font-black text-[10px] uppercase bg-red-50 px-3 py-2 rounded-full shadow-sm active:scale-90 transition-transform">✕ Vider</button>
   </div>
   <div class="flex gap-2 mb-3 px-1">
     <button onclick="openAddItem()" class="bg-orange-500 text-white font-black text-[10px] uppercase px-4 py-2 rounded-full flex-1">+ Article</button>
