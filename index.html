@@ -1772,7 +1772,7 @@ function renderFavs(){
         <button onclick="toggleFav(${r.id},event)" class="fav-btn active" data-fav-id="${r.id}">❤️</button>
         ${allergyBadgeHTML(r)}
         <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-4">
-          <div class="flex-1"><span class="text-white/60 text-[9px] font-black uppercase">${r.cat}</span>
+          <div class="flex-1"><span class="inline-flex items-center gap-1.5">${courseBadgeHTML(r)}<span class="text-white/60 text-[9px] font-black uppercase">${r.cat}</span></span>
           <h3 class="text-white font-black uppercase italic text-base leading-tight">${r.n}</h3></div>
           <button onclick="addToCart(recipes.find(x=>x.id==${r.id}));event.stopPropagation();" class="flex-shrink-0 bg-orange-500 text-white font-black text-[11px] uppercase px-4 py-2.5 rounded-full flex items-center gap-1.5" style="border:none;cursor:pointer">+ Ajouter</button>
         </div>
@@ -1993,7 +1993,10 @@ function renderGrid(){
     <div class="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm cursor-pointer active:scale-95 transition-transform recipe-card" style="animation:slideUp .3s ease-out ${Math.min(idx,10)*.03}s both">
       <div onclick="${clickAction}(${r.id})">
         <img data-src="${imgSize(r.i,320,400)}" alt="${r.n}" class="h-32 w-full object-cover" style="background:#f1f5f9" decoding="async">
-        <div class="p-3"><p class="text-[10px] font-black uppercase truncate text-slate-800">${r.n}</p></div>
+        <div class="p-3 flex items-center gap-1.5">
+          ${courseBadgeHTML(r)}
+          <p class="text-[10px] font-black uppercase truncate text-slate-800">${r.n}</p>
+        </div>
       </div>
       <button class="fav-btn ${favorites.has(r.id)?'active':''}" data-fav-id="${r.id}" onclick="toggleFav(${r.id},event)">${favorites.has(r.id)?'❤️':'🤍'}</button>
       <button class="add-btn" onclick="event.stopPropagation();handleAddRecipe(${r.id})">+</button>
@@ -2074,6 +2077,17 @@ function updateWeekCount(delta){
 // aux accents/variantes) ; tout ce qui n'est ni entrée ni dessert est classé
 // "plat" par défaut.
 const COURSES=[{key:'entree',label:'Entrée',article:'une',emoji:'🥗'},{key:'plat',label:'Plat',article:'un',emoji:'🍽️'},{key:'dessert',label:'Dessert',article:'un',emoji:'🍰'}];
+// Petit badge coloré par type de plat (entrée/plat/dessert) sur les cartes du catalogue —
+// purement visuel, pour repérer d'un coup d'œil sans lire le texte. Couleur par type plutôt
+// que par cuisine (trop de valeurs différentes pour rester lisible).
+const COURSE_BADGE_STYLE={entree:{bg:'#dcfce7',text:'#15803d'},plat:{bg:'#ffedd5',text:'#c2410c'},dessert:{bg:'#fce7f3',text:'#be185d'}};
+function courseBadgeHTML(r){
+  const key=courseKeyForRecipe(r);
+  const meta=COURSES.find(c=>c.key===key);
+  const style=COURSE_BADGE_STYLE[key];
+  if(!meta||!style)return'';
+  return`<span class="text-[9px] px-1.5 py-0.5 rounded-full font-black flex-shrink-0" style="background:${style.bg};color:${style.text}">${meta.emoji}</span>`;
+}
 function renderWeekCourseSelector(){
   const el=document.getElementById('week-course-selector');if(!el)return;
   el.innerHTML=COURSES.map(c=>`<button type="button" class="onboard-opt ${weekCourses.has(c.key)?'active':''}" onclick="toggleWeekCourse('${c.key}')">${c.emoji} ${c.label}</button>`).join('');
