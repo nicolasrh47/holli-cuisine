@@ -680,8 +680,14 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
     </div>
   </div>
   <div class="flex justify-center gap-6 mb-3">
-    <button onclick="handleNope()" class="w-14 h-14 bg-white rounded-full shadow-lg flex items-center justify-center text-red-500 border border-red-50 active:scale-90 transition-transform">✕</button>
-    <button onclick="handleLike()" class="w-14 h-14 bg-orange-500 rounded-full shadow-lg flex items-center justify-center text-white text-2xl active:scale-90 transition-transform">✓</button>
+    <div class="flex flex-col items-center gap-1">
+      <button onclick="handleNope()" aria-label="Passer cette recette" class="w-14 h-14 bg-white rounded-full shadow-lg flex items-center justify-center text-red-500 border border-red-50 active:scale-90 transition-transform">✕</button>
+      <span class="text-[9px] font-black uppercase text-red-400">Passer</span>
+    </div>
+    <div class="flex flex-col items-center gap-1">
+      <button onclick="handleLike()" aria-label="Garder cette recette" class="w-14 h-14 bg-orange-500 rounded-full shadow-lg flex items-center justify-center text-white text-2xl active:scale-90 transition-transform">✓</button>
+      <span class="text-[9px] font-black uppercase text-orange-500">Garder</span>
+    </div>
   </div>
 
   <div id="recurring-banner" class="recurring-banner" onclick="switchPage('maison')" style="display:none">
