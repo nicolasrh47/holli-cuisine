@@ -1764,7 +1764,7 @@ function renderFavs(){
     const terms=normalizeSearchText(rawSearch).split(/\s+/).filter(Boolean);
     filtered=filtered.filter(r=>terms.every(t=>normalizeSearchText(r.n).includes(t)));
   }
-  if(!filtered.length){document.getElementById('fav-grid').innerHTML=`<div class="text-center py-20 opacity-25"><div style="font-size:64px;margin-bottom:12px">🤍</div><div class="font-black text-lg uppercase">${favRecipes.length?'Aucun résultat':'Aucun favori'}</div><div class="text-sm font-bold mt-2 text-slate-400">${favRecipes.length?'Essaie une autre recherche ou un autre filtre':"Appuie sur ❤️ sur une recette pour l'ajouter"}</div></div>`;return;}
+  if(!filtered.length){document.getElementById('fav-grid').innerHTML=emptyStateHTML('🤍',favRecipes.length?'Aucun résultat':'Aucun favori',favRecipes.length?'Essaie une autre recherche ou un autre filtre':"Appuie sur ❤️ sur une recette pour l'ajouter");return;}
   document.getElementById('fav-grid').innerHTML=filtered.map(r=>`
     <div class="fav-card" onclick="showDetails(${r.id})">
       <div class="relative">
@@ -2001,7 +2001,7 @@ function renderGrid(){
       <button class="fav-btn ${favorites.has(r.id)?'active':''}" data-fav-id="${r.id}" onclick="toggleFav(${r.id},event)">${favorites.has(r.id)?'❤️':'🤍'}</button>
       <button class="add-btn" onclick="event.stopPropagation();handleAddRecipe(${r.id})">+</button>
       ${allergyBadgeHTML(r)}
-    </div>`).join(''):'<div class="col-span-2 text-center py-16 opacity-25"><div class="text-5xl mb-3">🔍</div><div class="font-black text-sm uppercase">Aucune recette trouvée</div></div>';
+    </div>`).join(''):emptyStateHTML('🔍','Aucune recette trouvée',null,{py:'py-16',small:true,extra:'col-span-2'});
   observeGridImages();
 }
 
@@ -2081,6 +2081,19 @@ const COURSES=[{key:'entree',label:'Entrée',article:'une',emoji:'🥗'},{key:'p
 // purement visuel, pour repérer d'un coup d'œil sans lire le texte. Couleur par type plutôt
 // que par cuisine (trop de valeurs différentes pour rester lisible).
 const COURSE_BADGE_STYLE={entree:{bg:'#dcfce7',text:'#15803d'},plat:{bg:'#ffedd5',text:'#c2410c'},dessert:{bg:'#fce7f3',text:'#be185d'}};
+// Écran vide commun (favoris/panier/catalogue/historique) : icône sur fond teinté plutôt que
+// la version grisée (opacity-25) précédente, qui donnait une impression de contenu "cassé".
+function emptyStateHTML(emoji,title,subtitle,opts){
+  opts=opts||{};
+  const py=opts.py||'py-20';
+  const extra=opts.extra||'';
+  const box=opts.small?64:92,fs=opts.small?28:42;
+  return`<div class="text-center ${py} ${extra}">
+    <div class="mx-auto mb-4 flex items-center justify-center rounded-full" style="width:${box}px;height:${box}px;background:#fff7ed;font-size:${fs}px">${emoji}</div>
+    <div class="font-black ${opts.small?'text-sm':'text-lg'} uppercase text-slate-800">${title}</div>
+    ${subtitle?`<div class="text-sm font-bold mt-2 text-slate-400">${subtitle}</div>`:''}
+  </div>`;
+}
 function courseBadgeHTML(r){
   const key=courseKeyForRecipe(r);
   const meta=COURSES.find(c=>c.key===key);
@@ -2471,7 +2484,7 @@ function renderCart(){
   const hasShoppingRecipes=cart.some(r=>!shoppedRecipeNames.has(r.n));
   if(!hasShoppingRecipes&&extraItems.length===0&&homeCart.length===0){
     rayonProgEl.innerHTML='';
-    cartListEl.innerHTML=`<div class="text-center py-24 opacity-25"><div class="text-6xl mb-4">🛒</div><div class="font-black text-lg uppercase">${siteContent.cart?.emptyMessage || 'Panier vide'}</div><div class="text-sm font-bold mt-1">Ajoute des recettes depuis le menu</div></div>`;
+    cartListEl.innerHTML=emptyStateHTML('🛒',siteContent.cart?.emptyMessage||'Panier vide','Ajoute des recettes depuis le menu',{py:'py-24'});
     updateCartBadge(); // met à jour la pastille
     return;
   }
@@ -2585,7 +2598,7 @@ function setCookTab(tab){
 }
 function renderCooking(){
   document.getElementById('cook-tab-current').innerText=`🍳 Recettes (${cart.length})`;
-  if(cart.length===0){document.getElementById('cook-grid').innerHTML=`<div class="text-center py-20 opacity-25"><div class="text-6xl mb-4">👨‍🍳</div><div class="font-black text-lg uppercase">Aucune recette</div><div class="text-sm font-bold mt-1 text-slate-400">Ajoute des recettes depuis le menu</div></div>`;return;}
+  if(cart.length===0){document.getElementById('cook-grid').innerHTML=emptyStateHTML('👨‍🍳','Aucune recette','Ajoute des recettes depuis le menu');return;}
   // Regroupe par jour (Lundi, Mardi...) quand les recettes viennent de "Créer ta semaine",
   // pour suivre facilement où on en est plutôt qu'une liste mélangée — une recette ajoutée
   // autrement (fiche recette, swipe...) tombe dans "Autres recettes".
@@ -2624,7 +2637,7 @@ function renderCooking(){
     ${groupsHTML}`;
 }
 function renderOldRecipes(){
-  if(!oldRecipes.length){document.getElementById('old-recipes-grid').innerHTML=`<div class="text-center py-16 opacity-25"><div class="text-5xl mb-4">📚</div><div class="font-black text-base uppercase">Aucune ancienne recette</div><div class="text-sm font-bold mt-1">Les recettes terminées apparaissent ici</div></div>`;return;}
+  if(!oldRecipes.length){document.getElementById('old-recipes-grid').innerHTML=emptyStateHTML('📚','Aucune ancienne recette','Les recettes terminées apparaissent ici',{py:'py-16',small:true});return;}
   document.getElementById('old-recipes-grid').innerHTML=oldRecipes.slice().reverse().map((r,i)=>`
     <div class="old-recipe-card" style="animation:slideUp .3s ease-out ${i*.05}s both">
       <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="w-14 h-14 rounded-2xl object-cover flex-shrink-0" loading="lazy" decoding="async">
