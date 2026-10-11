@@ -641,7 +641,8 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
     </div>
   </div>
   <div class="flex items-center gap-2">
-    <button onclick="toggleDark()" id="dark-btn" class="bg-slate-100 rounded-full px-3 py-1.5 font-black text-[10px] uppercase">🌓</button>
+    <button onclick="openCatalogueModal()" aria-label="Voir tout le catalogue" title="Catalogue" class="bg-slate-100 rounded-full px-3 py-1.5 font-black text-[10px] uppercase">🔍</button>
+    <button onclick="toggleDark()" id="dark-btn" aria-label="Changer de thème (clair/sombre)" title="Mode sombre" class="bg-slate-100 rounded-full px-3 py-1.5 font-black text-[10px] uppercase">🌓</button>
     <div class="pers-pill">
       <button onclick="updateServings(-1)">-</button>
       <span id="header-pers-disp">2 PERS.</span>
