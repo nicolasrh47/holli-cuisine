@@ -179,10 +179,10 @@ body.dark .course-filter-btn.active{background:#f97316;border-color:#f97316;colo
 .week-slot-actions button:active{transform:scale(.68);box-shadow:none;background:#e2e8f0;}
 body.dark .week-slot-actions button{background:#334155;}
 body.dark .week-slot-actions button:active{background:#1e293b;}
-.week-slot-actions button.danger{background:#fef2f2;color:#ef4444;}
-.week-slot-actions button.danger:active{background:#fecaca;}
-body.dark .week-slot-actions button.danger{background:#3f1d1d;}
-body.dark .week-slot-actions button.danger:active{background:#7f1d1d;}
+.week-slot-actions button.danger{background:#ef4444;color:#fff;box-shadow:0 3px 8px rgba(239,68,68,.4);}
+.week-slot-actions button.danger:active{background:#dc2626;box-shadow:none;}
+body.dark .week-slot-actions button.danger{background:#ef4444;}
+body.dark .week-slot-actions button.danger:active{background:#dc2626;}
 .week-slot-empty{width:100%;display:flex;align-items:center;justify-content:space-between;background:transparent;border:2px dashed var(--border);border-radius:1.3rem;padding:12px 14px;margin-bottom:6px;cursor:pointer;}
 .week-slot-empty-label{font-size:10px;font-weight:900;color:#f97316;text-transform:uppercase;}
 
@@ -1568,6 +1568,10 @@ function imgSize(url,w,h){
   if(url.startsWith('./images/recipes/')&&w<=200)return url.replace('/recipes/','/recipes/thumb/');
   return url.replace(/&w=\d+&h=\d+/,`&w=${w}&h=${h}`);
 }
+// Si une image échoue à charger (vignette manquante, coupure réseau…), le navigateur affiche
+// par défaut une icône cassée avec l'URL complète en infobulle — moche et ça expose l'adresse
+// technique du site. On bascule à la place sur un fond neutre uni.
+function imgFallback(el){el.onerror=null;el.removeAttribute('src');el.style.background='#f1f5f9';}
 // Le catalogue peut afficher 150+ cartes d'un coup ; loading="lazy" natif ne déclenche le
 // téléchargement que très près du viewport (encore plus tard sur Safari/iOS), donc en scrollant
 // normalement l'image n'a pas fini d'arriver quand la carte devient visible → case blanche
@@ -1783,7 +1787,7 @@ function renderFavs(){
   document.getElementById('fav-grid').innerHTML=filtered.map(r=>`
     <div class="fav-card" onclick="showDetails(${r.id})">
       <div class="relative">
-        <img src="${imgSize(r.i,360,450)}" alt="${r.n}" class="w-full h-40 object-cover" loading="lazy" decoding="async">
+        <img src="${imgSize(r.i,360,450)}" alt="${r.n}" class="w-full h-40 object-cover" loading="lazy" decoding="async" onerror="imgFallback(this)">
         <button onclick="toggleFav(${r.id},event)" class="fav-btn active" data-fav-id="${r.id}">❤️</button>
         ${allergyBadgeHTML(r)}
         <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-4">
@@ -1938,7 +1942,7 @@ function putWeeklyFeaturedFirst(){
 function renderCataloguePreview(){
   const el=document.getElementById('catalogue-preview');if(!el||!recipes.length)return;
   const sample=shuffleWithSeason(safeRecipes()).slice(0,4);
-  el.innerHTML=sample.map(r=>`<img src="${imgSize(r.i,160,200)}" alt="" loading="lazy" decoding="async">`).join('');
+  el.innerHTML=sample.map(r=>`<img src="${imgSize(r.i,160,200)}" alt="" loading="lazy" decoding="async" onerror="imgFallback(this)">`).join('');
 }
 
 let hideAllergens=false;
@@ -2007,7 +2011,7 @@ function renderGrid(){
   document.getElementById('grid').innerHTML=filtered.length?filtered.map((r,idx)=>`
     <div class="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm cursor-pointer active:scale-95 transition-transform recipe-card" style="animation:slideUp .3s ease-out ${Math.min(idx,10)*.03}s both">
       <div onclick="${clickAction}(${r.id})">
-        <img data-src="${imgSize(r.i,320,400)}" alt="${r.n}" class="h-32 w-full object-cover" style="background:#f1f5f9" decoding="async">
+        <img data-src="${imgSize(r.i,320,400)}" alt="${r.n}" class="h-32 w-full object-cover" style="background:#f1f5f9" decoding="async" onerror="imgFallback(this)">
         <div class="p-3 flex items-center gap-1.5">
           ${courseBadgeHTML(r)}
           <p class="text-[10px] font-black uppercase truncate text-slate-800">${r.n}</p>
@@ -2033,7 +2037,7 @@ function showDetails(id){
   const detailQtyUsedSet=new Set();
   document.getElementById('modal-content').innerHTML=`
     <div class="relative mb-5">
-      <img src="${r.i}" alt="${r.n}" class="w-full h-56 object-cover rounded-[2.5rem] shadow-xl border-4 border-white">
+      <img src="${r.i}" alt="${r.n}" class="w-full h-56 object-cover rounded-[2.5rem] shadow-xl border-4 border-white" onerror="imgFallback(this)">
       <button onclick="toggleFav(${r.id},event)" class="absolute top-4 left-4 w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-lg border-none cursor-pointer" data-fav-id="${r.id}" style="background:${isFav?'rgba(239,68,68,.25)':'rgba(255,255,255,.9)'}">${isFav?'❤️':'🤍'}</button>
     </div>
     <div class="flex items-center justify-between mb-4">
@@ -2427,14 +2431,14 @@ function courseSlotHTML(item,dayIdx,course){
   }
   const r=recipes.find(x=>x.id===rid);if(!r)return'';
   return`<div class="week-slot">
-    <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="week-slot-img" loading="lazy" decoding="async" onclick="showDetails(${r.id})">
+    <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="week-slot-img" loading="lazy" decoding="async" onclick="showDetails(${r.id})" onerror="imgFallback(this)">
     <div class="week-slot-body" onclick="showDetails(${r.id})">
       <span class="week-slot-tag">${meta.emoji} ${meta.label}</span>
       <div class="week-slot-name">${r.n}${allergyBadgeHTML(r,'inline')}</div>
     </div>
     <div class="week-slot-actions">
       <button onclick="swapWeekDay(${dayIdx},'${course}',event)" title="Aléatoire">🔄</button>
-      <button onclick="removeWeekSlot(${dayIdx},'${course}',event)" title="Retirer" class="danger">✕</button>
+      <button onclick="removeWeekSlot(${dayIdx},'${course}',event)" title="Retirer" aria-label="Retirer cette recette du planning" class="danger">🗑️</button>
     </div>
   </div>`;
 }
@@ -2635,7 +2639,7 @@ function renderCooking(){
   const cardHTML=r=>{
     const idx=cart.indexOf(r),anim=animIdx++;
     return`<div class="bg-white rounded-[2.2rem] border p-4 flex gap-4 items-center mb-2" style="animation:slideUp .4s ease-out ${anim*.08}s both">
-        <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0" loading="lazy" decoding="async">
+        <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0" loading="lazy" decoding="async" onerror="imgFallback(this)">
         <div class="flex-1 min-w-0">
           <h3 class="font-black uppercase text-[11px] italic text-slate-800 leading-tight">${r.n}${allergyBadgeHTML(r,'inline')}</h3>
           <p class="text-[9px] text-[var(--text2)] font-bold mt-1">${splitPrepSteps(r.prep).length} étapes${r.temps?` · ⏱ ${r.temps}`:''}</p>
@@ -2655,7 +2659,7 @@ function renderOldRecipes(){
   if(!oldRecipes.length){document.getElementById('old-recipes-grid').innerHTML=emptyStateHTML('📚','Aucune ancienne recette','Les recettes terminées apparaissent ici',{py:'py-16',small:true});return;}
   document.getElementById('old-recipes-grid').innerHTML=oldRecipes.slice().reverse().map((r,i)=>`
     <div class="old-recipe-card" style="animation:slideUp .3s ease-out ${i*.05}s both">
-      <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="w-14 h-14 rounded-2xl object-cover flex-shrink-0" loading="lazy" decoding="async">
+      <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="w-14 h-14 rounded-2xl object-cover flex-shrink-0" loading="lazy" decoding="async" onerror="imgFallback(this)">
       <div class="flex-1 min-w-0">
         <p class="font-black text-[11px] uppercase italic text-slate-800 leading-tight truncate">${r.n}</p>
         <p class="text-[9px] text-[var(--text2)] font-bold mt-1">${r.cat}</p>
