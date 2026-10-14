@@ -305,6 +305,8 @@ body.dark #add-item-modal{background:#1e293b;}
    d'articles — évite d'avoir à remonter tout en haut pour changer de filtre. */
 #maison-sticky-bar{position:sticky;top:var(--app-header-h,64px);z-index:20;background:rgba(255,255,255,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);margin:0 -16px;padding:10px 16px 8px;}
 body.dark #maison-sticky-bar{background:rgba(15,23,42,.97);}
+#week-action-bar{position:fixed;left:0;right:0;bottom:calc(84px + env(safe-area-inset-bottom));z-index:90;display:flex;gap:8px;padding:10px 16px;background:rgba(255,255,255,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border);box-shadow:0 -4px 16px rgba(0,0,0,.06);}
+body.dark #week-action-bar{background:rgba(15,23,42,.97);}
 .mais-cat-tab{font-size:9px;font-weight:900;color:#64748b;padding:8px 14px;border-radius:12px;text-transform:uppercase;border:1.5px solid #e2e8f0;white-space:nowrap;background:white;transition:.2s;cursor:pointer;}
 .mais-cat-tab.active{background:#0f172a;color:white;border-color:#0f172a;}
 body.dark .mais-cat-tab{background:#1e293b;border-color:#334155;color:#94a3b8;}
@@ -762,11 +764,11 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
       <button onclick="updateServings(1)">+</button>
     </div>
   </div>
-  <div class="flex gap-2 mb-5">
+  <div id="week-menu-list" style="padding-bottom:70px"></div>
+  <div id="week-action-bar">
     <button onclick="generateWeekMenu()" class="flex-1 bg-orange-500 text-white font-black text-xs uppercase py-3 rounded-full active:scale-95 transition-transform">🔄 Générer aléatoirement</button>
     <button onclick="addAllWeekToCart()" class="flex-1 bg-slate-900 text-white font-black text-xs uppercase py-3 rounded-full active:scale-95 transition-transform">🛒 Tout ajouter</button>
   </div>
-  <div id="week-menu-list"></div>
 </section>
 
 <section id="page-favs" class="page" role="tabpanel" aria-label="Favoris">
