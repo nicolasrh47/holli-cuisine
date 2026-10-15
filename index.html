@@ -1861,19 +1861,17 @@ function renderCard(justAdvanced){
     behindImgEl.alt=next?next.n:'';
   }
   const cardEl=document.getElementById('card');
+  cardEl.style.transition='none';
+  cardEl.style.transform='';
   if(justAdvanced){
-    // La carte qui devient active vient de peser derrière (scale(.93) translateY(10px), voir
-    // .swipe-card-behind) : on démarre dans cette même pose puis on anime vers sa taille finale,
-    // pour que le grossissement se prolonge naturellement au lieu de faire un 2e saut sec juste
-    // après celui du glissement (cf retour utilisateur : "ça grossit deux fois").
-    cardEl.style.transition='none';
-    cardEl.style.transform='scale(.93) translateY(10px)';
-    void cardEl.offsetWidth; // force le navigateur à appliquer la pose de départ avant l'anim
-    cardEl.style.transition='transform .25s cubic-bezier(.22,1,.36,1)';
-    cardEl.style.transform='';
-  } else {
-    cardEl.style.transition='none';
-    cardEl.style.transform='';
+    // La carte qui devient active ne doit plus "grossir" du tout (ni via la pose de la carte
+    // qui pesait derrière, ni par un saut de taille) : juste un fondu, pour un rendu fluide
+    // sans effet de zoom (cf retour utilisateur : d'abord "ça grossit deux fois", puis "ça
+    // zoom, je veux que ça reste fluide" une fois le grossissement remplacé par un 1 seul saut).
+    cardEl.style.opacity='0';
+    void cardEl.offsetWidth; // force le navigateur à appliquer l'état de départ avant l'anim
+    cardEl.style.transition='opacity .22s ease-out';
+    cardEl.style.opacity='1';
   }
   document.getElementById('miam-badge').style.opacity=0;
   document.getElementById('nope-badge').style.opacity=0;
