@@ -2007,7 +2007,8 @@ function filterGrid(cat){currentCat=cat;document.querySelectorAll('.cat-tab').fo
 function normalizeSearchText(str){return(str||'').toString().replace(/\u0153/gi,'oe').replace(/\u00e6/gi,'ae').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
 function renderGrid(){
   const rawSearch=(document.getElementById('catalogue-search')?.value||'').trim();
-  let filtered=currentCourseFilter==='tous'?recipes:recipes.filter(r=>courseKeyForRecipe(r)===currentCourseFilter);
+  const inSeasonRecipes=recipes.filter(recipeAvailableNow);
+  let filtered=currentCourseFilter==='tous'?inSeasonRecipes:inSeasonRecipes.filter(r=>courseKeyForRecipe(r)===currentCourseFilter);
   if(currentCat!=='Tous')filtered=filtered.filter(r=>displayCategory(r)===currentCat);
   if(weekPickerCourse)filtered=filtered.filter(r=>courseKeyForRecipe(r)===weekPickerCourse);
   if(rawSearch){
@@ -3677,11 +3678,21 @@ function getAllergyMatches(recipe){
 // exclues d'office, plutôt que juste signalées par un badge. Le Catalogue en
 // recherche manuelle, lui, continue de tout montrer (avec le badge + le
 // toggle "masquer mes allergènes") puisque c'est une recherche volontaire.
+// Une recette marquée "event" (ex: les spéciales Halloween) ne doit ressortir dans le swipe,
+// le catalogue et la génération de semaine que pendant son propre événement — le reste de
+// l'année elle est mise de côté, pour ne pas voir des bananes-fantômes en plein mois de mars.
+// Elle reste toutefois accessible normalement si déjà en favori ou déjà placée dans un menu
+// (ces vues-là ne passent pas par ce filtre, voir recipeAvailableNow()).
+function recipeAvailableNow(r){
+  return !r.event||r.event===getActiveEvent();
+}
 function safeRecipes(){
   const avoid=getAvoidList();
-  if(!avoid.length)return recipes;
-  const filtered=recipes.filter(r=>getAllergyMatches(r).length===0);
-  return filtered.length?filtered:recipes;
+  const inSeason=recipes.filter(recipeAvailableNow);
+  const base=inSeason.length?inSeason:recipes;
+  if(!avoid.length)return base;
+  const filtered=base.filter(r=>getAllergyMatches(r).length===0);
+  return filtered.length?filtered:base;
 }
 function allergyBadgeHTML(recipe,style){
   const matches=getAllergyMatches(recipe);
