@@ -318,8 +318,8 @@ body.dark #add-item-modal{background:#1e293b;}
    d'articles — évite d'avoir à remonter tout en haut pour changer de filtre. */
 #maison-sticky-bar{position:sticky;top:var(--app-header-h,64px);z-index:20;background:#fff;margin:0 -16px;padding:10px 16px 8px;}
 body.dark #maison-sticky-bar{background:#0f172a;}
-#week-action-bar{position:fixed;left:0;right:0;bottom:calc(84px + env(safe-area-inset-bottom));z-index:90;display:flex;gap:8px;padding:10px 16px;background:#fff;border-top:1px solid var(--border);box-shadow:0 -4px 16px rgba(0,0,0,.06);}
-body.dark #week-action-bar{background:#0f172a;}
+.bottom-action-bar{position:fixed;left:0;right:0;bottom:calc(84px + env(safe-area-inset-bottom));z-index:90;display:flex;gap:8px;padding:10px 16px;background:#fff;border-top:1px solid var(--border);box-shadow:0 -4px 16px rgba(0,0,0,.06);}
+body.dark .bottom-action-bar{background:#0f172a;}
 .mais-cat-tab{font-size:9px;font-weight:900;color:#64748b;padding:8px 14px;border-radius:12px;text-transform:uppercase;border:1.5px solid #e2e8f0;white-space:nowrap;background:white;transition:.2s;cursor:pointer;}
 .mais-cat-tab.active{background:#0f172a;color:white;border-color:#0f172a;}
 body.dark .mais-cat-tab{background:#1e293b;border-color:#334155;color:#94a3b8;}
@@ -781,7 +781,7 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
     </div>
   </div>
   <div id="week-menu-list" style="padding-bottom:70px"></div>
-  <div id="week-action-bar">
+  <div class="bottom-action-bar">
     <button onclick="generateWeekMenu()" class="flex-1 bg-orange-500 text-white font-black text-xs uppercase py-3 rounded-full active:scale-95 transition-transform">🔄 Générer aléatoirement</button>
     <button onclick="addAllWeekToCart()" class="flex-1 bg-slate-900 text-white font-black text-xs uppercase py-3 rounded-full active:scale-95 transition-transform">🛒 Tout ajouter</button>
   </div>
@@ -840,6 +840,9 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
   </div>
   <div id="rayon-progress" class="mb-3"></div>
   <div id="cart-list" class="space-y-4"></div>
+  <div id="cart-action-bar" class="bottom-action-bar" style="display:none">
+    <button onclick="clearCartIngredients()" class="w-full bg-slate-900 text-white font-black text-xs uppercase py-3 rounded-full active:scale-95 transition-transform">✅ Courses finies — tout vider</button>
+  </div>
 </section>
 
 <section id="page-cooking" class="page" role="tabpanel" aria-label="Cuisiner">
@@ -2593,9 +2596,11 @@ function renderCart(){
       ings.forEach(ing=>{html+=ingRow(ing);});
       html+='</div>';
     });
-    html+=`<button onclick="clearCartIngredients()" class="w-full bg-slate-900 text-white font-black text-xs uppercase py-4 rounded-full mt-2 mb-4 active:scale-95 transition-transform">✅ Courses finies — tout vider</button>`;
   }
   cartListEl.innerHTML=html;
+  cartListEl.style.paddingBottom=unchecked.length>0?'74px':'0';
+  const actionBar=document.getElementById('cart-action-bar');
+  if(actionBar)actionBar.style.display=unchecked.length>0?'flex':'none';
   updateCartBadge(); // met à jour la pastille après chaque rendu
 }
 let autoClearTimer=null;
