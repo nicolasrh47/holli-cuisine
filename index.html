@@ -158,7 +158,7 @@ body.dark .course-filter-btn.active{background:#f97316;border-color:#f97316;colo
     radial-gradient(100% 70% at 90% 100%, rgba(120,53,15,.4), transparent 60%),
     linear-gradient(160deg,#fde68a 0%,#fb923c 55%,#c2410c 100%);
   border-radius:1.6rem;position:relative;overflow:hidden;
-  min-height:128px;width:100%;display:flex;flex-direction:column;justify-content:flex-end;
+  min-height:128px;width:100%;display:flex;flex-direction:column;justify-content:space-between;
   padding:14px 16px;box-shadow:0 10px 24px rgba(234,88,12,.3);cursor:pointer;
   transition:transform .15s;
 }
@@ -166,7 +166,9 @@ body.dark .course-filter-btn.active{background:#f97316;border-color:#f97316;colo
 .week-menu-banner::after,.catalogue-tile::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,0) 48%);pointer-events:none;z-index:1;}
 .tile-chevron{position:absolute;top:14px;right:16px;font-size:20px;z-index:4;color:rgba(255,255,255,.85);}
 .tile-photo-badge{position:absolute;top:12px;left:14px;width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;z-index:4;background:rgba(255,255,255,.22);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.4);}
-.catalogue-preview-stack.medal-stack{display:flex;position:absolute;top:50px;left:15px;z-index:4;}
+/* Pile de photos sous le badge, dans le flux (pas en position absolute) : reste toujours
+   visible au-dessus du voile sombre du bas, même si le titre passe sur 2 lignes. */
+.catalogue-preview-stack.medal-stack{display:flex;margin-top:28px;position:relative;z-index:4;}
 .catalogue-preview-stack.medal-stack img{width:22px;height:22px;border-radius:7px;object-fit:cover;border:1.5px solid rgba(255,255,255,.75);margin-left:-9px;box-shadow:0 2px 5px rgba(0,0,0,.18);}
 .catalogue-preview-stack.medal-stack img:first-child{margin-left:0;}
 
@@ -1904,7 +1906,7 @@ function renderCard(justAdvanced){
     // zoom, je veux que ça reste fluide" une fois le grossissement remplacé par un 1 seul saut).
     cardEl.style.opacity='0';
     void cardEl.offsetWidth; // force le navigateur à appliquer l'état de départ avant l'anim
-    cardEl.style.transition='opacity .22s ease-out';
+    cardEl.style.transition='opacity .13s ease-out';
     cardEl.style.opacity='1';
   }
   document.getElementById('miam-badge').style.opacity=0;
@@ -1918,7 +1920,7 @@ function flingCard(direction){
   swipeBusy=true;
   const card=document.getElementById('card');
   const badge=document.getElementById(direction>0?'miam-badge':'nope-badge');
-  card.style.transition='.35s cubic-bezier(.23,1,.32,1)';
+  card.style.transition='.2s cubic-bezier(.23,1,.32,1)';
   card.style.transform=`translateX(${direction*520}px) rotate(${direction*28}deg)`;
   badge.style.opacity=1;
   if(direction>0)addToCart(shuffledRecipes[curIdx]);
@@ -1926,7 +1928,7 @@ function flingCard(direction){
     curIdx=(curIdx+1)%shuffledRecipes.length;
     renderCard(true);
     swipeBusy=false;
-  },320);
+  },190);
 }
 function handleLike(){flingCard(1);}
 function handleNope(){flingCard(-1);}
@@ -1955,7 +1957,7 @@ function initTouchSystem(){
     if(moveX>120)handleLike();
     else if(moveX<-120)handleNope();
     else{
-      card.style.transition='.4s cubic-bezier(.23,1,.32,1)';
+      card.style.transition='.22s cubic-bezier(.23,1,.32,1)';
       card.style.transform='';
       document.getElementById('miam-badge').style.opacity=0;
       document.getElementById('nope-badge').style.opacity=0;
