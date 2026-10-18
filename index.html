@@ -136,8 +136,14 @@ body.dark .course-filter-btn.active{background:#f97316;border-color:#f97316;colo
 .recurring-banner:active{transform:scale(.98);}
 .recurring-banner-deco{position:absolute;right:-14px;top:-14px;font-size:80px;opacity:.15;transform:rotate(15deg);pointer-events:none;}
 
+/* Tuiles "Crée ta semaine" / "Catalogue" côte à côte en haut de l'accueil, style "photo
+   gourmande" : fond dégradé chaud façon photo de plat + voile sombre en bas pour que le texte
+   blanc reste lisible, badge vitré en haut à gauche, chevron en haut à droite. */
 .week-menu-banner{
-  background:linear-gradient(135deg,#f97316 0%,#ea580c 50%,#c2410c 100%);
+  background:
+    radial-gradient(130% 90% at 20% 0%, rgba(255,255,255,.22), transparent 55%),
+    radial-gradient(90% 70% at 85% 100%, rgba(124,45,18,.55), transparent 60%),
+    linear-gradient(160deg,#fb923c 0%,#ea580c 45%,#9a3412 100%);
   border-radius:1.6rem;position:relative;overflow:hidden;
   min-height:128px;display:flex;flex-direction:column;justify-content:flex-end;
   padding:14px 16px;
@@ -145,27 +151,23 @@ body.dark .course-filter-btn.active{background:#f97316;border-color:#f97316;colo
   transition:transform .15s;
 }
 .week-menu-banner:active{transform:scale(.98);}
-.week-menu-banner-deco{position:absolute;right:-20px;top:-20px;font-size:100px;opacity:.15;transform:rotate(15deg);pointer-events:none;display:none;}
-.week-menu-banner-ring{position:absolute;width:150px;height:150px;border-radius:50%;border:1.5px solid rgba(255,255,255,.14);top:-50px;right:-50px;pointer-events:none;}
-/* Tuiles "Crée ta semaine" / "Catalogue" côte à côte en haut de l'accueil : même gabarit
-   vertical (médaillon rond + texte en bas) pour que les deux entrées principales de
-   l'appli soient aussi visibles/accessibles l'une que l'autre, au lieu de deux barres fines
-   empilées. */
+.week-menu-banner-deco{display:none;}
 .catalogue-tile{
+  background:
+    radial-gradient(120% 80% at 15% 0%, rgba(255,255,255,.35), transparent 55%),
+    radial-gradient(100% 70% at 90% 100%, rgba(120,53,15,.4), transparent 60%),
+    linear-gradient(160deg,#fde68a 0%,#fb923c 55%,#c2410c 100%);
   border-radius:1.6rem;position:relative;overflow:hidden;
-  min-height:128px;width:100%;display:flex;flex-direction:column;justify-content:flex-start;
-  padding:14px 16px;box-shadow:0 2px 10px rgba(0,0,0,.05);cursor:pointer;
+  min-height:128px;width:100%;display:flex;flex-direction:column;justify-content:flex-end;
+  padding:14px 16px;box-shadow:0 10px 24px rgba(234,88,12,.3);cursor:pointer;
   transition:transform .15s;
 }
 .catalogue-tile:active{transform:scale(.98);}
-.catalogue-tile-ring{position:absolute;width:150px;height:150px;border-radius:50%;border:1.5px solid var(--border);top:-50px;right:-50px;pointer-events:none;}
-.tile-chevron{position:absolute;top:14px;right:16px;font-size:22px;z-index:10;}
-.tile-medallion{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:10px;flex-shrink:0;position:relative;z-index:2;}
-.week-menu-banner .tile-medallion{background:rgba(255,255,255,.16);border:1.5px solid rgba(255,255,255,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.3);}
-.catalogue-tile .tile-medallion{background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1.5px solid #fed7aa;}
-body.dark .catalogue-tile .tile-medallion{background:linear-gradient(135deg,#3a2415,#2a1a0f);border-color:#7c3f12;}
-.catalogue-preview-stack.medal-stack{display:flex;margin-bottom:10px;position:relative;z-index:2;}
-.catalogue-preview-stack.medal-stack img{width:22px;height:22px;border-radius:50%;object-fit:cover;border:2px solid var(--card);margin-left:-9px;box-shadow:0 2px 5px rgba(0,0,0,.12);}
+.week-menu-banner::after,.catalogue-tile::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,0) 48%);pointer-events:none;z-index:1;}
+.tile-chevron{position:absolute;top:14px;right:16px;font-size:20px;z-index:4;color:rgba(255,255,255,.85);}
+.tile-photo-badge{position:absolute;top:12px;left:14px;width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;z-index:4;background:rgba(255,255,255,.22);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.4);}
+.catalogue-preview-stack.medal-stack{display:flex;position:absolute;top:50px;left:15px;z-index:4;}
+.catalogue-preview-stack.medal-stack img{width:22px;height:22px;border-radius:7px;object-fit:cover;border:1.5px solid rgba(255,255,255,.75);margin-left:-9px;box-shadow:0 2px 5px rgba(0,0,0,.18);}
 .catalogue-preview-stack.medal-stack img:first-child{margin-left:0;}
 
 .season-fx{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:1;}
@@ -745,23 +747,21 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
 
   <div class="grid grid-cols-2 gap-3 mb-3">
     <div class="week-menu-banner" onclick="switchPage('week')">
-      <div class="week-menu-banner-ring"></div>
       <div class="week-menu-banner-deco">🗓</div>
-      <span class="tile-chevron" style="color:rgba(255,255,255,.6)">›</span>
-      <div class="tile-medallion">🗓</div>
+      <span class="tile-chevron">›</span>
+      <div class="tile-photo-badge">🗓</div>
       <div class="relative z-10">
         <div class="text-white/70 text-[9px] font-black uppercase tracking-widest mb-0.5" id="weekBannerSub">Menu personnalisé</div>
         <div class="text-white text-base font-black uppercase italic leading-tight" id="weekBannerTitle">Crée ta semaine de menus 🍽️</div>
       </div>
     </div>
-    <button onclick="openCatalogueModal()" class="catalogue-tile" style="border:1.5px solid var(--border);background:var(--card)">
-      <div class="catalogue-tile-ring"></div>
-      <span class="tile-chevron text-orange-500">›</span>
-      <div class="tile-medallion">📖</div>
-      <span id="catalogue-preview" class="catalogue-preview-stack medal-stack relative z-10"></span>
+    <button onclick="openCatalogueModal()" class="catalogue-tile">
+      <span class="tile-chevron">›</span>
+      <div class="tile-photo-badge">📖</div>
+      <span id="catalogue-preview" class="catalogue-preview-stack medal-stack"></span>
       <span class="text-left relative z-10">
-        <span class="block font-[900] text-sm uppercase italic" style="color:var(--text)" id="catalogueTitle">Voir tout le catalogue</span>
-        <span class="block text-[10px] font-bold" style="color:var(--text2)">Toutes les recettes, par catégorie</span>
+        <span class="block font-[900] text-sm uppercase italic" style="color:#fff" id="catalogueTitle">Voir tout le catalogue</span>
+        <span class="block text-[10px] font-bold" style="color:rgba(255,255,255,.75)">Toutes les recettes, par catégorie</span>
       </span>
     </button>
   </div>
@@ -1761,11 +1761,11 @@ function renderSeasonFx(){
 function applySeasonalTheme(){
   const theme=currentTheme();if(!theme)return;
   const banner=document.querySelector('.week-menu-banner');
-  if(banner)banner.style.background=theme.gradient;
+  if(banner)banner.style.background=`radial-gradient(130% 90% at 20% 0%, rgba(255,255,255,.22), transparent 55%), radial-gradient(90% 70% at 85% 100%, rgba(0,0,0,.35), transparent 60%), ${theme.gradient}`;
   const deco=document.querySelector('.week-menu-banner-deco');
   if(deco)deco.innerText=theme.emoji;
-  const medal=document.querySelector('.week-menu-banner .tile-medallion');
-  if(medal)medal.innerText=theme.emoji;
+  const badgeIcon=document.querySelector('.week-menu-banner .tile-photo-badge');
+  if(badgeIcon)badgeIcon.innerText=theme.emoji;
   const badge=document.getElementById('seasonal-badge');
   if(badge&&theme.badge)badge.innerHTML=theme.badge;
   renderSeasonFx();
