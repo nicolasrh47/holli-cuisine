@@ -572,7 +572,10 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
   <p class="text-[var(--text2)] font-bold text-[11px] mb-4" id="catalogue-count"></p>
   <input id="catalogue-search" placeholder="🔍 Rechercher une recette…" oninput="renderGridDebounced()" style="width:100%;border:2px solid var(--border);border-radius:1rem;padding:12px 16px;font-size:13px;font-weight:700;font-family:inherit;outline:none;margin-bottom:12px;background:var(--card);color:var(--text)">
   <div id="course-filter-bar" class="flex gap-2 mb-3"></div>
-  <button id="hide-allergens-btn" onclick="toggleHideAllergens()" class="mais-cat-tab mb-4" style="display:none">🙈 Masquer mes allergènes</button>
+  <div class="flex gap-2 mb-4">
+    <button id="hide-allergens-btn" onclick="toggleHideAllergens()" class="mais-cat-tab" style="display:none">🙈 Masquer mes allergènes</button>
+    <button id="hide-offregime-btn" onclick="toggleHideOffRegime()" class="mais-cat-tab" style="display:none">🚫 Masquer hors régime</button>
+  </div>
   <div id="category-bar" class="flex gap-2 overflow-x-auto no-scrollbar mb-5 pb-2"></div>
   <div id="grid" class="grid grid-cols-2 gap-4"></div>
 </div>
@@ -1960,6 +1963,8 @@ function renderCataloguePreview(){
 
 let hideAllergens=false;
 function toggleHideAllergens(){hideAllergens=!hideAllergens;document.getElementById('hide-allergens-btn').classList.toggle('active',hideAllergens);renderGrid();}
+let hideOffRegime=false;
+function toggleHideOffRegime(){hideOffRegime=!hideOffRegime;document.getElementById('hide-offregime-btn').classList.toggle('active',hideOffRegime);renderGrid();}
 function openCatalogueModal(){
   document.getElementById('catalogue-modal').classList.add('open');
   document.getElementById('catalogue-search').value='';
@@ -1975,6 +1980,8 @@ function openCatalogueModal(){
   document.getElementById('category-bar').style.display=weekPickerCourse?'none':'flex';
   const allergenBtn=document.getElementById('hide-allergens-btn');
   allergenBtn.style.display=getAvoidList().length?'inline-block':'none';
+  const offRegimeBtn=document.getElementById('hide-offregime-btn');
+  offRegimeBtn.style.display=getRegimeExcludeWords().length?'inline-block':'none';
   setupCourseFilterBar();setupCategoryBar();renderGrid();
 }
 function closeCatalogueModal(){document.getElementById('catalogue-modal').classList.remove('open');weekPickerDayIdx=null;weekPickerCourse=null;}
@@ -2019,6 +2026,7 @@ function renderGrid(){
     });
   }
   if(hideAllergens)filtered=filtered.filter(r=>getAllergyMatches(r).length===0);
+  if(hideOffRegime)filtered=filtered.filter(recipeMatchesRegime);
   const countEl=document.getElementById('catalogue-count');
   if(countEl)countEl.innerText=`${filtered.length} recette${filtered.length>1?'s':''}`;
   const clickAction=weekPickerDayIdx!==null?'assignWeekDay':'showDetails';
@@ -2972,6 +2980,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetails();clos
    cache local en localStorage sous 'holli_profiles_v1' indexé par uid.
 ================================================================= */
 const REGIME_OPTIONS=['Omnivore','Végétarien','Vegan','Sans gluten','Sans lactose','Halal','Kasher','Keto','Low Carb'];
+const REGIME_EMOJI={'Omnivore':'🍽️','Végétarien':'🥦','Vegan':'🌱','Sans gluten':'🌾','Sans lactose':'🥛','Halal':'☪️','Kasher':'✡️','Keto':'🥑','Low Carb':'⚖️'};
 const COOKTIME_OPTIONS=[{v:'express',l:'⚡ Express (<15min)'},{v:'normal',l:'🍳 Normal'},{v:'passionne',l:'👨‍🍳 Passionné'}];
 const AVATAR_CHOICES=['🙂','😎','🧑‍🍳','👩‍🍳','🥑','🍕','🍜','🐱','🐶','🌶️'];
 const COMMON_ALLERGENS=['Gluten','Lactose','Œuf','Fruits à coque','Arachide','Poisson','Crustacés','Soja','Moutarde','Sésame'];
@@ -3169,7 +3178,7 @@ async function startOnboarding(editMode){
   onboardDraft=JSON.parse(JSON.stringify(currentUser.profile));
   if(!onboardDraft.recurringItems)onboardDraft.recurringItems=[];
   normalizeRegime(onboardDraft);
-  document.getElementById('onboard-regime-options').innerHTML=REGIME_OPTIONS.map(r=>`<button type="button" class="onboard-opt ${onboardDraft.regime.includes(r)?'active':''}" onclick="toggleOnboardRegime('${r}')">${r}</button>`).join('');
+  document.getElementById('onboard-regime-options').innerHTML=REGIME_OPTIONS.map(r=>`<button type="button" data-regime="${r}" class="onboard-opt ${onboardDraft.regime.includes(r)?'active':''}" onclick="toggleOnboardRegime('${r}')">${REGIME_EMOJI[r]||''} ${r}</button>`).join('');
   document.getElementById('onboard-cooktime-options').innerHTML=COOKTIME_OPTIONS.map(c=>`<button type="button" class="onboard-opt ${onboardDraft.cookTime===c.v?'active':''}" onclick="setOnboardCookTime('${c.v}')">${c.l}</button>`).join('');
   document.getElementById('onboard-allergies').value=(onboardDraft.allergies||[]).join(', ');
   document.getElementById('onboard-dislikes').value=(onboardDraft.dislikes||[]).join(', ');
@@ -3304,7 +3313,7 @@ function onboardBack(){if(onboardStep>1)goToOnboardStep(onboardStep-1);}
 function toggleOnboardRegime(r){
   const idx=onboardDraft.regime.indexOf(r);
   if(idx>-1)onboardDraft.regime.splice(idx,1);else onboardDraft.regime.push(r);
-  document.querySelectorAll('#onboard-regime-options .onboard-opt').forEach(b=>b.classList.toggle('active',onboardDraft.regime.includes(b.innerText)));
+  document.querySelectorAll('#onboard-regime-options .onboard-opt').forEach(b=>b.classList.toggle('active',onboardDraft.regime.includes(b.dataset.regime)));
 }
 function setOnboardCookTime(v){onboardDraft.cookTime=v;document.querySelectorAll('#onboard-cooktime-options .onboard-opt').forEach((b,i)=>b.classList.toggle('active',COOKTIME_OPTIONS[i].v===v));}
 function onboardHousehold(delta){onboardDraft.householdSize=Math.max(1,onboardDraft.householdSize+delta);document.getElementById('onboard-household-disp').innerText=`${onboardDraft.householdSize} PERS.`;}
@@ -3461,7 +3470,6 @@ function joinShareCode(){
     console.warn('Vérification du code foyer échouée',e);
   });
 }
-const REGIME_LABELS={};
 function renderProfilePage(){
   if(!currentUser)return;
   document.getElementById('profile-avatar').innerText=currentUser.avatar||'🙂';
@@ -3473,7 +3481,7 @@ function renderProfilePage(){
   const p=currentUser.profile;
   const cookLabel=(COOKTIME_OPTIONS.find(c=>c.v===p.cookTime)||{}).l||p.cookTime;
   document.getElementById('profile-prefs-card').innerHTML=`
-    <div class="pref-row"><span class="pref-label">Régime</span><span class="pref-value">${(Array.isArray(p.regime)?p.regime:[p.regime]).join(', ')}</span></div>
+    <div class="pref-row"><span class="pref-label">Régime</span><span class="pref-value">${(Array.isArray(p.regime)?p.regime:[p.regime]).filter(Boolean).map(r=>`${REGIME_EMOJI[r]||''} ${r}`).join(', ')}</span></div>
     <div class="pref-row"><span class="pref-label">Foyer</span><span class="pref-value">${p.householdSize} pers.</span></div>
     <div class="pref-row"><span class="pref-label">Budget hebdo</span><span class="pref-value">${p.budget?p.budget+' €':'—'}</span></div>
     <div class="pref-row"><span class="pref-label">Temps de cuisine</span><span class="pref-value">${cookLabel}</span></div>
