@@ -139,12 +139,25 @@ body.dark .course-filter-btn.active{background:#f97316;border-color:#f97316;colo
 .week-menu-banner{
   background:linear-gradient(135deg,#f97316 0%,#ea580c 50%,#c2410c 100%);
   border-radius:1.6rem;position:relative;overflow:hidden;
-  height:84px;display:flex;align-items:center;
+  min-height:150px;display:flex;flex-direction:column;justify-content:flex-end;
+  padding:16px 18px;
   box-shadow:0 10px 30px rgba(249,115,22,.4);cursor:pointer;
-  margin-bottom:10px;transition:transform .15s;
+  transition:transform .15s;
 }
 .week-menu-banner:active{transform:scale(.98);}
 .week-menu-banner-deco{position:absolute;right:-20px;top:-20px;font-size:100px;opacity:.15;transform:rotate(15deg);pointer-events:none;}
+/* Tuiles "Crée ta semaine" / "Catalogue" côte à côte en haut de l'accueil : même gabarit
+   vertical (icône/aperçu en haut, texte en bas) pour que les deux entrées principales de
+   l'appli soient aussi visibles/accessibles l'une que l'autre, au lieu de deux barres fines
+   empilées. */
+.catalogue-tile{
+  border-radius:1.6rem;position:relative;overflow:hidden;
+  min-height:150px;width:100%;display:flex;flex-direction:column;justify-content:flex-end;
+  padding:16px 18px;box-shadow:0 2px 10px rgba(0,0,0,.05);cursor:pointer;
+  transition:transform .15s;
+}
+.catalogue-tile:active{transform:scale(.98);}
+.tile-chevron{position:absolute;top:14px;right:16px;font-size:22px;z-index:10;}
 
 .season-fx{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:1;}
 .season-fx-particle{position:absolute;top:-10vh;will-change:transform;animation:season-fall linear infinite;opacity:.8;}
@@ -721,24 +734,24 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
     <div class="pr-5 text-white/30 text-3xl">›</div>
   </div>
 
-  <div class="week-menu-banner" onclick="switchPage('week')" style="width:100%">
-    <div class="week-menu-banner-deco">🗓</div>
-    <div class="flex-1 px-5 z-10">
-      <div class="text-white/70 text-[9px] font-black uppercase tracking-widest mb-0.5" id="weekBannerSub">Menu personnalisé</div>
-      <div class="text-white text-base font-black uppercase italic leading-tight" id="weekBannerTitle">Crée ta semaine de menus 🍽️</div>
+  <div class="grid grid-cols-2 gap-3 mb-3">
+    <div class="week-menu-banner" onclick="switchPage('week')">
+      <div class="week-menu-banner-deco">🗓</div>
+      <span class="tile-chevron" style="color:rgba(255,255,255,.6)">›</span>
+      <div class="relative z-10">
+        <div class="text-white/70 text-[9px] font-black uppercase tracking-widest mb-0.5" id="weekBannerSub">Menu personnalisé</div>
+        <div class="text-white text-base font-black uppercase italic leading-tight" id="weekBannerTitle">Crée ta semaine de menus 🍽️</div>
+      </div>
     </div>
-    <div class="pr-5 text-white/30 text-3xl">›</div>
-  </div>
-  <button onclick="openCatalogueModal()" class="w-full flex items-center justify-between bg-white border border-slate-100 rounded-[1.6rem] shadow-sm px-4 mb-3 active:scale-[.98] transition-transform" style="border:1.5px solid var(--border);background:var(--card)">
-    <span class="flex items-center gap-3">
-      <span id="catalogue-preview" class="catalogue-preview-stack"></span>
-      <span class="text-left">
+    <button onclick="openCatalogueModal()" class="catalogue-tile" style="border:1.5px solid var(--border);background:var(--card)">
+      <span id="catalogue-preview" class="catalogue-preview-stack relative z-10"></span>
+      <span class="tile-chevron text-orange-500">›</span>
+      <span class="text-left relative z-10">
         <span class="block font-[900] text-sm uppercase italic" style="color:var(--text)" id="catalogueTitle">Voir tout le catalogue</span>
         <span class="block text-[10px] font-bold" style="color:var(--text2)">Toutes les recettes, par catégorie</span>
       </span>
-    </span>
-    <span class="text-orange-500 text-2xl">›</span>
-  </button>
+    </button>
+  </div>
 </section>
 
 <section id="page-week" class="page" role="tabpanel" aria-label="Semaine">
