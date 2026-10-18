@@ -1714,6 +1714,18 @@ const EVENT_KEYWORDS={
   valentin:['coeur','pour deux','duo','champagne','romantique'],
   paques:['paques','agneau pascal','agneau de paques','nid de paques','chocolat de paques','lapin de paques']
 };
+// Sous-ensemble volontairement plus strict d'EVENT_KEYWORDS, utilisé uniquement pour MASQUER
+// une recette pendant un AUTRE événement (recipeAvailableNow) : seulement des mots qui ne
+// désignent que cet événement précis, jamais un ingrédient générique utilisable toute l'année
+// (ex: "dinde"/"saint-jacques" boostent une recette à Noël sans problème, mais les utiliser
+// pour l'exclure masquerait à tort une simple escalope de dinde le reste de l'année).
+const EVENT_EXCLUSIVE_KEYWORDS={
+  halloween:['citrouille','araignee','fantome','effrayant','sorciere','momie','monstre'],
+  noel:['buche','sapin','pain depice','chapon'],
+  chandeleur:['galette de sarrasin'],
+  valentin:['coeur','romantique'],
+  paques:['paques','agneau pascal','agneau de paques','nid de paques','chocolat de paques','lapin de paques']
+};
 function eventWeight(r,event){
   if(!event)return 1;
   const words=EVENT_KEYWORDS[event];if(!words)return 1;
@@ -3790,8 +3802,22 @@ function regimeBadgeHTML(recipe,style){
 // l'année elle est mise de côté, pour ne pas voir des bananes-fantômes en plein mois de mars.
 // Elle reste toutefois accessible normalement si déjà en favori ou déjà placée dans un menu
 // (ces vues-là ne passent pas par ce filtre, voir recipeAvailableNow()).
+// Idem pour une recette non taguée mais dont le NOM trahit clairement un autre événement
+// (ex: "Bûche de Noël" contient le mot-clé exclusif "buche" de EVENT_EXCLUSIVE_KEYWORDS.noel) :
+// si un événement différent est actif (ex: Halloween), on la masque aussi, pour ne pas mélanger
+// les thèmes — avec la liste stricte, pas la liste de boost, pour ne pas cacher une recette
+// normale qui partage juste un ingrédient (dinde, saint-jacques...) avec un événement.
 function recipeAvailableNow(r){
-  return !r.event||r.event===getActiveEvent();
+  if(r.event)return r.event===getActiveEvent();
+  const active=getActiveEvent();
+  if(active){
+    const n=normalizeSearchText(r.n);
+    for(const ev in EVENT_EXCLUSIVE_KEYWORDS){
+      if(ev===active)continue;
+      if(EVENT_EXCLUSIVE_KEYWORDS[ev].some(w=>containsFoodWord(n,w)))return false;
+    }
+  }
+  return true;
 }
 function safeRecipes(){
   const avoid=getAvoidList();
