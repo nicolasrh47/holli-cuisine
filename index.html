@@ -1947,21 +1947,34 @@ function initTouchSystem(){
 }
 
 // Recette en vedette : choisie parmi les recettes de saison/événement en cours (mêmes critères
-// que shuffleWithSeason), stable sur 1 jour via le quantième de l'année — change chaque jour
-// plutôt que chaque semaine (avant : un numéro de semaine, donc la même recette restait en avant
-// ~7 jours d'affilée ; avec un événement court comme Halloween et son propre pool de recettes,
-// ça ne laissait voir que 2-3 recettes différentes sur toute la période). Se retrouve en 1ère
-// carte du deck de swipe avec un badge, au lieu d'un bloc séparé qui dupliquait l'info.
+// que shuffleWithSeason), stable sur une tranche de 10 min via l'horodatage — change toutes les
+// 10 min plutôt que chaque jour. Se retrouve en 1ère carte du deck de swipe avec un badge, au
+// lieu d'un bloc séparé qui dupliquait l'info.
 function pickWeeklyFeatured(){
   const pool0=safeRecipes();
   if(!pool0.length)return null;
-  const now=new Date(),oj=new Date(now.getFullYear(),0,1);
-  const dayOfYear=Math.ceil((now-oj)/86400000);
+  const slot=Math.floor(Date.now()/(10*60*1000));
   const event=getActiveEvent();
   const matched=event?pool0.filter(r=>eventWeight(r,event)>1):pool0.filter(r=>seasonWeight(r)===2);
   const pool=matched.length?matched:pool0;
-  return pool[dayOfYear%pool.length]||null;
+  return pool[slot%pool.length]||null;
 }
+// Permet à la vedette de tourner toutes les 10 min même si l'appli reste ouverte, sans jamais
+// perturber un swipe en cours : on ne met à jour que si l'utilisateur est encore sur la toute
+// première carte (jamais swipée) et qu'aucune animation n'est en cours. Vérifié chaque minute
+// (coût négligeable), pas toutes les 10 min, pour détecter le changement de tranche rapidement
+// dès qu'elle survient plutôt que de risquer de la rater entre deux vérifications espacées.
+function refreshFeaturedIfIdle(){
+  if(!document.getElementById('page-home')?.classList.contains('active'))return;
+  if(typeof curIdx==='undefined'||curIdx!==0||swipeBusy)return;
+  const featured=pickWeeklyFeatured();
+  if(!featured||!shuffledRecipes.length||shuffledRecipes[0].id===featured.id)return;
+  shuffledRecipes=shuffledRecipes.filter(r=>r.id!==featured.id);
+  shuffledRecipes.unshift(featured);
+  weeklyFeaturedId=featured.id;
+  renderCard(true);
+}
+setInterval(refreshFeaturedIfIdle,60000);
 function putWeeklyFeaturedFirst(){
   const featured=pickWeeklyFeatured();
   weeklyFeaturedId=featured?featured.id:null;
