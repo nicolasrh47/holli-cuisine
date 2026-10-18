@@ -1946,19 +1946,21 @@ function initTouchSystem(){
   });
 }
 
-// Recette de la semaine : choisie parmi les recettes de saison en cours
-// (mêmes critères que shuffleWithSeason), stable sur 7 jours via le numéro
-// de semaine. Se retrouve en 1ère carte du deck de swipe avec un badge,
-// au lieu d'un bloc séparé qui dupliquait l'info.
+// Recette en vedette : choisie parmi les recettes de saison/événement en cours (mêmes critères
+// que shuffleWithSeason), stable sur 1 jour via le quantième de l'année — change chaque jour
+// plutôt que chaque semaine (avant : un numéro de semaine, donc la même recette restait en avant
+// ~7 jours d'affilée ; avec un événement court comme Halloween et son propre pool de recettes,
+// ça ne laissait voir que 2-3 recettes différentes sur toute la période). Se retrouve en 1ère
+// carte du deck de swipe avec un badge, au lieu d'un bloc séparé qui dupliquait l'info.
 function pickWeeklyFeatured(){
   const pool0=safeRecipes();
   if(!pool0.length)return null;
   const now=new Date(),oj=new Date(now.getFullYear(),0,1);
-  const wk=Math.ceil((((now-oj)/86400000)+oj.getDay()+1)/7);
+  const dayOfYear=Math.ceil((now-oj)/86400000);
   const event=getActiveEvent();
   const matched=event?pool0.filter(r=>eventWeight(r,event)>1):pool0.filter(r=>seasonWeight(r)===2);
   const pool=matched.length?matched:pool0;
-  return pool[wk%pool.length]||null;
+  return pool[dayOfYear%pool.length]||null;
 }
 function putWeeklyFeaturedFirst(){
   const featured=pickWeeklyFeatured();
