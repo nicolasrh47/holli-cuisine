@@ -3704,13 +3704,13 @@ function getAvoidList(){
 // (ex: un ingrédient précis comme "coriandre" continue de matcher direct).
 const ALLERGEN_KEYWORDS={
   'gluten':['farine','ble','pain','pate','pates','chapelure','semoule','orge','seigle','avoine','couscous','biscuit','brioche','tortilla','nouilles','vermicelle','crepe','sable','speculoos','tartelette'],
-  'lactose':['lait','creme','beurre','fromage','yaourt','mascarpone','parmesan','gruyere','mozzarella','ricotta','camembert','emmental','feta','chevre','beaufort','comte','cheddar'],
-  'produits laitiers':['lait','creme','beurre','fromage','yaourt','mascarpone','parmesan','gruyere','mozzarella','ricotta','camembert','emmental','feta','chevre','beaufort','comte','cheddar'],
+  'lactose':['lait','creme','beurre','fromage','yaourt','mascarpone','parmesan','gruyere','mozzarella','burrata','ricotta','camembert','emmental','feta','chevre','beaufort','comte','cheddar'],
+  'produits laitiers':['lait','creme','beurre','fromage','yaourt','mascarpone','parmesan','gruyere','mozzarella','burrata','ricotta','camembert','emmental','feta','chevre','beaufort','comte','cheddar'],
   'oeuf':['oeuf'],'oeufs':['oeuf'],
   'fruits a coque':['amande','noisette','noix','pistache','cajou','pecan','macadamia','pralin'],
   'arachide':['arachide','cacahuete'],'arachides':['arachide','cacahuete'],'cacahuete':['arachide','cacahuete'],
-  'poisson':['saumon','thon','cabillaud','poisson','truite','anchois','sardine','colin','merlan','dorade','sole','morue','congre','grondin','rascasse'],
-  'poissons':['saumon','thon','cabillaud','poisson','truite','anchois','sardine','colin','merlan','dorade','sole','morue','congre','grondin','rascasse'],
+  'poisson':['saumon','thon','cabillaud','poisson','truite','anchois','sardine','colin','merlan','dorade','daurade','sole','morue','congre','grondin','rascasse'],
+  'poissons':['saumon','thon','cabillaud','poisson','truite','anchois','sardine','colin','merlan','dorade','daurade','sole','morue','congre','grondin','rascasse'],
   'crustaces':['crevette','crabe','homard','langouste','langoustine','gambas'],
   'fruits de mer':['crevette','crabe','homard','langouste','langoustine','moule','huitre','escargot','calamar','poulpe','saint-jacques','gambas'],
   'mollusques':['moule','huitre','escargot','calamar','poulpe','saint-jacques'],
@@ -3753,7 +3753,7 @@ function getAllergyMatches(recipe){
 // dit juste "jambon" est exclue du Halal même si c'est en réalité du jambon de dinde), mais c'est
 // le même compromis déjà accepté pour les allergies dans ce fichier.
 const MEAT_WORDS=['boeuf','bœuf','porc','veau','agneau','mouton','poulet','dinde','canard','volaille','pintade','caille','lapin','gibier','jambon','lardons','bacon','saucisse','saucisses','saucisson','chorizo','merguez','chipolata','andouillette','pancetta','steak','entrecote','entrecôte','gigot','foie gras','rillettes','viande','pate de campagne','pâté','confit de canard','magret','filet mignon','jarret','travers de porc','escalope','osso buco','bresaola'];
-const FISH_SEAFOOD_WORDS=['poisson','saumon','thon','cabillaud','truite','anchois','sardine','colin','merlan','dorade','sole','morue','congre','crevette','crabe','homard','langouste','langoustine','moule','huitre','huître','escargot','calamar','poulpe','saint-jacques','gambas','lotte','maquereau','hareng','caviar','bar','surimi','brandade'];
+const FISH_SEAFOOD_WORDS=['poisson','saumon','thon','cabillaud','truite','anchois','sardine','colin','merlan','dorade','daurade','sole','morue','congre','crevette','crabe','homard','langouste','langoustine','moule','huitre','huître','escargot','calamar','poulpe','saint-jacques','gambas','lotte','maquereau','hareng','caviar','bar','surimi','brandade'];
 const EGG_HONEY_WORDS=['oeuf','œuf','miel','mayonnaise'];
 const PORK_WORDS=['porc','lard','lardons','bacon','jambon','saucisson','chorizo','pancetta','andouillette','boudin','cochon','porcelet'];
 const ALCOHOL_WORDS=['vin','biere','bière','alcool','rhum','cognac','champagne','porto','calvados','kirsch','grand marnier','liqueur','armagnac','pastis'];
