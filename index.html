@@ -1791,7 +1791,7 @@ function renderFavs(){
       <div class="relative">
         <img src="${imgSize(r.i,360,450)}" alt="${r.n}" class="w-full h-40 object-cover" loading="lazy" decoding="async" onerror="imgFallback(this)">
         <button onclick="toggleFav(${r.id},event)" class="fav-btn active" data-fav-id="${r.id}">❤️</button>
-        ${allergyBadgeHTML(r)}
+        ${allergyBadgeHTML(r)}${regimeBadgeHTML(r)}
         <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-4">
           <div class="flex-1"><span class="inline-flex items-center gap-1.5">${courseBadgeHTML(r)}<span class="text-white/60 text-[9px] font-black uppercase">${r.cat}</span></span>
           <h3 class="text-white font-black uppercase italic text-base leading-tight">${r.n}</h3></div>
@@ -2033,7 +2033,7 @@ function renderGrid(){
       </div>
       <button class="fav-btn ${favorites.has(r.id)?'active':''}" data-fav-id="${r.id}" onclick="toggleFav(${r.id},event)">${favorites.has(r.id)?'❤️':'🤍'}</button>
       <button class="add-btn" onclick="event.stopPropagation();handleAddRecipe(${r.id})">+</button>
-      ${allergyBadgeHTML(r)}
+      ${allergyBadgeHTML(r)}${regimeBadgeHTML(r)}
     </div>`).join(''):emptyStateHTML('🔍','Aucune recette trouvée',null,{py:'py-16',small:true,extra:'col-span-2'});
   observeGridImages();
 }
@@ -2067,6 +2067,7 @@ function showDetails(id){
       ${r.prix?`<span class="bg-slate-100 text-slate-600 text-[10px] font-black px-3 py-1.5 rounded-full">${prixDisplay(r.prix)}</span>`:''}
     </div>`:''}
     ${getAllergyMatches(r).length?`<div class="bg-red-50 border-2 border-red-200 rounded-2xl p-4 mb-4"><p class="text-red-700 font-black text-xs uppercase">⚠️ Attention</p><p class="text-red-700 font-bold text-[11px] mt-1">Cette recette contient : ${getAllergyMatches(r).join(', ')}</p></div>`:''}
+    ${getRegimeMismatch(r).length?`<div class="bg-orange-50 border-2 border-orange-200 rounded-2xl p-4 mb-4"><p class="text-orange-700 font-black text-xs uppercase">🚫 Hors régime</p><p class="text-orange-700 font-bold text-[11px] mt-1">Ne correspond pas à ton régime : ${getRegimeMismatch(r).join(', ')}</p></div>`:''}
     <p class="text-[9px] font-black text-orange-500 uppercase mb-1" id="detail-ing-label">Ingrédients · ${wb?batchLabel(r):servings+' pers.'}</p>
     <div class="bg-orange-50 p-5 rounded-[2rem] mb-5 font-bold text-slate-700 text-sm" id="detail-ing-list">${ings}</div>
     <p class="text-[9px] font-black text-orange-500 uppercase mb-2">Préparation</p>
@@ -2450,7 +2451,7 @@ function courseSlotHTML(item,dayIdx,course){
       <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="week-slot-img" loading="lazy" decoding="async" onclick="showDetails(${r.id})" onerror="imgFallback(this)">
       <div class="week-slot-body" onclick="showDetails(${r.id})">
         <span class="week-slot-tag">${meta.emoji} ${meta.label}</span>
-        <div class="week-slot-name">${r.n}${allergyBadgeHTML(r,'inline')}</div>
+        <div class="week-slot-name">${r.n}${allergyBadgeHTML(r,'inline')}${regimeBadgeHTML(r,'inline')}</div>
         ${tempsShort?`<span class="week-slot-badge">⏱ ${tempsShort}</span>`:''}
       </div>
     </div>
@@ -2659,7 +2660,7 @@ function renderCooking(){
     return`<div class="bg-white rounded-[2.2rem] border p-4 flex gap-4 items-center mb-2" style="animation:slideUp .4s ease-out ${anim*.08}s both">
         <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0" loading="lazy" decoding="async" onerror="imgFallback(this)">
         <div class="flex-1 min-w-0">
-          <h3 class="font-black uppercase text-[11px] italic text-slate-800 leading-tight">${r.n}${allergyBadgeHTML(r,'inline')}</h3>
+          <h3 class="font-black uppercase text-[11px] italic text-slate-800 leading-tight">${r.n}${allergyBadgeHTML(r,'inline')}${regimeBadgeHTML(r,'inline')}</h3>
           <p class="text-[9px] text-[var(--text2)] font-bold mt-1">${splitPrepSteps(r.prep).length} étapes${r.temps?` · ⏱ ${r.temps}`:''}</p>
         </div>
         <div class="flex gap-3 flex-shrink-0">
@@ -3673,11 +3674,59 @@ function getAllergyMatches(recipe){
     return keywords.some(k=>containsFoodWord(ing,normalizeSearchText(k)));
   });
 }
+// Filtrage par régime alimentaire (Végétarien, Vegan, Sans gluten, Halal...) : jusqu'ici
+// profile.regime n'était affiché que sur la page Profil, sans jamais influencer les recettes
+// montrées — un utilisateur Vegan voyait quand même des plats de viande partout. Même principe
+// que les allergies ci-dessus : une liste de mots-clés par régime, comparée aux ingrédients via
+// containsFoodWord (mots entiers, pluriel optionnel). Approximatif par nature (une recette qui
+// dit juste "jambon" est exclue du Halal même si c'est en réalité du jambon de dinde), mais c'est
+// le même compromis déjà accepté pour les allergies dans ce fichier.
+const MEAT_WORDS=['boeuf','bœuf','porc','veau','agneau','mouton','poulet','dinde','canard','volaille','pintade','caille','lapin','gibier','jambon','lardons','bacon','saucisse','saucisses','saucisson','chorizo','merguez','chipolata','andouillette','pancetta','steak','entrecote','entrecôte','gigot','foie gras','rillettes','viande','pate de campagne','pâté','confit de canard','magret','filet mignon','jarret','travers de porc','escalope','osso buco','bresaola'];
+const FISH_SEAFOOD_WORDS=['poisson','saumon','thon','cabillaud','truite','anchois','sardine','colin','merlan','dorade','sole','morue','congre','crevette','crabe','homard','langouste','langoustine','moule','huitre','huître','escargot','calamar','poulpe','saint-jacques','gambas','lotte','maquereau','hareng','caviar','bar','surimi','brandade'];
+const EGG_HONEY_WORDS=['oeuf','œuf','miel','mayonnaise'];
+const PORK_WORDS=['porc','lard','lardons','bacon','jambon','saucisson','chorizo','pancetta','andouillette','boudin','cochon','porcelet'];
+const ALCOHOL_WORDS=['vin','biere','bière','alcool','rhum','cognac','champagne','porto','calvados','kirsch','grand marnier','liqueur','armagnac','pastis'];
+const SHELLFISH_MOLLUSK_WORDS=['crevette','crabe','homard','langouste','langoustine','moule','huitre','huître','escargot','calamar','poulpe','saint-jacques','gambas'];
+const HIGH_CARB_WORDS=['farine','pain','pates','pâtes','riz','pommes de terre','patate','sucre','frites','couscous','semoule','quinoa','lentilles','pois chiches','haricots blancs','haricots rouges','banane','confiture','biscuit','gateau','gâteau','tarte','crepe','crêpe','brioche','nouilles','vermicelle'];
+const REGIME_EXCLUDE_KEYWORDS={
+  'Végétarien':[...MEAT_WORDS,...FISH_SEAFOOD_WORDS],
+  'Vegan':[...MEAT_WORDS,...FISH_SEAFOOD_WORDS,...ALLERGEN_KEYWORDS['lactose'],...EGG_HONEY_WORDS],
+  'Sans gluten':ALLERGEN_KEYWORDS['gluten'],
+  'Sans lactose':ALLERGEN_KEYWORDS['lactose'],
+  'Halal':[...PORK_WORDS,...ALCOHOL_WORDS],
+  'Kasher':[...PORK_WORDS,...SHELLFISH_MOLLUSK_WORDS],
+  'Keto':[...HIGH_CARB_WORDS,'mais','maïs','petits pois'],
+  'Low Carb':HIGH_CARB_WORDS,
+};
+function getRegimeExcludeWords(){
+  if(!currentUser)return[];
+  const regimes=Array.isArray(currentUser.profile?.regime)?currentUser.profile.regime:[];
+  const set=new Set();
+  regimes.forEach(r=>(REGIME_EXCLUDE_KEYWORDS[r]||[]).forEach(w=>set.add(w)));
+  return[...set];
+}
+function getRegimeMismatch(recipe){
+  const words=getRegimeExcludeWords();
+  if(!words.length||!recipe)return[];
+  let ing=normalizeSearchText(recipe.ing);
+  NON_DAIRY_MILK_PHRASES.forEach(p=>{ing=ing.replace(new RegExp(normalizeSearchText(p),'g'),'');});
+  return words.filter(w=>containsFoodWord(ing,normalizeSearchText(w)));
+}
+function recipeMatchesRegime(recipe){
+  return getRegimeMismatch(recipe).length===0;
+}
+function regimeBadgeHTML(recipe,style){
+  const matches=getRegimeMismatch(recipe);
+  if(!matches.length)return'';
+  const title=`Ne correspond pas à ton régime : ${matches.join(', ')}`;
+  if(style==='inline')return`<span title="${title}" style="display:inline-flex;align-items:center;gap:4px;background:#fff7ed;color:#c2410c;font-size:9px;font-weight:900;padding:4px 10px;border-radius:99px;margin-left:6px">🚫 ${matches[0]}</span>`;
+  return`<div class="allergy-warning-badge" title="${title}">🚫 régime</div>`;
+}
 // Recettes utilisées par les parcours "automatiques" (swipe, semaine, aperçu
-// catalogue) : celles qui contiennent une allergie/un ingrédient détesté sont
-// exclues d'office, plutôt que juste signalées par un badge. Le Catalogue en
-// recherche manuelle, lui, continue de tout montrer (avec le badge + le
-// toggle "masquer mes allergènes") puisque c'est une recherche volontaire.
+// catalogue) : celles qui contiennent une allergie/un ingrédient détesté, ou qui ne
+// correspondent pas au régime choisi, sont exclues d'office, plutôt que juste signalées par
+// un badge. Le Catalogue en recherche manuelle, lui, continue de tout montrer (avec le badge +
+// le toggle "masquer mes allergènes") puisque c'est une recherche volontaire.
 // Une recette marquée "event" (ex: les spéciales Halloween) ne doit ressortir dans le swipe,
 // le catalogue et la génération de semaine que pendant son propre événement — le reste de
 // l'année elle est mise de côté, pour ne pas voir des bananes-fantômes en plein mois de mars.
@@ -3689,7 +3738,9 @@ function recipeAvailableNow(r){
 function safeRecipes(){
   const avoid=getAvoidList();
   const inSeason=recipes.filter(recipeAvailableNow);
-  const base=inSeason.length?inSeason:recipes;
+  let base=inSeason.length?inSeason:recipes;
+  const onRegime=base.filter(recipeMatchesRegime);
+  base=onRegime.length?onRegime:base;
   if(!avoid.length)return base;
   const filtered=base.filter(r=>getAllergyMatches(r).length===0);
   return filtered.length?filtered:base;
