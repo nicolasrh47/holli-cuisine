@@ -1737,7 +1737,7 @@ function currentTheme(){const event=getActiveEvent();return event?EVENT_THEME[ev
 // par frame, pour rester léger. Désactivées automatiquement si l'utilisateur préfère moins
 // d'animations (prefers-reduced-motion).
 const SEASON_PARTICLES={printemps:['🌸','🌷'],ete:['☀️','🍉','🍦'],automne:['🍂','🍁'],hiver:['❄️']};
-const EVENT_PARTICLES={halloween:['🦇','🕸️'],noel:['❄️','✨'],chandeleur:[],valentin:['💕','💗'],paques:['🐰','🥚','🐣']};
+const EVENT_PARTICLES={halloween:['🎃'],noel:['❄️','✨'],chandeleur:[],valentin:['💕','💗'],paques:['🐰','🥚','🐣']};
 function renderSeasonFx(){
   const el=document.getElementById('season-fx');if(!el)return;
   const event=getActiveEvent();
