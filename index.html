@@ -3752,7 +3752,11 @@ function getAllergyMatches(recipe){
 // containsFoodWord (mots entiers, pluriel optionnel). Approximatif par nature (une recette qui
 // dit juste "jambon" est exclue du Halal même si c'est en réalité du jambon de dinde), mais c'est
 // le même compromis déjà accepté pour les allergies dans ce fichier.
-const MEAT_WORDS=['boeuf','bœuf','porc','veau','agneau','mouton','poulet','dinde','canard','volaille','pintade','caille','lapin','gibier','jambon','lardons','bacon','saucisse','saucisses','saucisson','chorizo','merguez','chipolata','andouillette','pancetta','steak','entrecote','entrecôte','gigot','foie gras','rillettes','viande','pate de campagne','pâté','confit de canard','magret','filet mignon','jarret','travers de porc','escalope','osso buco','bresaola'];
+// "pâté" seul a été retiré : une fois les accents normalisés, il devient indiscernable de
+// "pâte"/"pâtes" (pâtisserie, pâtes alimentaires) — aucune recette de la base n'utilise
+// "pâté" seul (toujours "pâté de campagne" etc, déjà couvert ci-dessous), donc ce mot ne
+// servait qu'à exclure à tort 38 recettes à base de pâte/pâtes des régimes végé/vegan.
+const MEAT_WORDS=['boeuf','bœuf','porc','veau','agneau','mouton','poulet','dinde','canard','volaille','pintade','caille','lapin','gibier','jambon','lardons','bacon','saucisse','saucisses','saucisson','chorizo','merguez','chipolata','andouillette','pancetta','steak','entrecote','entrecôte','gigot','foie gras','rillettes','viande','pate de campagne','pâté de campagne','pâté de foie','confit de canard','magret','filet mignon','jarret','travers de porc','escalope','osso buco','bresaola'];
 const FISH_SEAFOOD_WORDS=['poisson','saumon','thon','cabillaud','truite','anchois','sardine','colin','merlan','dorade','daurade','sole','morue','congre','crevette','crabe','homard','langouste','langoustine','moule','huitre','huître','escargot','calamar','poulpe','saint-jacques','gambas','lotte','maquereau','hareng','caviar','bar','surimi','brandade'];
 const EGG_HONEY_WORDS=['oeuf','œuf','miel','mayonnaise'];
 const PORK_WORDS=['porc','lard','lardons','bacon','jambon','saucisson','chorizo','pancetta','andouillette','boudin','cochon','porcelet'];
