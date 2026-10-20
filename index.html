@@ -93,7 +93,7 @@ body.dark .cook-tab-btn.active{background:#f97316;border-color:#f97316;color:whi
 body.dark .pers-pill button{background:#334155;color:#e2e8f0;}
 body.dark .pers-pill span{color:#f1f5f9;}
 
-.swipe-zone{position:relative;height:225px;width:100%;touch-action:none;}
+.swipe-zone{position:relative;height:270px;width:100%;touch-action:none;}
 .swipe-card{position:absolute;inset:0;border-radius:3.5rem;overflow:hidden;box-shadow:0 28px 56px -10px rgba(0,0,0,.22);border:4px solid white;z-index:10;will-change:transform;}
 .swipe-card-behind{position:absolute;inset:0;border-radius:3.5rem;overflow:hidden;border:4px solid white;z-index:5;opacity:.55;box-shadow:0 14px 30px -10px rgba(0,0,0,.18);pointer-events:none;}
 #card-img{transition:opacity .2s ease-out;}
@@ -145,8 +145,8 @@ body.dark .course-filter-btn.active{background:#f97316;border-color:#f97316;colo
     radial-gradient(90% 70% at 85% 100%, rgba(124,45,18,.55), transparent 60%),
     linear-gradient(160deg,#fb923c 0%,#ea580c 45%,#9a3412 100%);
   border-radius:1.6rem;position:relative;overflow:hidden;
-  min-height:128px;display:flex;flex-direction:column;justify-content:flex-end;
-  padding:14px 16px;
+  min-height:118px;display:flex;flex-direction:column;justify-content:flex-end;
+  padding:12px 16px;
   box-shadow:0 10px 30px rgba(249,115,22,.4);cursor:pointer;
   transition:transform .15s;
 }
@@ -158,8 +158,8 @@ body.dark .course-filter-btn.active{background:#f97316;border-color:#f97316;colo
     radial-gradient(100% 70% at 90% 100%, rgba(120,53,15,.4), transparent 60%),
     linear-gradient(160deg,#fde68a 0%,#fb923c 55%,#c2410c 100%);
   border-radius:1.6rem;position:relative;overflow:hidden;
-  min-height:128px;width:100%;display:flex;flex-direction:column;justify-content:space-between;
-  padding:14px 16px;box-shadow:0 10px 24px rgba(234,88,12,.3);cursor:pointer;
+  min-height:118px;width:100%;display:flex;flex-direction:column;justify-content:space-between;
+  padding:12px 16px;box-shadow:0 10px 24px rgba(234,88,12,.3);cursor:pointer;
   transition:transform .15s;
 }
 .catalogue-tile:active{transform:scale(.98);}
@@ -706,8 +706,8 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
     <span class="ad-banner-text">👀 Retire la pub et débloque tout avec Premium</span>
     <span class="ad-banner-cta">Voir →</span>
   </div>
-  <div class="flex justify-center mb-1">
-    <div class="bg-slate-100 px-4 py-2 rounded-full text-[11px] flex items-center gap-2">
+  <div class="flex justify-center mb-0.5">
+    <div class="bg-slate-100 px-4 py-1 rounded-full text-[11px] flex items-center gap-2">
       <span class="text-red-600 font-black">✕ Jeter</span>
       <span class="w-1 h-1 bg-slate-400 rounded-full"></span>
       <span class="text-slate-700 italic font-semibold" id="swipeHintText">Glisse la carte</span>
@@ -715,7 +715,7 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
       <span class="text-green-600 font-black" id="miamLabelText">MIAM</span>
     </div>
   </div>
-  <div id="swipe-container" class="swipe-zone mb-2">
+  <div id="swipe-container" class="swipe-zone mb-1">
     <div id="card-behind" class="swipe-card-behind"><img id="card-behind-img" src="" alt="" class="w-full h-full object-cover"></div>
     <div id="miam-badge" class="miam-label">MIAM</div>
     <div id="nope-badge" class="nope-label">NOPE</div>
@@ -728,13 +728,13 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
       <button id="swipe-fav-btn" class="swipe-fav-btn" onclick="toggleSwipeFav(event)">🤍</button>
     </div>
   </div>
-  <div class="flex justify-center gap-6 mb-2">
-    <div class="flex flex-col items-center gap-1">
-      <button onclick="handleNope()" aria-label="Passer cette recette" class="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-red-500 border border-red-50 active:scale-90 transition-transform">✕</button>
+  <div class="flex justify-center gap-6 mb-1">
+    <div class="flex flex-col items-center gap-0.5">
+      <button onclick="handleNope()" aria-label="Passer cette recette" class="w-11 h-11 bg-white rounded-full shadow-lg flex items-center justify-center text-red-500 border border-red-50 active:scale-90 transition-transform">✕</button>
       <span class="text-[9px] font-black uppercase text-red-700">Passer</span>
     </div>
-    <div class="flex flex-col items-center gap-1">
-      <button onclick="handleLike()" aria-label="Garder cette recette" class="w-12 h-12 bg-orange-500 rounded-full shadow-lg flex items-center justify-center text-white text-2xl active:scale-90 transition-transform">✓</button>
+    <div class="flex flex-col items-center gap-0.5">
+      <button onclick="handleLike()" aria-label="Garder cette recette" class="w-11 h-11 bg-orange-500 rounded-full shadow-lg flex items-center justify-center text-white text-2xl active:scale-90 transition-transform">✓</button>
       <span class="text-[9px] font-black uppercase text-orange-500">Garder</span>
     </div>
   </div>
