@@ -338,6 +338,7 @@ body.dark .bottom-action-bar{background:#0f172a;}
 body.dark .mais-cat-tab{background:#1e293b;border-color:#334155;color:#94a3b8;}
 body.dark .mais-cat-tab.active{background:#f97316;color:white;border-color:#f97316;}
 .btn-maison{background:white;padding:13px 11px;border-radius:1.2rem;border:1.5px solid #f1f5f9;font-weight:800;font-size:9px;text-transform:uppercase;transition:.2s;display:flex;align-items:center;gap:8px;cursor:pointer;width:100%;text-align:left;}
+.maison-icon-img{width:18px;height:18px;object-fit:contain;display:inline-block;vertical-align:middle;flex-shrink:0;}
 .btn-maison.active{background:#eff6ff;border-color:#3b82f6;color:#1d4ed8;}
 .btn-maison.needed{border-color:#f59e0b;background:#fffbeb;}
 .btn-maison.urgent{border-color:#ef4444;background:#fef2f2;}
@@ -1216,6 +1217,17 @@ function escapeHtml(str){
   const div=document.createElement('div');
   div.textContent=str==null?'':String(str);
   return div.innerHTML;
+}
+
+// Icône d'un article (Maison, courses récurrentes…) : la plupart sont un simple emoji, mais
+// certains produits (abricot, nectarine, prune…) n'ont pas d'emoji dédié dans Unicode — pour
+// ceux-là, item.i contient un chemin vers une petite icône dessinée sur-mesure
+// (images/maison-icons/xxx.png) plutôt qu'un emoji approximatif. On détecte ce cas partout où
+// une icône d'article est affichée, pour ne pas afficher le chemin du fichier en texte brut.
+function iconHtml(icon){
+  if(!icon)return'';
+  if(icon.indexOf('/')>-1)return`<img src="${escapeHtml(icon)}" class="maison-icon-img" alt="">`;
+  return escapeHtml(icon);
 }
 
 // Échappe une valeur destinée à être insérée dans un attribut du type
@@ -2919,9 +2931,9 @@ function renderMaison(){
     const diff=(next-now)/864e5;
     return diff<=3&&diff>-7;
   });
-  document.getElementById('maison-alerts').innerHTML=dueItems.length?`<div class="maison-alert-box"><p class="maison-alert-title">⚠️ À racheter bientôt</p><div class="flex flex-wrap gap-2">${dueItems.slice(0,8).map(item=>`<button onclick="toggleHome('${jsAttr(item.n)}')" class="maison-alert-chip">${escapeHtml(item.i)} ${escapeHtml(item.n)}</button>`).join('')}</div>${dueItems.length>8?`<p class="maison-alert-more">+${dueItems.length-8} autres</p>`:''}</div>`:'';
+  document.getElementById('maison-alerts').innerHTML=dueItems.length?`<div class="maison-alert-box"><p class="maison-alert-title">⚠️ À racheter bientôt</p><div class="flex flex-wrap gap-2">${dueItems.slice(0,8).map(item=>`<button onclick="toggleHome('${jsAttr(item.n)}')" class="maison-alert-chip">${iconHtml(item.i)} ${escapeHtml(item.n)}</button>`).join('')}</div>${dueItems.length>8?`<p class="maison-alert-more">+${dueItems.length-8} autres</p>`:''}</div>`:'';
   const freqItems=getFrequentItems().filter(item=>!homeCart.includes(item.n));
-  document.getElementById('maison-suggestions').innerHTML=freqItems.length?`<p class="text-[9px] font-black text-purple-500 uppercase mb-2">⭐ Achats fréquents</p><div class="flex flex-wrap gap-2 mb-3">${freqItems.map(item=>`<span class="suggestion-chip" onclick="toggleHome('${jsAttr(item.n)}')">${escapeHtml(item.i)} ${escapeHtml(item.n)}</span>`).join('')}</div>`:'';
+  document.getElementById('maison-suggestions').innerHTML=freqItems.length?`<p class="text-[9px] font-black text-purple-500 uppercase mb-2">⭐ Achats fréquents</p><div class="flex flex-wrap gap-2 mb-3">${freqItems.map(item=>`<span class="suggestion-chip" onclick="toggleHome('${jsAttr(item.n)}')">${iconHtml(item.i)} ${escapeHtml(item.n)}</span>`).join('')}</div>`:'';
   let filtered=maisonItems;
   if(currentMaisonCat!=='Tous')filtered=filtered.filter(i=>i.cat===currentMaisonCat);
   if(searchTerms.length)filtered=filtered.filter(i=>searchTerms.every(t=>normalizeSearchText(i.n).includes(t)));
@@ -2973,7 +2985,7 @@ function renderMaisonGrid(filtered){
       const fl={hebdo:'freq-hebdo',mensuel:'freq-mensuel',trim:'freq-trim'}[item.freq]||'';
       const fl2={hebdo:'Hebdo',mensuel:'Mensuel',trim:'Trim.'}[item.freq]||'';
       let ec='';if(!inCart&&sl==='danger')ec='urgent';else if(!inCart&&sl==='warning')ec='needed';
-      html+=`<button onclick="toggleHome('${jsAttr(item.n)}')" class="btn-maison ${inCart?'active':''} ${ec}"><span class="text-base">${escapeHtml(item.i)}</span><span class="flex-1 text-left"><span class="block">${escapeHtml(item.n)}</span>${fl2?`<span class="freq-badge ${fl}">${fl2}</span>`:''}</span>${inCart?'<span class="text-blue-400 text-[10px]">✓</span>':''}</button>`;
+      html+=`<button onclick="toggleHome('${jsAttr(item.n)}')" class="btn-maison ${inCart?'active':''} ${ec}"><span class="text-base">${iconHtml(item.i)}</span><span class="flex-1 text-left"><span class="block">${escapeHtml(item.n)}</span>${fl2?`<span class="freq-badge ${fl}">${fl2}</span>`:''}</span>${inCart?'<span class="text-blue-400 text-[10px]">✓</span>':''}</button>`;
     });
     html+='</div>';
   });
@@ -3299,7 +3311,7 @@ function renderOnboardRecurring(){
     onboardDraft.recurringItems.forEach(item=>{
       const safeName=jsAttr(item.name);
       activeHtml+=`<div class="onboard-recur-item active onboard-recur-item-fixed">
-        <span>${item.icon}</span>
+        <span>${iconHtml(item.icon)}</span>
         <span class="onboard-recur-name">${escapeHtml(item.name)}</span>
         <select class="onboard-recur-freq" onchange="setOnboardRecurringFreq('${safeName}',this.value)">
           ${[7,14,30,60,90].map(d=>`<option value="${d}" ${item.freqDays===d?'selected':''}>${d<30?d+' j':(d/30)+' mois'}</option>`).join('')}
@@ -3329,7 +3341,7 @@ function renderOnboardRecurring(){
       const picked=onboardDraft.recurringItems.find(r=>r.name===item.n);
       const defDays=freqDays(item.freq);
       html+=`<div class="onboard-recur-item ${picked?'active':''}" onclick="toggleOnboardRecurring('${safeName}','${jsAttr(item.i)}','${jsAttr(cat)}',${defDays})">
-        <span>${escapeHtml(item.i)}</span>
+        <span>${iconHtml(item.i)}</span>
         <span class="onboard-recur-name">${escapeHtml(item.n)}</span>
         ${picked?'<span class="onboard-recur-check">✓</span>':''}
       </div>`;
@@ -3558,7 +3570,7 @@ function renderProfilePage(){
     </div>`;
   const recur=p.recurringItems||[];
   document.getElementById('profile-recurring-card').innerHTML=recur.length
-    ?recur.map(r=>`<div class="pref-row"><span class="pref-label">${r.icon} ${escapeHtml(r.name)}</span><span class="pref-value">tous les ${r.freqDays<30?r.freqDays+' j':(r.freqDays/30)+' mois'}</span></div>`).join('')
+    ?recur.map(r=>`<div class="pref-row"><span class="pref-label">${iconHtml(r.icon)} ${escapeHtml(r.name)}</span><span class="pref-value">tous les ${r.freqDays<30?r.freqDays+' j':(r.freqDays/30)+' mois'}</span></div>`).join('')
     :'<p class="text-[11px] font-bold text-center py-2" style="color:var(--text2)">Aucun article récurrent configuré</p>';
 }
 
@@ -3611,7 +3623,7 @@ async function renderRecurringManager(){
     currentUser.profile.recurringItems.forEach(item=>{
       const safeName=jsAttr(item.name);
       activeHtml+=`<div class="onboard-recur-item active onboard-recur-item-fixed">
-        <span>${item.icon}</span>
+        <span>${iconHtml(item.icon)}</span>
         <span class="onboard-recur-name">${escapeHtml(item.name)}</span>
         <select class="onboard-recur-freq" onchange="setRecurringItemFreq('${safeName}',this.value)">
           ${[7,14,30,60,90].map(d=>`<option value="${d}" ${item.freqDays===d?'selected':''}>${d<30?d+' j':(d/30)+' mois'}</option>`).join('')}
@@ -3641,7 +3653,7 @@ async function renderRecurringManager(){
       const picked=currentUser.profile.recurringItems.find(r=>r.name===item.n);
       const defDays=freqDays(item.freq);
       html+=`<div class="onboard-recur-item ${picked?'active':''}" onclick="toggleRecurringItem('${safeName}','${jsAttr(item.i)}','${jsAttr(cat)}',${defDays})">
-        <span>${escapeHtml(item.i)}</span>
+        <span>${iconHtml(item.i)}</span>
         <span class="onboard-recur-name">${escapeHtml(item.n)}</span>
         ${picked?'<span class="onboard-recur-check">✓</span>':''}
       </div>`;
