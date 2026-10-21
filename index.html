@@ -1208,7 +1208,7 @@ function toggleDark(){isDark=!isDark;localStorage.setItem('holli_dark',isDark);d
 async function requestWakeLock(){if(!('wakeLock'in navigator))return;try{wakeLock=await navigator.wakeLock.request('screen');document.getElementById('wakelock-btn').innerText='🔓 Actif';wakeLock.addEventListener('release',()=>{wakeLock=null;document.getElementById('wakelock-btn').innerText='🔒 Veille';});}catch(e){}}
 function releaseWakeLock(){if(wakeLock){wakeLock.release();wakeLock=null;}}
 function toggleWakeLock(){if(wakeLock)releaseWakeLock();else requestWakeLock();}
-function showToast(msg,color='#22c55e'){const t=document.createElement('div');t.className='toast';t.style.background=color;t.innerText=msg;document.body.appendChild(t);setTimeout(()=>{t.classList.add('hiding');setTimeout(()=>t.remove(),420);},2400);}
+function showToast(msg,color='#22c55e'){document.querySelectorAll('.toast').forEach(el=>el.remove());const t=document.createElement('div');t.className='toast';t.style.background=color;t.innerText=msg;document.body.appendChild(t);setTimeout(()=>{t.classList.add('hiding');setTimeout(()=>t.remove(),420);},2400);}
 function fmtTime(s){const m=Math.floor(s/60),r=s%60;return m>0?`${m}min${r>0?r+'s':''}`:`${r}s`;}
 function rnd(v){return Math.round(v*10)/10;}
 // Échappe le texte libre saisi par l'utilisateur (articles ajoutés, allergies, noms d'articles
