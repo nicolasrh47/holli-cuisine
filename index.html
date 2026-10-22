@@ -1833,13 +1833,13 @@ function updateSwipeFavBtn(){
 function renderFavs(){
   const favRecipes=recipes.filter(r=>favorites.has(r.id));
   document.getElementById('fav-count-label').innerText=favRecipes.length?`${favRecipes.length} recette${favRecipes.length>1?'s':''}`:'';
-  const cats=['Tous',...new Set(favRecipes.map(r=>r.cat))];
-  document.getElementById('fav-cat-bar').innerHTML=cats.map(c=>`<button onclick="setFavCat('${c}')" class="cat-tab ${c===currentFavCat?'active':''}">${c}</button>`).join('');
+  const cats=['Tous',...new Set(favRecipes.map(r=>displayCategory(r)))];
+  document.getElementById('fav-cat-bar').innerHTML=cats.map(c=>`<button onclick="setFavCat('${jsAttr(c)}')" class="cat-tab ${c===currentFavCat?'active':''}">${c}</button>`).join('');
   document.getElementById('fav-course-bar').innerHTML=['Tous',...COURSES.map(c=>c.key)].map(key=>{
     const label=key==='Tous'?'Tous':COURSES.find(c=>c.key===key).emoji+' '+COURSES.find(c=>c.key===key).label;
     return`<button onclick="setFavCourse('${key}')" class="cat-tab ${key===currentFavCourse?'active':''}">${label}</button>`;
   }).join('');
-  let filtered=currentFavCat==='Tous'?favRecipes:favRecipes.filter(r=>r.cat===currentFavCat);
+  let filtered=currentFavCat==='Tous'?favRecipes:favRecipes.filter(r=>displayCategory(r)===currentFavCat);
   if(currentFavCourse!=='Tous')filtered=filtered.filter(r=>courseKeyForRecipe(r)===currentFavCourse);
   const rawSearch=(document.getElementById('fav-search')?.value||'').trim();
   if(rawSearch){
