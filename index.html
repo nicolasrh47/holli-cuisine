@@ -3745,7 +3745,10 @@ function containsFoodWord(haystack,word){
 // "Lait de coco" contient le mot "lait" mais n'est pas un produit laitier : sans ce retrait, une
 // allergie au lactose excluait a tort une recette qui n'en contient pas. Retirer la phrase avant
 // la recherche du mot "lait" seul evite le faux positif sans toucher aux vrais produits laitiers.
-const NON_DAIRY_MILK_PHRASES=['lait de coco'];
+// Même principe pour les autres laits végétaux (amande, soja, avoine...) : trouvé en ajoutant une
+// recette vegan au lait de soja, qui ressortait à tort incompatible Vegan/Sans lactose — "Smoothie
+// Bowl Framboise & Banane" (lait d'amande seul, sans alternative laitière) avait déjà ce même bug.
+const NON_DAIRY_MILK_PHRASES=['lait de coco','lait d\'amande','lait d\'avoine','lait de soja','lait de riz','lait de noisette','lait de cajou'];
 function getAllergyMatches(recipe){
   const avoid=getAvoidList();
   if(!avoid.length||!recipe)return[];
