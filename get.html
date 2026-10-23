@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cuisine en Famille — Télécharger l'app</title>
+<meta name="description" content="Recettes, menu de la semaine et liste de courses partagée. Téléchargez gratuitement Cuisine en Famille sur Google Play.">
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { height:100%; }
+  body {
+    font-family:-apple-system,'Segoe UI',Arial,sans-serif;
+    background: linear-gradient(170deg,#2C4A63 0%,#1B2F40 60%,#0F1B26 100%);
+    min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    padding:32px 24px;
+    position:relative;
+    overflow:hidden;
+  }
+  .bokeh { position:absolute; border-radius:50%; filter:blur(60px); pointer-events:none; }
+  .bk1 { width:340px; height:340px; left:-100px; top:-80px; background:rgba(232,147,92,.25); }
+  .bk2 { width:280px; height:280px; right:-90px; bottom:-60px; background:rgba(255,255,255,.07); }
+
+  .card {
+    position:relative; z-index:1;
+    width:100%; max-width:420px;
+    text-align:center;
+  }
+  .icon {
+    width:112px; height:112px; border-radius:28px;
+    box-shadow:0 20px 50px rgba(0,0,0,.4);
+    margin:0 auto 24px;
+    display:block;
+  }
+  h1 {
+    color:#fff; font-size:30px; font-weight:900; font-style:italic;
+    line-height:1.2; margin-bottom:14px;
+    text-shadow:0 6px 18px rgba(0,0,0,.3);
+  }
+  p.tagline {
+    color:rgba(255,255,255,.8); font-size:16px; font-weight:600;
+    line-height:1.5; margin-bottom:36px;
+  }
+  .badge-link { display:inline-block; transition:transform .15s ease; }
+  .badge-link:active { transform:scale(.96); }
+  .badge-link img { height:64px; }
+
+  .foot { margin-top:40px; color:rgba(255,255,255,.4); font-size:12px; font-weight:600; }
+  .foot a { color:rgba(255,255,255,.6); text-decoration:underline; }
+</style>
+</head>
+<body>
+  <div class="bokeh bk1"></div>
+  <div class="bokeh bk2"></div>
+
+  <div class="card">
+    <img class="icon" src="icon-512.png" alt="Cuisine en Famille">
+    <h1>Cuisine en Famille</h1>
+    <p class="tagline">Recettes, menu de la semaine et liste de courses partagée — gratuit, pour toute la famille.</p>
+    <a class="badge-link" href="https://play.google.com/store/apps/details?id=io.github.nicolasrh47.cuisineenfamille" rel="noopener">
+      <img src="images/google-play-badge-fr.png" alt="Disponible sur Google Play">
+    </a>
+    <div class="foot">
+      <a href="privacy.html">Politique de confidentialité</a>
+    </div>
+  </div>
+</body>
+</html>
