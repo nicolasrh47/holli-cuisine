@@ -1695,7 +1695,35 @@ async function fetchRecipesFromSheet(cacheKey,updateLive){
 }
 
 function getSeason(){const m=new Date().getMonth();if(m>=2&&m<=4)return'printemps';if(m>=5&&m<=7)return'ete';if(m>=8&&m<=10)return'automne';return'hiver';}
-function seasonWeight(r){const s=getSeason(),n=r.n.toLowerCase(),c=r.cat.toLowerCase();if(s==='printemps'&&(n.includes('asperge')||n.includes('fraise')||c.includes('légume')))return 2;if(s==='ete'&&(n.includes('tomate')||n.includes('salade')))return 2;if(s==='automne'&&(n.includes('potiron')||n.includes('champignon')))return 2;if(s==='hiver'&&(n.includes('soupe')||n.includes('tartiflette')||n.includes('fondue')))return 2;return 1;}
+// Liste de mots-clés bien plus large que les 2 mots d'origine par saison, pour que la mise en
+// avant saisonnière du swipe/catalogue repère vraiment la majorité des recettes de saison (avant :
+// 2-10% des recettes détectées selon la saison ; après : 7-35%). Deux groupes de mots-clés :
+// - DISH_WORDS : des noms de PLATS ("tartiflette", "fondue"...) — recherchés uniquement dans le nom
+//   et la catégorie, jamais dans les ingrédients, car "soupe" y matchait à tort "c. à soupe"
+//   (cuillère à soupe) et faussait des dizaines de recettes sans rapport avec une soupe.
+// - ING_WORDS : des noms d'INGRÉDIENTS ("potiron", "fraise"...) — recherchés aussi dans les
+//   ingrédients (normalizeSearchText retire déjà les accents, donc "maïs"→"mais" sans collision
+//   avec le mot "mais" de liaison, qui n'apparaît jamais dans une liste d'ingrédients).
+const SEASON_DISH_WORDS={
+  printemps:['paques'],
+  ete:['barbecue','pistou','gaspacho'],
+  automne:[],
+  hiver:['tartiflette','fondue','pot-au-feu','choucroute','raclette','potee','cassoulet','veloute'],
+};
+const SEASON_ING_WORDS={
+  printemps:['asperge','fraise','radis','petit pois','artichaut','feve','rhubarbe','agneau','epinard','laitue','cerfeuil','oseille','morille'],
+  ete:['tomate','courgette','aubergine','poivron','melon','peche','abricot','pasteque','haricot vert','basilic','concombre','cerise','prune','nectarine','framboise','myrtille','groseille','mais'],
+  automne:['potiron','champignon','chataigne','marron','poire','pomme','coing','raisin','figue','potimarron','cepe','girolle','topinambour','panais','gibier','noix','noisette','courge','salsifis'],
+  hiver:['chou','poireau','endive','mandarine','clementine','orange','kiwi','agrumes','pamplemousse','navet','salsifis'],
+};
+function seasonWeight(r){
+  const s=getSeason();
+  const nameCat=normalizeSearchText(r.n+' '+r.cat);
+  if(SEASON_DISH_WORDS[s].some(w=>containsFoodWord(nameCat,normalizeSearchText(w))))return 2;
+  const full=nameCat+' '+normalizeSearchText(r.ing);
+  if(SEASON_ING_WORDS[s].some(w=>containsFoodWord(full,normalizeSearchText(w))))return 2;
+  return 1;
+}
 // Gros événements (Halloween, Noël, Chandeleur, Saint-Valentin, Pâques) : fenêtres de dates
 // autour de chacun. Un événement actif prend le pas sur la simple saison météo, aussi bien pour
 // le thème visuel que pour la mise en avant des recettes.
