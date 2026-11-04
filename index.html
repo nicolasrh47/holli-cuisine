@@ -501,24 +501,24 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
       <button id="auth-tab-login" class="auth-tab active" onclick="setAuthTab('login')">Connexion</button>
       <button id="auth-tab-signup" class="auth-tab" onclick="setAuthTab('signup')">Inscription</button>
     </div>
-    <div id="auth-form-login">
-      <input id="login-email" class="auth-input" type="email" placeholder="Adresse e-mail" autocomplete="email" onkeydown="if(event.key==='Enter')handleLogin()">
+    <form id="auth-form-login" autocomplete="on" onsubmit="event.preventDefault();handleLogin();">
+      <input id="login-email" class="auth-input" type="email" name="email" placeholder="Adresse e-mail" autocomplete="username" required>
       <div class="auth-pw-wrap">
-        <input id="login-password" class="auth-input" type="password" placeholder="Mot de passe" autocomplete="current-password" onkeydown="if(event.key==='Enter')handleLogin()">
+        <input id="login-password" class="auth-input" type="password" name="password" placeholder="Mot de passe" autocomplete="current-password" required>
         <button type="button" class="auth-pw-toggle" onclick="togglePwVisibility('login-password',this)">👁️</button>
       </div>
-      <button id="login-submit-btn" onclick="handleLogin()" class="auth-submit">Se connecter</button>
+      <button id="login-submit-btn" type="submit" class="auth-submit">Se connecter</button>
       <button onclick="handleForgotPassword()" class="auth-forgot" type="button">Mot de passe oublié ?</button>
-    </div>
-    <div id="auth-form-signup" style="display:none">
-      <input id="signup-pseudo" class="auth-input" type="text" placeholder="Pseudo" maxlength="30" onkeydown="if(event.key==='Enter')handleSignup()">
-      <input id="signup-email" class="auth-input" type="email" placeholder="Adresse e-mail" autocomplete="email" onkeydown="if(event.key==='Enter')handleSignup()">
+    </form>
+    <form id="auth-form-signup" autocomplete="on" style="display:none" onsubmit="event.preventDefault();handleSignup();">
+      <input id="signup-pseudo" class="auth-input" type="text" name="pseudo" placeholder="Pseudo" maxlength="30" autocomplete="nickname">
+      <input id="signup-email" class="auth-input" type="email" name="email" placeholder="Adresse e-mail" autocomplete="username" required>
       <div class="auth-pw-wrap">
-        <input id="signup-password" class="auth-input" type="password" placeholder="Mot de passe (6 car. min.)" autocomplete="new-password" onkeydown="if(event.key==='Enter')handleSignup()">
+        <input id="signup-password" class="auth-input" type="password" name="new-password" placeholder="Mot de passe (6 car. min.)" autocomplete="new-password" required>
         <button type="button" class="auth-pw-toggle" onclick="togglePwVisibility('signup-password',this)">👁️</button>
       </div>
-      <button id="signup-submit-btn" onclick="handleSignup()" class="auth-submit">Créer mon compte</button>
-    </div>
+      <button id="signup-submit-btn" type="submit" class="auth-submit">Créer mon compte</button>
+    </form>
     <div class="auth-divider"><span>ou</span></div>
     <button onclick="handleGoogleAuth()" class="auth-google-btn"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>Continuer avec Google</button>
     <button onclick="continueAsGuest()" class="auth-guest-btn">👀 Juste regarder, sans compte</button>
