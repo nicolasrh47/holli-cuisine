@@ -470,6 +470,22 @@ body.dark #boot-screen{background:linear-gradient(160deg,#1e293b,#0f172a 55%);}
 .boot-skeleton-bar:last-child{width:60%;margin-bottom:0;}
 body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#475569 37%,#334155 63%);background-size:400% 100%;}
 @keyframes boot-shimmer{0%{background-position:100% 50%}100%{background-position:0 50%}}
+
+/* ========== GRAND ÉCRAN (web/desktop) : recentre l'app dans une colonne façon mobile au lieu
+   de l'étirer sur toute la largeur. Sans effet en dessous de 640px (le wrapping ci-dessous ne
+   change que l'alignement horizontal, jamais la logique de scroll/position:fixed native, pour
+   ne rien risquer sur l'app mobile/TWA qui reste prioritaire). ========== */
+@media (min-width:640px){
+  body{background:#e2e8f0;}
+  body.dark{background:#020617;}
+  #app-shell{max-width:480px;margin:0 auto;box-shadow:0 0 60px rgba(0,0,0,.1);}
+  .nav-bar,.bottom-action-bar,#add-item-modal{left:50%;right:auto;width:480px;margin-left:-240px;}
+  .toast{left:50%;right:auto;width:480px;margin-left:-240px;}
+  .tutorial-bubble{left:50%;right:auto;width:480px;margin-left:-240px;}
+  .ck-finish-bar{left:50%;right:auto;width:480px;margin-left:-240px;}
+  #cook-modal,#bonappetit-overlay,#detail-modal,#catalogue-modal,#recurring-modal,#premium-modal,
+  #auth-screen,#onboard-screen,#boot-screen{left:50%;right:auto;width:480px;margin-left:-240px;}
+}
 </style>
 </head>
 <body>
