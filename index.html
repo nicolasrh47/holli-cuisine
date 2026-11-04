@@ -3802,7 +3802,11 @@ function containsFoodWord(haystack,word){
 // Même principe pour les autres laits végétaux (amande, soja, avoine...) : trouvé en ajoutant une
 // recette vegan au lait de soja, qui ressortait à tort incompatible Vegan/Sans lactose — "Smoothie
 // Bowl Framboise & Banane" (lait d'amande seul, sans alternative laitière) avait déjà ce même bug.
-const NON_DAIRY_MILK_PHRASES=['lait de coco','lait d\'amande','lait d\'avoine','lait de soja','lait de riz','lait de noisette','lait de cajou'];
+// Et pareil pour les "crèmes" végétales (crème d'avoine, de soja...), qui contiennent le mot
+// "creme" du même lot ALLERGEN_KEYWORDS['lactose'] — trouvé en ajoutant une recette vegan à la
+// crème d'avoine ("Pâtes Crémeuses au Pesto, Tomates Cerises et Épinards").
+const NON_DAIRY_MILK_PHRASES=['lait de coco','lait d\'amande','lait d\'avoine','lait de soja','lait de riz','lait de noisette','lait de cajou',
+  'creme de coco','creme d\'avoine','creme de soja','creme d\'amande','creme de riz','creme de noisette','creme de cajou'];
 function getAllergyMatches(recipe){
   const avoid=getAvoidList();
   if(!avoid.length||!recipe)return[];
