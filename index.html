@@ -3850,8 +3850,10 @@ function getAllergyMatches(recipe){
 // "sanglier" (gibier porcin) manquait des deux listes ci-dessous : une recette au sanglier
 // passait à tort comme compatible Végétarien/Vegan (ni dans MEAT_WORDS) et comme compatible
 // Halal/Kasher (ni dans PORK_WORDS, alors que le sanglier est proscrit au même titre que le
-// porc) — trouvé en ajoutant "Civet de Sanglier".
-const MEAT_WORDS=['boeuf','bœuf','porc','veau','agneau','mouton','poulet','dinde','canard','volaille','pintade','caille','lapin','gibier','sanglier','jambon','lardons','bacon','saucisse','saucisses','saucisson','chorizo','merguez','chipolata','andouillette','pancetta','steak','entrecote','entrecôte','gigot','foie gras','rillettes','viande','pate de campagne','pâté de campagne','pâté de foie','confit de canard','magret','filet mignon','jarret','travers de porc','escalope','osso buco','bresaola'];
+// porc) — trouvé en ajoutant "Civet de Sanglier". Même bug pour "biche" (chevreuil/cerf), qui
+// manquait de MEAT_WORDS — trouvé en ajoutant "Pavé de Biche, Sauce Grand Veneur". La biche
+// reste autorisée en Halal/Kasher (contrairement au sanglier), donc pas d'ajout à PORK_WORDS.
+const MEAT_WORDS=['boeuf','bœuf','porc','veau','agneau','mouton','poulet','dinde','canard','volaille','pintade','caille','lapin','gibier','sanglier','biche','jambon','lardons','bacon','saucisse','saucisses','saucisson','chorizo','merguez','chipolata','andouillette','pancetta','steak','entrecote','entrecôte','gigot','foie gras','rillettes','viande','pate de campagne','pâté de campagne','pâté de foie','confit de canard','magret','filet mignon','jarret','travers de porc','escalope','osso buco','bresaola'];
 const FISH_SEAFOOD_WORDS=['poisson','saumon','thon','cabillaud','truite','anchois','sardine','colin','merlan','dorade','daurade','sole','morue','congre','crevette','crabe','homard','langouste','langoustine','moule','huitre','huître','escargot','calamar','poulpe','saint-jacques','gambas','lotte','maquereau','hareng','caviar','bar','surimi','brandade'];
 const EGG_HONEY_WORDS=['oeuf','œuf','miel','mayonnaise'];
 const PORK_WORDS=['porc','lard','lardons','bacon','jambon','saucisson','chorizo','pancetta','andouillette','boudin','cochon','porcelet','sanglier'];
