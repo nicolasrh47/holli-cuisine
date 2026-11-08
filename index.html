@@ -3850,11 +3850,16 @@ function getAllergyMatches(recipe){
 // "sanglier" (gibier porcin) manquait des deux listes ci-dessous : une recette au sanglier
 // passait à tort comme compatible Végétarien/Vegan (ni dans MEAT_WORDS) et comme compatible
 // Halal/Kasher (ni dans PORK_WORDS, alors que le sanglier est proscrit au même titre que le
-// porc) — trouvé en ajoutant "Civet de Sanglier". Même bug pour "biche" (chevreuil/cerf) et
-// "chapon" (volaille), qui manquaient de MEAT_WORDS — trouvés en ajoutant "Pavé de Biche,
-// Sauce Grand Veneur" puis "Chapon Rôti aux Herbes". Biche et chapon restent autorisés en
-// Halal/Kasher (contrairement au sanglier), donc pas d'ajout à PORK_WORDS pour ceux-ci.
-const MEAT_WORDS=['boeuf','bœuf','porc','veau','agneau','mouton','poulet','dinde','canard','volaille','pintade','caille','lapin','gibier','sanglier','biche','chapon','jambon','lardons','bacon','saucisse','saucisses','saucisson','chorizo','merguez','chipolata','andouillette','pancetta','steak','entrecote','entrecôte','gigot','foie gras','rillettes','viande','pate de campagne','pâté de campagne','pâté de foie','confit de canard','magret','filet mignon','jarret','travers de porc','escalope','osso buco','bresaola'];
+// porc) — trouvé en ajoutant "Civet de Sanglier". Même bug pour "biche" (chevreuil/cerf),
+// "chapon" (volaille) et "boudin"/"lard" (charcuterie), qui manquaient de MEAT_WORDS — trouvés
+// en ajoutant "Pavé de Biche, Sauce Grand Veneur", "Chapon Rôti aux Herbes" puis "Crumble de
+// Boudin Noir aux Pommes" ("boudin" et "lard" sont déjà dans PORK_WORDS, mais ça n'exclut que
+// Halal/Kasher, pas Végétarien/Vegan — "lard" seul, sans "ons", était même déjà utilisé par
+// "Choucroute Garnie" et "Brochettes de Lotte au Lard Fumé" sans être détecté). "cochon" et
+// "porcelet" ajoutés en prévention par le même raisonnement. Biche et chapon restent autorisés
+// en Halal/Kasher (contrairement au sanglier, au boudin et au lard), donc pas d'ajout à
+// PORK_WORDS pour ceux-ci.
+const MEAT_WORDS=['boeuf','bœuf','porc','veau','agneau','mouton','poulet','dinde','canard','volaille','pintade','caille','lapin','gibier','sanglier','biche','chapon','boudin','lard','cochon','porcelet','jambon','lardons','bacon','saucisse','saucisses','saucisson','chorizo','merguez','chipolata','andouillette','pancetta','steak','entrecote','entrecôte','gigot','foie gras','rillettes','viande','pate de campagne','pâté de campagne','pâté de foie','confit de canard','magret','filet mignon','jarret','travers de porc','escalope','osso buco','bresaola'];
 const FISH_SEAFOOD_WORDS=['poisson','saumon','thon','cabillaud','truite','anchois','sardine','colin','merlan','dorade','daurade','sole','morue','congre','crevette','crabe','homard','langouste','langoustine','moule','huitre','huître','escargot','calamar','poulpe','saint-jacques','gambas','lotte','maquereau','hareng','caviar','bar','surimi','brandade'];
 const EGG_HONEY_WORDS=['oeuf','œuf','miel','mayonnaise'];
 const PORK_WORDS=['porc','lard','lardons','bacon','jambon','saucisson','chorizo','pancetta','andouillette','boudin','cochon','porcelet','sanglier'];
