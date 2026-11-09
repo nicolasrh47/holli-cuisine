@@ -30,7 +30,7 @@
 /* ========== STYLE COMPLET (identique à l'original) ========== */
 :root{--bg:#f8fafc;--card:#fff;--text:#1e293b;--text2:#64748b;--border:#e2e8f0;--orange:#f97316;--green:#22c55e;--red:#ef4444;}
 *{-webkit-tap-highlight-color:transparent;box-sizing:border-box;}
-body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);padding-bottom:calc(110px + env(safe-area-inset-bottom));padding-top:env(safe-area-inset-top);overflow-x:hidden;transition:background .3s;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);padding-bottom:calc(110px + env(safe-area-inset-bottom));padding-top:env(safe-area-inset-top);overflow-x:hidden;transition:background .3s;}
 button,.nav-item,.cat-tab,.chk{-webkit-user-select:none;user-select:none;}
 body.dark{--bg:#0f172a;--card:#1e293b;--text:#f1f5f9;--text2:#94a3b8;--border:#334155;}
 body.dark .glass{background:#0f172a;}
@@ -222,10 +222,12 @@ body.dark .week-slot-actions button.danger:active{background:#dc2626;}
 
 .cart-ing{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #f1f5f9;transition:all .25s;cursor:pointer;min-height:56px;}
 .cart-ing:last-child{border-bottom:none;}
+body.dark .cart-ing{border-bottom-color:var(--border);}
 .cart-ing.checked .ing-text{text-decoration:line-through;color:#cbd5e1;}
 .cart-ing.checked .chk{background:#22c55e;border-color:#22c55e;animation:checkPop .35s ease;}
 .cart-ing.checked .chk::after{content:'✓';color:white;font-size:11px;font-weight:900;}
 .chk{width:28px;height:28px;min-width:28px;border-radius:50%;border:3px solid #e2e8f0;display:flex;align-items:center;justify-content:center;transition:all .25s;}
+body.dark .chk{border-color:var(--border);}
 .ing-text{font-size:14px;font-weight:700;color:#334155;flex:1;transition:all .25s;line-height:1.3;}
 .ing-qty-edit{font-size:16px;font-weight:900;color:#f97316;background:#fff7ed;border:2px solid #fed7aa;border-radius:10px;padding:4px 8px;width:88px;text-align:center;font-family:inherit;}
 .recipe-tag{font-size:8px;font-weight:800;color:#94a3b8;text-transform:uppercase;}
@@ -2261,7 +2263,7 @@ function emptyStateHTML(emoji,title,subtitle,opts){
   const box=opts.small?64:92,fs=opts.small?28:42;
   return`<div class="text-center ${py} ${extra}">
     <div class="mx-auto mb-4 flex items-center justify-center rounded-full" style="width:${box}px;height:${box}px;background:#fff7ed;font-size:${fs}px">${emoji}</div>
-    <div class="font-black ${opts.small?'text-sm':'text-lg'} uppercase text-slate-800">${title}</div>
+    <div class="font-black ${opts.small?'text-sm':'text-lg'} uppercase" style="color:var(--text)">${title}</div>
     ${subtitle?`<div class="text-sm font-bold mt-2 text-[var(--text2)]">${subtitle}</div>`:''}
   </div>`;
 }
@@ -2718,7 +2720,7 @@ function renderCart(){
     const byRayon={};
     unchecked.forEach(ing=>{const r=ing.isMaison?'✨ Maison':ing.isExtra?'➕ Ajouts':getRayon(ing.displayName);if(!byRayon[r])byRayon[r]=[];byRayon[r].push(ing);});
     Object.entries(sortRayons(byRayon)).forEach(([rayon,ings])=>{
-      html+=`<div class="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden mb-3">`;
+      html+=`<div class="rounded-[2rem] shadow-sm overflow-hidden mb-3" style="background:var(--card);border:1px solid var(--border)">`;
       html+=`<div class="rayon-header">${rayon}<span class="ml-auto text-[9px] font-black text-[var(--text2)]">${ings.length}</span></div>`;
       ings.forEach(ing=>{html+=ingRow(ing);});
       html+='</div>';
