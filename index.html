@@ -1657,25 +1657,27 @@ function imgSize(url,w,h){
 // par défaut une icône cassée avec l'URL complète en infobulle — moche et ça expose l'adresse
 // technique du site. On bascule à la place sur un fond neutre uni.
 function imgFallback(el){el.onerror=null;el.removeAttribute('src');el.style.background='#f1f5f9';}
-// Le catalogue peut afficher 150+ cartes d'un coup ; loading="lazy" natif ne déclenche le
+// Toute liste un peu longue (catalogue, favoris, semaine, Cook, anciennes recettes…) peut
+// afficher des dizaines de cartes d'un coup ; loading="lazy" natif ne déclenche le
 // téléchargement que très près du viewport (encore plus tard sur Safari/iOS), donc en scrollant
 // normalement l'image n'a pas fini d'arriver quand la carte devient visible → case blanche
 // plusieurs secondes. On lance nous-mêmes le téléchargement ~1000px avant que la carte soit à
 // l'écran (le temps de scroller jusque-là, l'image est déjà prête), via IntersectionObserver
-// plutôt que le lazy natif dont la marge n'est pas réglable.
-let gridImgObserver=null;
-function observeGridImages(){
-  if(!gridImgObserver){
-    gridImgObserver=new IntersectionObserver((entries)=>{
+// plutôt que le lazy natif dont la marge n'est pas réglable — un seul observateur partagé par
+// toutes les listes de l'app plutôt qu'un par écran.
+let lazyImgObserver=null;
+function observeLazyImages(){
+  if(!lazyImgObserver){
+    lazyImgObserver=new IntersectionObserver((entries)=>{
       entries.forEach(entry=>{
         if(!entry.isIntersecting)return;
         const img=entry.target;
         if(img.dataset.src){img.src=img.dataset.src;img.removeAttribute('data-src');}
-        gridImgObserver.unobserve(img);
+        lazyImgObserver.unobserve(img);
       });
     },{rootMargin:'1000px 0px'});
   }
-  document.querySelectorAll('#grid img[data-src]').forEach(img=>gridImgObserver.observe(img));
+  document.querySelectorAll('img[data-src]').forEach(img=>lazyImgObserver.observe(img));
 }
 
 // Même principe que loadMaisonItems() : instantané embarqué toujours revérifié en premier
@@ -1914,7 +1916,7 @@ function renderFavs(){
   document.getElementById('fav-grid').innerHTML=filtered.map(r=>`
     <div class="fav-card" onclick="showDetails(${r.id})">
       <div class="relative">
-        <img src="${imgSize(r.i,360,450)}" alt="${r.n}" class="w-full h-40 object-cover" loading="lazy" decoding="async" onerror="imgFallback(this)">
+        <img data-src="${imgSize(r.i,360,450)}" alt="${r.n}" class="w-full h-40 object-cover" style="background:#f1f5f9" decoding="async" onerror="imgFallback(this)">
         <button onclick="toggleFav(${r.id},event)" class="fav-btn active" data-fav-id="${r.id}">❤️</button>
         ${allergyBadgeHTML(r)}${regimeBadgeHTML(r)}
         <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-4">
@@ -1924,6 +1926,7 @@ function renderFavs(){
         </div>
       </div>
     </div>`).join('');
+  observeLazyImages();
 }
 function setFavCat(cat){currentFavCat=cat;renderFavs();}
 function setFavCourse(key){currentFavCourse=key;renderFavs();}
@@ -2180,7 +2183,7 @@ function renderGrid(){
       <button class="add-btn" onclick="event.stopPropagation();handleAddRecipe(${r.id})">+</button>
       ${allergyBadgeHTML(r)}${regimeBadgeHTML(r)}
     </div>`).join(''):emptyStateHTML('🔍','Aucune recette trouvée',null,{py:'py-16',small:true,extra:'col-span-2'});
-  observeGridImages();
+  observeLazyImages();
 }
 
 function showDetails(id){
@@ -2607,7 +2610,7 @@ function weekTileHTML(item,dayIdx,course){
   const r=recipes.find(x=>x.id===rid);if(!r)return'';
   const expanded=weekExpandedSlots.has(weekSlotKey(dayIdx,course));
   return`<button onclick="toggleWeekSlotExpand(${dayIdx},'${course}',event)" class="week-tile" aria-label="${escapeHtml(r.n)}">
-    <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="week-tile-img ${expanded?'expanded':''}" loading="lazy" decoding="async" onerror="imgFallback(this)">
+    <img data-src="${imgSize(r.i,160,200)}" alt="${r.n}" class="week-tile-img ${expanded?'expanded':''}" style="background:#f1f5f9" decoding="async" onerror="imgFallback(this)">
     <span class="week-tile-label">${meta.emoji} ${r.n}</span>
   </button>`;
 }
@@ -2618,7 +2621,7 @@ function weekExpandedCardHTML(item,dayIdx,course){
   const tempsShort=r.temps?r.temps.split('|')[0].trim():'';
   return`<div class="week-slot">
     <div class="week-slot-top">
-      <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="week-slot-img" loading="lazy" decoding="async" onclick="showDetails(${r.id})" onerror="imgFallback(this)">
+      <img data-src="${imgSize(r.i,160,200)}" alt="${r.n}" class="week-slot-img" style="background:#f1f5f9" decoding="async" onclick="showDetails(${r.id})" onerror="imgFallback(this)">
       <div class="week-slot-body" onclick="showDetails(${r.id})">
         <span class="week-slot-tag">${meta.emoji} ${meta.label}</span>
         <div class="week-slot-name">${r.n}${allergyBadgeHTML(r,'inline')}${regimeBadgeHTML(r,'inline')}</div>
@@ -2649,6 +2652,7 @@ function renderWeekMenu(){
       ${expandedCourses.map(c=>weekExpandedCardHTML(item,i,c.key)).join('')}
     </div>`;
   }).join('');
+  observeLazyImages();
 }
 // Boîte réutilisée par la page Semaine (budget hebdo vs menu généré) et la page Courses
 // (budget des recettes du panier) — mêmes couleurs/format pour une lecture cohérente.
@@ -2834,7 +2838,7 @@ function renderCooking(){
   const cardHTML=r=>{
     const idx=cart.indexOf(r),anim=animIdx++;
     return`<div class="bg-white rounded-[2.2rem] border p-4 flex gap-4 items-center mb-2" style="animation:slideUp .4s ease-out ${anim*.08}s both">
-        <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0" loading="lazy" decoding="async" onerror="imgFallback(this)">
+        <img data-src="${imgSize(r.i,160,200)}" alt="${r.n}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0" style="background:#f1f5f9" decoding="async" onerror="imgFallback(this)">
         <div class="flex-1 min-w-0">
           <h3 class="font-black uppercase text-[11px] italic text-slate-800 leading-tight">${r.n}${allergyBadgeHTML(r,'inline')}${regimeBadgeHTML(r,'inline')}</h3>
           <p class="text-[9px] text-[var(--text2)] font-bold mt-1">${splitPrepSteps(r.prep).length} étapes${r.temps?` · ⏱ ${r.temps}`:''}</p>
@@ -2849,12 +2853,13 @@ function renderCooking(){
   document.getElementById('cook-grid').innerHTML=`
     <button onclick="cookAll()" class="cook-all-btn mb-4"><span class="em">🔥</span><span>Cuisiner tous les plats</span><span class="em">🍽️</span></button>
     ${groupsHTML}`;
+  observeLazyImages();
 }
 function renderOldRecipes(){
   if(!oldRecipes.length){document.getElementById('old-recipes-grid').innerHTML=emptyStateHTML('📚','Aucune ancienne recette','Les recettes terminées apparaissent ici',{py:'py-16',small:true});return;}
   document.getElementById('old-recipes-grid').innerHTML=oldRecipes.slice().reverse().map((r,i)=>`
     <div class="old-recipe-card" style="animation:slideUp .3s ease-out ${i*.05}s both">
-      <img src="${imgSize(r.i,160,200)}" alt="${r.n}" class="w-14 h-14 rounded-2xl object-cover flex-shrink-0" loading="lazy" decoding="async" onerror="imgFallback(this)">
+      <img data-src="${imgSize(r.i,160,200)}" alt="${r.n}" class="w-14 h-14 rounded-2xl object-cover flex-shrink-0" style="background:#f1f5f9" decoding="async" onerror="imgFallback(this)">
       <div class="flex-1 min-w-0">
         <p class="font-black text-[11px] uppercase italic text-slate-800 leading-tight truncate">${r.n}</p>
         <p class="text-[9px] text-[var(--text2)] font-bold mt-1">${r.cat}</p>
@@ -2865,6 +2870,7 @@ function renderOldRecipes(){
         <button onclick="restoreRecipe(${i})" class="bg-green-50 text-green-600 px-3 py-1.5 rounded-full font-black text-[9px] uppercase border-none cursor-pointer">↩ Remettre</button>
       </div>
     </div>`).join('');
+  observeLazyImages();
 }
 function restoreRecipe(reversedIdx){const idx=oldRecipes.length-1-reversedIdx;const r=oldRecipes[idx];if(!r)return;oldRecipes.splice(idx,1);addToCart(r);save();renderOldRecipes();renderCooking();showToast(`↩ ${r.n} remis dans le panier !`,'#8b5cf6');}
 
