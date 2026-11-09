@@ -871,13 +871,6 @@ body.dark .boot-skeleton-bar{background:linear-gradient(90deg,#334155 25%,#47556
     <button onclick="openAddItem()" class="bg-orange-500 text-white font-black text-[10px] uppercase px-4 py-2 rounded-full flex-1">+ Article</button>
     <button onclick="shareCart()" class="bg-slate-900 text-white font-black text-[10px] uppercase px-4 py-2 rounded-full flex-1">Partager</button>
   </div>
-  <div class="page-pers mb-2">
-    <div class="pers-pill">
-      <button onclick="updateServings(-1)">-</button>
-      <span id="cart-pers-disp">2 PERS.</span>
-      <button onclick="updateServings(1)">+</button>
-    </div>
-  </div>
   <div id="rayon-progress" class="mb-3"></div>
   <div id="cart-list" class="space-y-4"></div>
   <div id="cart-action-bar" class="bottom-action-bar" style="display:none">
@@ -3683,11 +3676,11 @@ function renderProfilePage(){
     <div class="pref-row"><span class="pref-label">Temps de cuisine</span><span class="pref-value">${cookLabel}</span></div>
     <div class="pref-row" style="display:block">
       <span class="pref-label">Allergies</span>
-      <div class="mt-2">${p.allergies.length?p.allergies.map(a=>`<span class="chip allergy">⚠️ ${escapeHtml(a)}</span>`).join(''):'<span class="text-[var(--text2)] text-[11px] font-bold">Aucune</span>'}</div>
+      <div class="mt-2">${(p.allergies||[]).length?p.allergies.map(a=>`<span class="chip allergy">⚠️ ${escapeHtml(a)}</span>`).join(''):'<span class="text-[var(--text2)] text-[11px] font-bold">Aucune</span>'}</div>
     </div>
     <div class="pref-row" style="display:block">
       <span class="pref-label">Ingrédients détestés</span>
-      <div class="mt-2">${p.dislikes.length?p.dislikes.map(a=>`<span class="chip">${escapeHtml(a)}</span>`).join(''):'<span class="text-[var(--text2)] text-[11px] font-bold">Aucun</span>'}</div>
+      <div class="mt-2">${(p.dislikes||[]).length?p.dislikes.map(a=>`<span class="chip">${escapeHtml(a)}</span>`).join(''):'<span class="text-[var(--text2)] text-[11px] font-bold">Aucun</span>'}</div>
     </div>`;
   const recur=p.recurringItems||[];
   document.getElementById('profile-recurring-card').innerHTML=recur.length
